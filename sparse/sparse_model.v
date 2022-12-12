@@ -198,10 +198,23 @@ autorewrite with sublist.
 reflexivity.
 Qed.
 
+Lemma strict_float_eqv_i:
+ forall {t} (x: ftype t), finite x -> strict_float_eqv x x.
+Proof. auto. Qed.
+
+Lemma strict_floatlist_eqv_i:
+  forall {t} (vec: list (ftype t)), Forall finite vec -> strict_floatlist_eqv vec vec.
+Proof.
+intros.
+induction H; constructor; auto.
+Qed.
+
+#[export] Hint Resolve strict_float_eqv_i strict_floatlist_eqv_i : core.
+
 Lemma partial_row_end:
  forall {t} i (mval: matrix t) cols vals col_ind row_ptr vval
-  (FINvval: strict_floatlist_eqv vval vval)
-  (FINmval: strict_floatlistlist_eqv mval mval)
+  (FINvval: Forall finite vval)
+  (FINmval: Forall (Forall finite) mval)
   (LEN: Zlength vval = cols),
   0 <= i < matrix_rows mval ->
   crs_rep_aux mval cols vals col_ind row_ptr ->
@@ -219,12 +232,10 @@ set (vals' := sublist _ _ vals) in *. clearbody vals'.
 set (col_ind' := sublist _ _ col_ind)  in *. clearbody col_ind'.
 unfold matrix_rows in *.
 rewrite Znth_map by list_solve.
-assert (FINrow := Forall2_Znth _ _ _ FINmval i H).
+assert (FINrow := sublist.Forall_Znth _ _ _ H FINmval).
 set (row := Znth i mval) in *. clearbody row.
-assert (FINvals': strict_floatlist_eqv vals' vals'). {
+assert (FINvals': Forall finite vals'). {
  clear - FINrow H4.
- red in FINrow|-*.
- rewrite <- Forall_Forall2diag in FINrow|-*.
  eapply crs_row_rep_property; eauto.
 }
 clear - H4 FINvval FINvals' FINrow LEN.
@@ -234,7 +245,7 @@ revert s vval FINvval LEN; induction H4; intros.
 -
 reflexivity.
 -
- inv FINrow. clear H2. rename H5 into FINrow.
+ inv FINrow. clear H1. rename H2 into FINrow.
 destruct vval as [ | v0 vval'].
  +
   simpl.
@@ -243,9 +254,7 @@ destruct vval as [ | v0 vval'].
   revert s col_ind H; induction vals; intros; destruct col_ind; simpl; auto.
   rewrite Znth_nil. unfold default, zerof.
   inv FINvals'.
-  fold (strict_floatlist_eqv vals vals) in H5.
-  assert (strict_floatlist_eqv nil (@nil (ftype t))). constructor.
-  specialize (IHvals H5 s col_ind H).
+  specialize (IHvals H3 s col_ind H).
    etransitivity; [ | apply IHvals].
    apply rowmult_mor; auto.
    apply BFMA_zero2; auto.
@@ -273,15 +282,15 @@ destruct vval as [ | v0 vval'].
  * clear - FINvval FINrow.
     inv FINvval.
     assert (float_eqv s (BFMA (Zconst t 0) v0 s)). symmetry; apply BFMA_zero1; auto.
-    forget (BFMA (Zconst t 0) v0 s) as s'. clear v0 H2.
-    revert s s' H vval' H4; induction v; simpl; intros; auto.
+    forget (BFMA (Zconst t 0) v0 s) as s'. clear v0 H1.
+    revert s s' H vval' H2; induction v; simpl; intros; auto.
     destruct vval'; simpl; auto.
-    inv H4. inv FINrow.
+    inv H2. inv FINrow.
     apply IHv; auto.
     apply BFMA_mor; auto. 
 -
-  inv FINrow. rename H2 into FINx. rename H5 into FINrow.
-  inv FINvals'. clear H2. rename H5 into FINvals.
+  inv FINrow. rename H1 into FINx. rename H2 into FINrow.
+  inv FINvals'. clear H1. rename H2 into FINvals.
   specialize (IHcrs_row_rep FINrow FINvals).
   destruct vval as [ | v0 vval'].
  + simpl. rewrite Znth_nil. unfold default, zerof.
@@ -294,7 +303,7 @@ destruct vval as [ | v0 vval'].
  +
    simpl. rewrite Znth_0_cons.
    forget (BFMA x v0 s) as s1. clear s x FINx.
-   inv FINvval. rename H2 into FINv0. rename H5 into FINvval.
+   inv FINvval. rename H1 into FINv0. rename H2 into FINvval.
    rewrite <- IHcrs_row_rep; auto; clear IHcrs_row_rep.
    pose proof (crs_row_rep_col_range _ _ _ _ H4). clear H4.
    rewrite Zlength_map in H by list_solve.
@@ -309,7 +318,8 @@ destruct vval as [ | v0 vval'].
    rewrite IHvals; auto.
    apply rowmult_mor; auto. apply BFMA_mor; auto.
    rewrite Znth_pos_cons by list_solve.
-   apply Forall2_Znth; auto.
+   unfold Z.pred. apply strict_float_eqv_i.
+   apply Forall_Znth; auto.
    lia. list_solve.
 Qed.
 

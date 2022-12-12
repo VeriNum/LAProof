@@ -32,8 +32,8 @@ Definition crs_matrix_vector_multiply_spec :=
              matrix_cols mval (Zlength vval);
              matrix_rows mval < Int.max_unsigned;
              Zlength vval < Int.max_unsigned;
-             strict_floatlist_eqv vval vval;
-             strict_floatlistlist_eqv mval mval)
+             Forall finite vval;
+             Forall (Forall finite) mval)
     PARAMS(m; v; p)
     SEP (crs_rep sh1 mval m;
          data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v; 
