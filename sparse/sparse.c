@@ -1,12 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
-
-struct sparsevec {
-  unsigned *index;
-  double *val;
-  unsigned k;
-  unsigned n;
-};
+#include "sparse.h"
 
 void *surely_malloc(size_t n) {
   void *p = malloc(n);
@@ -72,20 +66,6 @@ double densedotprod(double *vec1, double *vec2, unsigned n) {
     result = fma(vec1[i],vec2[i],result);
   return result;
 }
-
-
-/* Compressed Row Storage (CRS) representation of matrix,
-   see section 4.3.1 of 
-   "Templates for the Solution of Linear Systems: Building Blocks 
-    for Iterative Methods" by Richard Barrett et al., 
-    https://netlib.org/templates/templates.pdf
-*/
-struct crs_matrix {
-  double *val;
-  unsigned *col_ind;
-  unsigned *row_ptr;
-  unsigned rows, cols;
-};
 
 /* crs_matrix_vector_multiply(m,v,p)
       multiplies a sparse matrix m by a dense vector v,
