@@ -1,10 +1,3 @@
-struct sparsevec {
-  unsigned *index;
-  double *val;
-  unsigned k;
-  unsigned n;
-};
-
 /* Compressed Row Storage (CRS) representation of matrix,
    see section 4.3.1 of 
    "Templates for the Solution of Linear Systems: Building Blocks 
@@ -20,10 +13,11 @@ struct crs_matrix {
 
 void *surely_malloc(size_t n);
 
-double *sparse2dense (struct sparsevec *v);
-struct sparsevec *dense2sparse (double *p, unsigned n);
-double sparsedotprod (struct sparsevec *vec1, double *vec2);
-double densedotprod(double *vec1, double *vec2, unsigned n);
-
 void crs_matrix_vector_multiply (struct crs_matrix *m, double *v, double *p);
+
+/* Let D be a diagonal matrix, whose diagonal is represented
+   as the vector diag.  Let A be a matrix with number of rows equal
+   to dimension of D.  let m represent A.
+   Then diag_mult(diag,m) sets m to represent D*A */
+void diag_mult(double *diag, struct crs_matrix *m);
 
