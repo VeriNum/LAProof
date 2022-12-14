@@ -92,3 +92,16 @@ void crs_matrix_vector_multiply (struct crs_matrix *m, double *v, double *p) {
   }
 }
 
+/* Let D be a diagonal matrix, whose diagonal is represented
+   as the vector diag.  Let A be a matrix with number of rows equal
+   to dimension of D.  let m represent A.
+   Then diag_mult(diag,m) sets m to represent D*A */
+void diag_mult(double *diag, struct crs_matrix *m) {
+  unsigned i, rows=m->rows;
+  for (i=0; i<row; i++) {
+    unsigned k=m->row_ptr(i+1);
+    unsigned x = diag[i];
+    for (h=m->row_ptr(i); h<k; h++)
+      m->val[h] *= x;
+  }
+}
