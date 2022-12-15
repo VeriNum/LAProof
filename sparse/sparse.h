@@ -1,3 +1,9 @@
+#ifndef SPARSE_DOT_H
+#define SPARSE_DOT_H
+
+#include <stddef.h>
+#include <sys/time.h>
+
 /* Compressed Row Storage (CRS) representation of matrix,
    see section 4.3.1 of 
    "Templates for the Solution of Linear Systems: Building Blocks 
@@ -21,3 +27,11 @@ void crs_matrix_vector_multiply (struct crs_matrix *m, double *v, double *p);
    Then diag_mult(diag,m) sets m to represent D*A */
 void diag_mult(double *diag, struct crs_matrix *m);
 
+
+struct crs_matrix *make_example(unsigned N, unsigned D, double diag);
+void dump_crs_matrix  (struct crs_matrix *m);
+void print_crs_matrix (struct crs_matrix *m);
+double timediff(struct timeval *start, struct timeval *finish);
+
+
+#endif
