@@ -14,7 +14,6 @@ void *surely_malloc(size_t n) {
 */
 void crs_matrix_vector_multiply (struct crs_matrix *m, double *v, double *p) {
   unsigned i, rows=m->rows;
-  unsigned cols=m->cols;
   double *val = m->val;
   unsigned *col_ind = m->col_ind;
   unsigned *row_ptr = m->row_ptr;
