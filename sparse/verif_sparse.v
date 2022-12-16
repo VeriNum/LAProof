@@ -1,10 +1,10 @@
 Require Import VST.floyd.proofauto.
-Require Import Sparse.sparse.
+Require Import sparse.sparse.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
 Require Import VSTlib.spec_math.
-Require Import Sparse.floatlib Sparse.sparse_model.
-Require Import Sparse.spec_sparse.
+Require Import sparse.floatlib sparse.sparse_model.
+Require Import sparse.spec_sparse.
 
 Set Bullet Behavior "Strict Subproofs".
 
