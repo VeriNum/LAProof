@@ -1,10 +1,8 @@
 Require Import VST.floyd.proofauto.
-Require Import sparse.sparse.
+From Iterative.sparse Require Import sparse floatlib sparse_model spec_sparse.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
 Require Import VSTlib.spec_math.
-Require Import sparse.floatlib sparse.sparse_model.
-Require Import sparse.spec_sparse.
 
 Set Bullet Behavior "Strict Subproofs".
 
@@ -48,7 +46,6 @@ semax (func_tycontext f_crs_matrix_vector_multiply Vprog Gprog [])
    LOCAL (temp _i (Vint (Int.repr i));
    temp _next (Vint (Int.repr (Znth i row_ptr))); 
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _cols (Vint (Int.repr cols));
    temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (FRAME;
@@ -66,7 +63,6 @@ semax (func_tycontext f_crs_matrix_vector_multiply Vprog Gprog [])
       LOCAL (temp _i (Vint (Int.repr i));
       temp _next (Vint (Int.repr (Znth (i + 1) row_ptr)));
       temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-      temp _cols (Vint (Int.repr cols));
       temp _rows (Vint (Int.repr (matrix_rows mval))); 
       temp _m m; temp _v v; temp _p p)
       SEP (FRAME;
@@ -99,7 +95,6 @@ forward_loop
    temp _h (Vint  (Int.repr h));
    temp _next (Vint (Int.repr (Znth (i+1) row_ptr))); 
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _cols (Vint (Int.repr cols));
    temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (FRAME;
@@ -118,7 +113,6 @@ forward_loop
    temp _i (Vint (Int.repr i));
    temp _next (Vint (Int.repr (Znth (i+1) row_ptr))); 
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _cols (Vint (Int.repr cols));
    temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (FRAME;
@@ -214,7 +208,6 @@ forward.
 forward.
 forward.
 forward.
-forward.
 freeze FR1 := (data_at sh1 _ _ _).
 rename v0 into vp.
 assert_PROP (0 <= 0 < Zlength row_ptr)
@@ -225,7 +218,7 @@ forward_for_simple_bound (matrix_rows mval)
    PROP(floatlist_eqv result (sublist 0 i (matrix_vector_mult mval vval))) 
    LOCAL (temp _next (Vint (Int.repr (Znth i row_ptr))); 
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _cols (Vint (Int.repr cols));
+(*   temp _cols (Vint (Int.repr cols));*)
    temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (FRZL FR1;
@@ -244,7 +237,7 @@ apply derives_refl.
 -
 Intros.
 eapply semax_post_flipped'.
-apply crs_multiply_loop_body; auto.
+eapply crs_multiply_loop_body; eassumption; auto.
 Intros r.
 Exists (result ++ [r]).
 entailer!.

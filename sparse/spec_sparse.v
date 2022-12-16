@@ -1,9 +1,8 @@
 Require Import VST.floyd.proofauto.
-Require Import sparse.sparse.
+From Iterative.sparse Require Import sparse floatlib sparse_model.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
 Require Import VSTlib.spec_math.
-Require Import sparse.floatlib sparse.sparse_model.
 
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
