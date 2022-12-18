@@ -1,5 +1,6 @@
 Require Import VST.floyd.proofauto.
-From Iterative.sparse Require Import sparse floatlib sparse_model.
+Require Import Iterative.floatlib.
+From Iterative.sparse Require Import sparse sparse_model.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
 Require Import VSTlib.spec_math.

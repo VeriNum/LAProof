@@ -2,7 +2,7 @@ Require Import VST.floyd.proofauto.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
 Require Import VSTlib.spec_math.
-From Iterative.sparse Require Import floatlib.
+Require Import Iterative.floatlib.
 
 Set Bullet Behavior "Strict Subproofs".
 
