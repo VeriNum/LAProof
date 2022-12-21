@@ -8,6 +8,27 @@ void *surely_malloc(size_t n) {
   return p;
 }
 
+double crs_row_vector_multiply(struct crs_matrix *m, double *v, unsigned i) {
+  double *val = m->val;
+  unsigned *col_ind = m->col_ind;
+  unsigned *row_ptr = m->row_ptr;
+  unsigned h, hi=row_ptr[i+1];
+  double s=0.0;
+  for (h=row_ptr[i]; h<hi; h++) {
+      double x = val[h];
+      unsigned j = col_ind[h];
+      double y = v[j];
+      s = fma(x,y,s);
+  }
+  return s;
+}
+
+void crs_matrix_vector_multiply_byrows (struct crs_matrix *m, double *v, double *p) {
+  unsigned i, rows=m->rows;
+  for (i=0; i<rows; i++)
+    p[i]=crs_row_vector_multiply(m,v,i);
+}
+
 /* crs_matrix_vector_multiply(m,v,p)
       multiplies a sparse matrix m by a dense vector v,
       putting the result into the (already allocated) dense vector p
