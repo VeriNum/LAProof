@@ -20,6 +20,8 @@ struct crs_matrix {
 void *surely_malloc(size_t n);
 
 void crs_matrix_vector_multiply (struct crs_matrix *m, double *v, double *p);
+double crs_row_vector_multiply(struct crs_matrix *m, double *v, unsigned i);
+void crs_matrix_vector_multiply_byrows (struct crs_matrix *m, double *v, double *p);
 
 /* Let D be a diagonal matrix, whose diagonal is represented
    as the vector diag.  Let A be a matrix with number of rows equal
