@@ -23,6 +23,18 @@ Definition crs_rep (sh: share) (mval: matrix Tdouble) (p: val) : mpred :=
   data_at sh (tarray tuint (Zlength col_ind)) (map Vint (map Int.repr col_ind)) ci *
   data_at sh (tarray tuint (matrix_rows mval + 1)) (map Vint (map Int.repr row_ptr)) rp.
 
+Definition crs_matrix_rows_spec :=
+ DECLARE _crs_matrix_rows
+ WITH sh: share, m: val, mval: matrix Tdouble
+ PRE [ tptr t_crs ]
+    PROP (readable_share sh; matrix_rows mval < Int.max_unsigned)
+    PARAMS (m)
+    SEP (crs_rep sh mval m)
+ POST [ tuint ]
+    PROP ()
+    RETURN (Vint (Int.repr (matrix_rows mval)))
+    SEP (crs_rep sh mval m).
+
 Definition crs_row_vector_multiply_spec :=
  DECLARE _crs_row_vector_multiply
  WITH sh1: share, sh2: share, sh3: share,
@@ -94,6 +106,7 @@ Definition crs_matrix_vector_multiply_spec :=
              (map Vfloat result) p).
 
 Definition SparseASI : funspecs := [ 
+   crs_matrix_rows_spec;
    crs_row_vector_multiply_spec;
    crs_matrix_vector_multiply_byrows_spec;
    crs_matrix_vector_multiply_spec ].

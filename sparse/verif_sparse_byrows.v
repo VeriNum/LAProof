@@ -11,104 +11,6 @@ Open Scope logic.
 
 Definition Gprog: funspecs := SparseASI ++ MathASI.
 
-Lemma body_crs_row_vector_multiply: semax_body Vprog Gprog f_crs_row_vector_multiply crs_row_vector_multiply_spec.
-Proof.
-start_function.
-rename H3 into FINmval.
-assert (0 <= matrix_rows mval) by (unfold matrix_rows; rep_lia).
-forward.
-forward.
-forward.
-freeze FR1 := (data_at sh1 _ _ _).
-rename v0 into vp.
-assert_PROP (0 <= i + 1 < Zlength row_ptr)
-  by (entailer!; list_solve).
-forward.
-forward.
-clear H6.
-assert (CRS := H5).
-assert (COLS := crs_rep_matrix_cols _ _ _ _ _ H5).
-destruct H5 as [H2' [H7 [H8 [H9 H10]]]].
- assert_PROP (0 <= i < Zlength row_ptr - 1)
-  by (entailer!; list_solve).
-forward_for_simple_bound (Znth (i + 1) row_ptr)
-  (EX h:Z, PROP(0 <= Znth i row_ptr <= h)
-   LOCAL (
-   temp _s (Vfloat (partial_row i h vals col_ind row_ptr vval));
-   temp _i (Vint (Int.repr i));
-   temp _hi (Vint (Int.repr (Znth (i+1) row_ptr))); 
-   temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _m m; temp _v v)
-   SEP (FRZL FR1;
-   data_at sh1 (tarray tdouble (Zlength col_ind)) (map Vfloat vals) vp;
-   data_at sh1 (tarray tuint (Zlength col_ind))
-     (map Vint (map Int.repr col_ind)) ci;
-   data_at sh1 (tarray tuint (matrix_rows mval + 1))
-     (map Vint (map Int.repr row_ptr)) rp;
-   data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v))%assert.
--
- clear - H9 H2 H2'. unfold matrix_rows in H2.  list_solve.
--
- forward.
-change float with (ftype Tdouble) in *. 
- EExists. entailer!.
- split3. 
- clear - H9 H5. list_solve. 
- clear - H9 H5. list_solve.
- f_equal. erewrite partial_row_start. reflexivity. eassumption.
--
-rename i0 into h.
-assert (h <= Int.max_unsigned). clear - H9 H6 H5. list_solve.
-forward. apply prop_right. list_solve.
-progress change float with (ftype Tdouble) in *. 
-entailer!.
-rewrite Znth_map. hnf; auto.
-clear - H6 H7 H5 H2 H2' H9. unfold matrix_rows in *. list_solve.
-assert  (0 <= h < Zlength col_ind).
-  rewrite H8.  clear - H5 H2' H9 H6. list_solve.
-forward.
-progress change float with (ftype Tdouble) in *. 
-assert (0 <= Znth h col_ind < Zlength vval). {
-     assert (Znth i row_ptr <= h < Znth (i+1) row_ptr) by lia.
-     assert (Znth (i+1) row_ptr <= Zlength col_ind) by list_solve.
-     clear - COLS H H14 H6 H2 H10 H12 H15.
-      replace (Znth h col_ind) with 
-              (Znth (h-Znth i row_ptr) (sublist (Znth i row_ptr) (Znth (i+1) row_ptr) col_ind))
-         by list_solve.
-     specialize (H10 _ H2).
-    pose proof (crs_row_rep_col_range _ _ _ _ H10).
-    specialize (H0 (h - Znth i row_ptr)).
-    autorewrite with sublist in H0. autorewrite with sublist. 
-  rewrite <- (sublist.Forall_Znth _ _ _ H2 H), (sublist.Forall_Znth _ _ _ H2 COLS).
-  apply H0. list_solve.
-  }
-forward.
-  change float with (ftype Tdouble) in *.
-  rewrite (@Znth_map (ftype Tdouble) _ _ _ h Vfloat) by rep_lia.
-  rewrite (@Znth_map (ftype Tdouble) _ _ _ (Znth h col_ind)) by rep_lia.
-  forward_call (Znth h vals, Znth (Znth h col_ind) vval, partial_row i h vals col_ind row_ptr vval).
-  forward.
-  entailer!.
-  f_equal.
-  change (Binary.Bfma _ _ _ _ _ _ _ _ _) with 
-   (@BFMA _ Tdouble (Znth h vals) (Znth (Znth h col_ind) vval)
-     (partial_row i h vals col_ind row_ptr vval)
-  ).
-  eapply partial_row_next; try eassumption; lia.
--
- forward.
- Exists  (partial_row i (Znth (i + 1) row_ptr) vals col_ind row_ptr vval).
- entailer!.
- erewrite partial_row_end; try eassumption.
- unfold matrix_vector_mult.
- rewrite Znth_map by rep_lia. reflexivity.
-  rewrite <- (sublist.Forall_Znth _ _ _ H2 H), (sublist.Forall_Znth _ _ _ H2 COLS); auto.
- unfold crs_rep.
- thaw FR1.
- Exists vp ci rp cols vals col_ind row_ptr.
- entailer!.
-Qed.
-
 Lemma fold_crs_rep:
   forall sh  (p v ci rp: val) mval cols (vals: list (ftype Tdouble))  col_ind row_ptr,
      crs_rep_aux mval cols vals col_ind row_ptr ->
@@ -129,12 +31,102 @@ rewrite prop_true_andp by auto.
 cancel.
 Qed.
 
+Lemma body_crs_matrix_rows: semax_body Vprog Gprog f_crs_matrix_rows crs_matrix_rows_spec.
+Proof.
+start_function.
+forward.
+sep_apply fold_crs_rep.
+forward.
+Qed.
+
+Lemma body_crs_row_vector_multiply: semax_body Vprog Gprog f_crs_row_vector_multiply crs_row_vector_multiply_spec.
+Proof.
+start_function.
+rename H3 into FINmval.
+assert (0 <= matrix_rows mval) by (unfold matrix_rows; rep_lia).
+forward.
+forward.
+forward.
+freeze FR1 := (data_at sh1 _ _ _).
+rename v0 into vp.
+assert_PROP (0 <= i + 1 < Zlength row_ptr)
+  by (entailer!; list_solve).
+forward.
+forward.
+clear H6.
+assert (CRS := H5).
+assert (COLS: cols = Zlength vval). {
+  pose proof (crs_rep_matrix_cols _ _ _ _ _ H5).
+  rewrite <- (sublist.Forall_Znth _ _ _ H2 H).
+  rewrite (sublist.Forall_Znth _ _ _ H2 H6); auto.
+}
+destruct H5 as [H2' [H7 [H8 [H9 H10]]]].
+unfold matrix_rows in *.
+assert (H9': 0 <= Znth i row_ptr <= Znth (i+1) row_ptr 
+            /\ Znth (i+1) row_ptr <= Znth (Zlength mval) row_ptr <= Int.max_unsigned)
+   by (clear - H9 H2' H2; list_solve).
+clear H9. destruct H9' as [H9 H9'].
+forward_for_simple_bound (Znth (i + 1) row_ptr)
+  (EX h:Z, PROP(0 <= Znth i row_ptr <= h)
+   LOCAL (
+   temp _s (Vfloat (partial_row i h vals col_ind row_ptr vval));
+   temp _i (Vint (Int.repr i));
+   temp _hi (Vint (Int.repr (Znth (i+1) row_ptr))); 
+   temp _row_ptr rp; temp _col_ind ci; temp _val vp;
+   temp _m m; temp _v v)
+   SEP (FRZL FR1;
+   data_at sh1 (tarray tdouble (Zlength col_ind)) (map Vfloat vals) vp;
+   data_at sh1 (tarray tuint (Zlength col_ind))
+     (map Vint (map Int.repr col_ind)) ci;
+   data_at sh1 (tarray tuint (matrix_rows mval + 1))
+     (map Vint (map Int.repr row_ptr)) rp;
+   data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v))%assert.
+-
+ forward.
+ change float with (ftype Tdouble) in *. 
+ EExists. entailer!.
+ f_equal. erewrite partial_row_start. reflexivity. eassumption.
+-
+rename i0 into h.
+forward.
+change float with (ftype Tdouble) in *. 
+forward.
+assert (0 <= Znth h col_ind < Zlength vval). {
+    specialize (H10 _ H2).
+    assert (H11 := crs_row_rep_col_range _ _ _ _ H10 (h - Znth i row_ptr)).
+    autorewrite with sublist in H11.
+  subst cols.
+  apply H11. rep_lia.
+  }
+forward.
+rewrite (@Znth_map (ftype Tdouble) _ _ _ h Vfloat) by rep_lia.
+rewrite (@Znth_map (ftype Tdouble) _ _ _ (Znth h col_ind)) by rep_lia.
+forward_call (Znth h vals, Znth (Znth h col_ind) vval, partial_row i h vals col_ind row_ptr vval).
+forward.
+entailer!.
+f_equal.
+change (Binary.Bfma _ _ _ _ _ _ _ _ _) with 
+   (@BFMA _ Tdouble (Znth h vals) (Znth (Znth h col_ind) vval)
+     (partial_row i h vals col_ind row_ptr vval)
+  ).
+eapply partial_row_next; try eassumption; lia.
+-
+ forward.
+ Exists  (partial_row i (Znth (i + 1) row_ptr) vals col_ind row_ptr vval).
+ entailer!.
+ erewrite partial_row_end; try eassumption; auto.
+ unfold matrix_vector_mult.
+ rewrite Znth_map by rep_lia. reflexivity.
+ unfold crs_rep.
+ thaw FR1.
+ Exists vp ci rp (Zlength vval) vals col_ind row_ptr.
+ entailer!.
+Qed.
 
 Lemma body_crs_matrix_vector_multiply_byrows: semax_body Vprog Gprog f_crs_matrix_vector_multiply_byrows crs_matrix_vector_multiply_byrows_spec.
 Proof.
 start_function.
-forward.
-sep_apply fold_crs_rep. clear H4 v0 ci rp vals col_ind row_ptr cols.
+forward_call.
 forward_for_simple_bound (Zlength mval)
   (EX i:Z, EX result: list (ftype Tdouble),
    PROP(floatlist_eqv result (sublist 0 i (matrix_vector_mult mval vval))) 

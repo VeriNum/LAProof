@@ -24,7 +24,7 @@ double crs_row_vector_multiply(struct crs_matrix *m, double *v, unsigned i) {
 }
 
 void crs_matrix_vector_multiply_byrows (struct crs_matrix *m, double *v, double *p) {
-  unsigned i, rows=m->rows;
+  unsigned i, rows=crs_matrix_rows(m);
   for (i=0; i<rows; i++)
     p[i]=crs_row_vector_multiply(m,v,i);
 }
@@ -65,4 +65,8 @@ void diag_mult(double *diag, struct crs_matrix *m) {
     for (h=m->row_ptr[i]; h<k; h++)
       m->val[h] *= x;
   }
+}
+
+unsigned crs_matrix_rows (struct crs_matrix *m) {
+  return m->rows;
 }
