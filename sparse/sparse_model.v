@@ -8,21 +8,6 @@ Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
 
-Definition matrix t := list (list (ftype t)).
-Definition vector t := list (ftype t).
-
-Definition dotprod {t: type} (v1 v2: list (ftype t)) : ftype t :=
-  fold_left (fun s x12 => BFMA (fst x12) (snd x12) s) 
-                (List.combine v1 v2)  (Zconst t 0).
-
-Definition matrix_vector_mult {t: type} (m: matrix t) (v: vector t) : vector t :=
-      map (fun row => dotprod row v) m.
-
-Definition matrix_cols {t} (m: matrix t) cols :=
-    Forall (fun r => Zlength r = cols) m.
-
-Definition matrix_rows {t} (m: matrix t) : Z := Zlength m.
-
 Inductive crs_row_rep {t: type}: forall (cols: Z) (vals: list (ftype t)) (col_ind: list Z) (v: list  (ftype t)), Prop :=
  | crs_row_rep_nil: crs_row_rep 0%Z nil nil nil
  | crs_row_rep_zero: forall cols vals col_ind v,

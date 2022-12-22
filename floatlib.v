@@ -9,6 +9,21 @@ Definition BFMA {NAN: Nans} {t: type} : forall (x y z: ftype t), ftype t :=
       (fprec_lt_femax t) (fma_nan t) BinarySingleNaN.mode_NE.
 
 
+Definition matrix t := list (list (ftype t)).
+Definition vector t := list (ftype t).
+
+Definition dotprod {t: type} (v1 v2: list (ftype t)) : ftype t :=
+  fold_left (fun s x12 => BFMA (fst x12) (snd x12) s) 
+                (List.combine v1 v2)  (Zconst t 0).
+
+Definition matrix_vector_mult {t: type} (m: matrix t) (v: vector t) : vector t :=
+      map (fun row => dotprod row v) m.
+
+Definition matrix_cols {t} (m: matrix t) cols :=
+    Forall (fun r => Zlength r = cols) m.
+
+Definition matrix_rows {t} (m: matrix t) : Z := Zlength m.
+
 Definition float_eqv {t: type} (x y : ftype t) : Prop :=
   match x, y with
     | Binary.B754_zero _ _ b1, Binary.B754_zero _ _ b2 => True
@@ -163,5 +178,23 @@ change (Zconst t 0) with
   (Binary.B754_zero (fprec t)  (femax t) false).
 unfold BFMA, BPLUS, BINOP in *.
 destruct x, s; try discriminate; simpl; auto.
+Qed.
+
+Lemma BPLUS_0_l: forall t x, finite x -> 
+      float_eqv (BPLUS t (Zconst t 0) x) x.
+Proof.
+  intros. destruct x; try contradiction;
+ destruct s; simpl; auto.
+Qed.
+Lemma BPLUS_0_r: forall t x, finite x -> 
+      float_eqv (BPLUS t x (Zconst t 0)) x.
+Proof.
+  intros. destruct x; try contradiction;
+ destruct s; simpl; auto.
+Qed.
+
+Lemma finite_0: forall t,  finite (Zconst t 0).
+Proof.
+intros; apply I.
 Qed.
 
