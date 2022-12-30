@@ -129,7 +129,7 @@ start_function.
 forward_call.
 forward_for_simple_bound (Zlength mval)
   (EX i:Z, EX result: list (ftype Tdouble),
-   PROP(floatlist_eqv result (sublist 0 i (matrix_vector_mult mval vval))) 
+   PROP(Forall2 feq result (sublist 0 i (matrix_vector_mult mval vval))) 
    LOCAL (temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (crs_rep sh1 mval m;
@@ -138,7 +138,6 @@ forward_for_simple_bound (Zlength mval)
       (map Vfloat result ++ Zrepeat Vundef (matrix_rows mval - i)) p))%assert.
 - unfold matrix_rows in H0; lia.
 - Exists (@nil (ftype Tdouble)). simpl app. entailer!.
-    rewrite sublist_nil. constructor.
      apply derives_refl.
 - forward_call (sh1,sh2,sh3, m, mval, v, vval, i).
    Intros s.

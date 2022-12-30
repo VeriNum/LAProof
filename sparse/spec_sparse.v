@@ -52,7 +52,7 @@ Definition crs_row_vector_multiply_spec :=
          data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v)
  POST [ tdouble ]
    EX s: ftype Tdouble,
-    PROP(float_eqv s (dotprod (Znth i mval) vval)) 
+    PROP(feq s (dotprod (Znth i mval) vval)) 
     RETURN(Vfloat s)
     SEP (crs_rep sh1 mval m;
           data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v).
@@ -74,7 +74,7 @@ Definition crs_matrix_vector_multiply_byrows_spec :=
          data_at_ sh3 (tarray tdouble (matrix_rows mval)) p)
  POST [ tvoid ]
    EX result: vector Tdouble,
-    PROP(floatlist_eqv result (matrix_vector_mult mval vval)) 
+    PROP(Forall2 feq result (matrix_vector_mult mval vval)) 
     RETURN()
     SEP (crs_rep sh1 mval m;
           data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v; 
@@ -98,7 +98,7 @@ Definition crs_matrix_vector_multiply_spec :=
          data_at_ sh3 (tarray tdouble (matrix_rows mval)) p)
  POST [ tvoid ]
    EX result: vector Tdouble,
-    PROP(floatlist_eqv result (matrix_vector_mult mval vval)) 
+    PROP(Forall2 feq result (matrix_vector_mult mval vval)) 
     RETURN()
     SEP (crs_rep sh1 mval m;
           data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v; 

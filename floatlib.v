@@ -1,6 +1,7 @@
 Require Import VST.floyd.proofauto.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
+Require Import Coq.Relations.Relations Coq.Classes.Morphisms Coq.Classes.RelationPairs Coq.Classes.RelationClasses.
 
 Set Bullet Behavior "Strict Subproofs".
 
@@ -56,7 +57,8 @@ Definition matrix_rows_nat {t} (m: matrix t) := length m.
 Definition matrix_cols_nat {t} (m: matrix t) cols :=
     Forall (fun r => length r = cols) m.
 
-Definition float_eqv {t: type} (x y : ftype t) : Prop :=
+Definition feq {t: type} : relation (ftype t) :=
+ fun x y =>
   match x, y with
     | Binary.B754_zero _ _ b1, Binary.B754_zero _ _ b2 => True
     | Binary.B754_zero _ _ _, _ => False
@@ -68,50 +70,86 @@ Definition float_eqv {t: type} (x y : ftype t) : Prop :=
     | _, _ => True
   end.
 
-Lemma float_eqv_refl {t}: forall x: ftype t, float_eqv x x.
+Lemma feq_refl {t}: reflexive (ftype t) feq.
 Proof.
-destruct x; simpl; auto.
+intro x; destruct x; simpl; auto.
 Qed.
 
-#[export] Hint Resolve float_eqv_refl : core.
+Lemma feq_refl' {t}: forall x: ftype t, feq x x. 
+exact feq_refl.
+Qed.
 
-Lemma float_eqv_sym {t: type}: forall x y : ftype t, float_eqv x y -> float_eqv y x.
+#[export] Hint Resolve feq_refl': core.
+
+Lemma feq_sym {t}: symmetric (ftype t) feq.
 Proof.
-destruct x,y; simpl; auto.
+intros x y; destruct x,y; simpl; auto.
 intros [? [? ?]].
 subst. auto.
 Qed.
 
-Lemma float_eqv_trans {t: type}: 
-  forall x y z : ftype t, float_eqv x y -> float_eqv y z -> float_eqv x z.
+Lemma feq_trans {t: type}: transitive (ftype t) feq.
 Proof.
+intros x y z.
 destruct x,y,z; simpl; intros; auto; try contradiction.
 destruct H as [? [? ?]]; destruct H0 as [? [? ?]]; subst; auto.
 Qed.
 
-Add Parametric Relation {t: type}: (ftype t) (@float_eqv t)
-  reflexivity proved by float_eqv_refl
-  symmetry proved by float_eqv_sym
-  transitivity proved by float_eqv_trans
-   as float_eqv_rel.
-
-Definition floatlist_eqv {t: type} : list (ftype t) -> list (ftype t) -> Prop :=
- Forall2 float_eqv.
+Add Parametric Relation {t: type}: (ftype t) (@feq t)
+  reflexivity proved by feq_refl
+  symmetry proved by feq_sym
+  transitivity proved by feq_trans
+   as feq_rel.
 
 (*
-Add Parametric Morphism {t: type}: 
-  with float_eqv ==> floatlist_eqv ==> floatlist_eqv
-  as floatlist_cons_mor.
-Proof.
-intros. intro. simpl. rewrite H, H0; auto.
-Qed.
+Definition list_eqv {t: Type} : relation t ->  relation (list t) :=
+  @Forall2 t t.
 *)
 
-Definition floatlistlist_eqv {t: type} : list (list (ftype t)) -> list (list (ftype t)) -> Prop :=
- Forall2 floatlist_eqv.
+Lemma list_eqv_refl: forall {T} {rel: relation T} {EQrel: Equivalence rel},
+   reflexive (list T) (Forall2 rel).
+Proof.
+intros.
+red.
+induction x; constructor; auto. reflexivity.
+Qed.
+
+Lemma list_eqv_sym: forall {T} {rel: relation T} {EQrel: Equivalence rel},
+   symmetric (list T) (Forall2 rel).
+Proof.
+intros.
+red.
+induction x; destruct y; intros; inversion H; clear H; subst;  constructor; auto.
+symmetry; auto.
+Qed.
+
+Lemma list_eqv_trans: forall {T} {rel: relation T} {EQrel: Equivalence rel},
+   transitive (list T) (Forall2 rel).
+Proof.
+intros.
+red.
+induction x; destruct y,z; intros; inversion H; inversion H0; clear H H0; subst;  constructor; auto.
+rewrite H4; auto.
+eapply IHx; eauto.
+Qed.
+
+(*
+Add Parametric Relation {T: Type} (rel: relation T) {EQrel: Equivalence rel}: (list T) (list_eqv rel)
+  reflexivity proved by list_eqv_refl
+  symmetry proved by list_eqv_sym
+  transitivity proved by list_eqv_trans
+   as list_eqv_rel.
+*)
+
+Add Parametric Relation {T: Type} (rel: relation T) {EQrel: Equivalence rel}: (list T) (Forall2 rel)
+  reflexivity proved by list_eqv_refl
+  symmetry proved by list_eqv_sym
+  transitivity proved by list_eqv_trans
+   as list_eqv_rel.
 
 
-Definition strict_float_eqv {t: type} (x y : ftype t) : Prop :=
+Definition strict_feq {t: type} : relation (ftype t) :=
+ fun x y =>
   match x, y with
     | Binary.B754_zero _ _ b1, Binary.B754_zero _ _ b2 => True
     | Binary.B754_finite _ _ b1 m1 e1 _, Binary.B754_finite _ _ b2 m2 e2 _ =>
@@ -119,37 +157,43 @@ Definition strict_float_eqv {t: type} (x y : ftype t) : Prop :=
     | _, _ => False
   end.
 
-Definition finite {t} (x: ftype t) := strict_float_eqv x x.
+#[export] Instance subrelation_strict_feq {t: type}: subrelation (@strict_feq t) (@feq t).
+Proof.
+red; intros.
+destruct x,y; inv H; simpl; auto.
+Qed.
 
-Lemma strict_float_eqv_refl {t: type}: forall (x: ftype t),
- Binary.is_finite _ _ x = true -> strict_float_eqv x x.
+Definition finite {t} (x: ftype t) := strict_feq x x.
+
+Lemma strict_feq_refl {t: type}: forall (x: ftype t),
+ Binary.is_finite _ _ x = true -> strict_feq x x.
 Proof.
 intros.
 destruct x; try discriminate; hnf; auto.
 Qed.
 
-Lemma strict_float_eqv_sym {t: type}: forall x y : ftype t, 
-   strict_float_eqv x y -> strict_float_eqv y x.
+Lemma strict_feq_sym {t: type}: symmetric (ftype t) strict_feq.
 Proof.
+intros x y.
 destruct x,y; simpl; auto.
 intros [? [? ?]].
 subst. auto.
 Qed.
 
-Lemma strict_float_eqv_trans {t: type}: 
-  forall x y z : ftype t, strict_float_eqv x y -> strict_float_eqv y z -> strict_float_eqv x z.
+Lemma strict_feq_trans {t: type}:  transitive (ftype t) strict_feq.
 Proof.
+intros x y z.
 destruct x,y,z; simpl; intros; auto; try contradiction.
 destruct H as [? [? ?]]; destruct H0 as [? [? ?]]; subst; auto.
 Qed.
 
-Add Parametric Relation {t: type}: (ftype t) (@strict_float_eqv t)
-  symmetry proved by strict_float_eqv_sym
-  transitivity proved by strict_float_eqv_trans
-   as strict_float_eqv_rel.
+Add Parametric Relation {t: type}: (ftype t) (@strict_feq t)
+  symmetry proved by strict_feq_sym
+  transitivity proved by strict_feq_trans
+   as strict_feq_rel.
 
 Add Parametric Morphism {t: type} : BFMA
- with signature (@strict_float_eqv t) ==> strict_float_eqv ==> float_eqv ==> float_eqv
+ with signature (@strict_feq t) ==> strict_feq ==> feq ==> feq
   as BFMA_mor.
 Proof.
 intros.
@@ -166,49 +210,6 @@ destruct s, s2; simpl; try reflexivity;
 unfold BinarySingleNaN.Bfma_szero; simpl;
 destruct s0,s1; simpl; try reflexivity.
 Qed.
-
-Definition strict_floatlist_eqv {t: type} : list (ftype t) -> list (ftype t) -> Prop :=
- Forall2 strict_float_eqv.
-
-Definition strict_floatlistlist_eqv {t: type} : list (list (ftype t)) -> list (list (ftype t)) -> Prop :=
- Forall2 strict_floatlist_eqv.
-
-Definition matrix_eqv {t} : matrix t -> matrix t -> Prop :=
-  Forall2 (Forall2 float_eqv).
-
-Lemma matrix_eqv_refl {t: type} : reflexive _ (@matrix_eqv t).
-Proof.
-intro m.
-induction m; constructor; auto.
-induction a; constructor; auto.
-Qed.
-
-Lemma matrix_eqv_sym {t: type} : symmetric _ (@matrix_eqv t).
-Proof.
-red.
-unfold matrix_eqv.
-induction x; destruct y; intros; inv H; constructor; auto.
-clear - H3.
-induction H3; constructor; auto.
-symmetry; auto.
-Qed.
-
-Lemma matrix_eqv_trans {t: type} : transitive _ (@matrix_eqv t).
-Proof.
-red.
-unfold matrix_eqv.
-induction x; destruct y,z; intros; inv H; inv H0; constructor; auto.
-clear - H3 H4.
-revert a H4; induction H3; intros; inv H4; constructor; auto.
-etransitivity; eauto.
-eauto.
-Qed.
-
-Add Parametric Relation {t: type}: (matrix t) (@matrix_eqv t)
-  reflexivity proved by matrix_eqv_refl
-  symmetry proved by matrix_eqv_sym
-  transitivity proved by matrix_eqv_trans
-   as matrix_eqv_rel.
 
 Lemma matrix_by_index_rows:
   forall {t} rows cols (f: nat -> nat -> ftype t),
@@ -288,20 +289,20 @@ Lemma matrix_extensionality:
   matrix_rows_nat m1 = matrix_rows_nat m2 ->
   matrix_cols_nat m1 cols -> matrix_cols_nat m2 cols ->
   (forall i j, i < matrix_rows_nat m1 -> j < cols ->
-        float_eqv (matrix_index m1 i j) (matrix_index m2 i j)) ->
-  matrix_eqv m1 m2.
+        feq (matrix_index m1 i j) (matrix_index m2 i j)) ->
+  Forall2 (Forall2 feq) m1 m2.
 Proof.
- unfold matrix_eqv.
- induction m1; destruct m2; simpl; intros; inv H; auto.
- inv H0. inv H1.
- constructor. 
- clear - H3 H2.
+ induction m1; destruct m2; simpl; intros; inv H; constructor; auto.
  specialize (H2 O).
  unfold matrix_index in H2. simpl in H2.
- revert l H3 H2; induction a; destruct l; simpl; intros; inv H3; auto.
- constructor.
+ inv H0. inv H1.
+ clear - l H3 H2.
+ revert l H3 H2; induction a; destruct l; simpl; intros; inv H3; constructor.
  apply (H2 O); try lia.
  apply IHa; auto. intros j ? ?. apply (H2 (S j)); try lia.
+ inv H0. inv H1.
+ fold (matrix_cols_nat m1 (length a)) in H6.
+ fold (matrix_cols_nat m2 (length a)) in H5.
  eapply IHm1; eauto.
  intros i j ? ?. apply (H2 (S i) j); lia.
 Qed.
@@ -374,7 +375,7 @@ intros.
 apply (H0 (S i)). lia.
 Qed.
 
-(* Infix "==" := float_eqv (at level 70, no associativity). *)
+(* Infix "==" := feq (at level 70, no associativity). *)
 
 Lemma Forall_Forall2diag {A: Type}:
    forall (P: A -> A -> Prop) al,
@@ -390,8 +391,8 @@ Qed.
 #[export] Instance zerof {t} : Inhabitant (ftype t) := (Zconst t 0).
 
 Lemma BFMA_zero1: forall {t} y s, 
-  strict_float_eqv y y ->
-  float_eqv (BFMA (Zconst t 0) y s) s.
+  strict_feq y y ->
+  feq (BFMA (Zconst t 0) y s) s.
 Proof.
 intros.
 intros.
@@ -402,8 +403,8 @@ destruct y, s; try discriminate; simpl; auto.
 Qed.
 
 Lemma BFMA_zero2: forall {t} x s, 
-  strict_float_eqv x x ->
-  float_eqv (BFMA x (Zconst t 0) s) s.
+  strict_feq x x ->
+  feq (BFMA x (Zconst t 0) s) s.
 Proof.
 intros.
 intros.
@@ -414,13 +415,14 @@ destruct x, s; try discriminate; simpl; auto.
 Qed.
 
 Lemma BPLUS_0_l: forall t x, finite x -> 
-      float_eqv (BPLUS t (Zconst t 0) x) x.
+      feq (BPLUS t (Zconst t 0) x) x.
 Proof.
   intros. destruct x; try contradiction;
  destruct s; simpl; auto.
 Qed.
+
 Lemma BPLUS_0_r: forall t x, finite x -> 
-      float_eqv (BPLUS t x (Zconst t 0)) x.
+      feq (BPLUS t x (Zconst t 0)) x.
 Proof.
   intros. destruct x; try contradiction;
  destruct s; simpl; auto.
@@ -441,19 +443,19 @@ Lemma norm2_snoc:
  Qed.
 
 Lemma BMULT_congr:
- forall {t} (x x' y y': ftype t), float_eqv x x' -> float_eqv y y' -> 
-   float_eqv (BMULT t x y) (BMULT t x' y').
+ forall {t} (x x' y y': ftype t), feq x x' -> feq y y' -> 
+   feq (BMULT t x y) (BMULT t x' y').
 Proof.
 intros.
 destruct x,x'; inv H; try constructor;
 destruct y,y'; inv H0; try constructor.
 destruct H2,H1; subst. repeat proof_irr.
-apply float_eqv_refl.
+apply feq_refl.
 Qed.
 
 Lemma BMINUS_congr:
- forall {t} (x x' y y': ftype t), float_eqv x x' -> float_eqv y y' -> 
-   float_eqv (BMINUS t x y) (BMINUS t x' y').
+ forall {t} (x x' y y': ftype t), feq x x' -> feq y y' -> 
+   feq (BMINUS t x y) (BMINUS t x' y').
 Proof.
 intros.
 destruct x,x'; inv H; try constructor;
@@ -467,17 +469,8 @@ repeat proof_irr;
  destruct (Binary.Bfma _ _ _ _ _ _ _ _ _); auto.
 Qed.
 
-Lemma floatlist_eqv_rev:  forall {t} (x x': vector t),
- floatlist_eqv x x' -> floatlist_eqv (rev x) (rev x').
-Proof.
-induction 1.
-constructor.
-simpl.
-apply Forall2_app; auto.
-Qed.
-
-Lemma strict_floatlist_eqv_rev:  forall {t} (x x': vector t),
- strict_floatlist_eqv x x' -> strict_floatlist_eqv (rev x) (rev x').
+Lemma Forall2_rev:  forall {t} (rel: relation t) (x x': list t),
+    Forall2 rel x x' -> Forall2 rel (rev x) (rev x').
 Proof.
 induction 1.
 constructor.
@@ -486,17 +479,17 @@ apply Forall2_app; auto.
 Qed.
 
 Lemma dotprod_congr {t} (x x' y y' : vector t):
- strict_floatlist_eqv x x' ->
- strict_floatlist_eqv y y' ->
+ Forall2 strict_feq x x' ->
+ Forall2 strict_feq y y' ->
  length x = length y ->
- float_eqv (dotprod x y) (dotprod x' y').
+ feq (dotprod x y) (dotprod x' y').
 Proof.
  intros.
  unfold dotprod.
  pose proof (Forall2_length H).
  pose proof (Forall2_length H0).
  rewrite <- !fold_left_rev_right.
- apply strict_floatlist_eqv_rev in H, H0.
+ apply Forall2_rev in H, H0.
  rewrite !rev_combine by lia.
  clear - H H0.
  set (a := rev x) in *; clearbody a. set (a' := rev x') in *; clearbody a'.
@@ -508,14 +501,14 @@ Qed.
 
 Lemma norm2_congr: 
   forall {t} (x x': vector t), 
-           floatlist_eqv x x' -> 
-           float_eqv (norm2 x) (norm2 x').
+           Forall2 feq x x' -> 
+           feq (norm2 x) (norm2 x').
 Proof.
 intros.
 unfold norm2.
 unfold dotprod.
  rewrite <- !fold_left_rev_right.
- apply floatlist_eqv_rev in H.
+ apply Forall2_rev in H.
  rewrite !rev_combine by lia.
 set (a := rev x) in *. set (b := rev x') in *. clearbody a. clearbody b.
 induction H; simpl; intros; auto.
@@ -555,9 +548,9 @@ Qed.
 
 Lemma BFMA_xx_mor:
  forall {t} (x x' s s': ftype t), 
-  float_eqv x x' -> 
-  float_eqv s s' ->
-  float_eqv (BFMA x x s) (BFMA x' x' s').
+  feq x x' -> 
+  feq s s' ->
+  feq (BFMA x x s) (BFMA x' x' s').
 Proof.
 intros.
 red.
@@ -574,9 +567,10 @@ repeat proof_irr;
  destruct (Binary.Bfma _ _ _ _ _ _ _ _ _); auto.
 Qed.
 
+
 Lemma vector_sub_congr: forall {t} (x x' y y': vector t),
-  floatlist_eqv x x' -> floatlist_eqv y y' ->
-  floatlist_eqv (vector_sub x y) (vector_sub x' y').
+  Forall2 feq x x' -> Forall2 feq y y' ->
+  Forall2 feq (vector_sub x y) (vector_sub x' y').
 Proof.
 induction x; destruct x'; intros; inv H.
 constructor.
@@ -588,7 +582,7 @@ apply BMINUS_congr; auto.
 Qed.
 
 Lemma norm2_loose_congr: 
- forall {t} (x x': vector t),  floatlist_eqv x x' -> float_eqv (norm2 x) (norm2 x').
+ forall {t} (x x': vector t),  Forall2 feq x x' -> feq (norm2 x) (norm2 x').
 Proof.
 intros.
 unfold norm2.
@@ -597,7 +591,7 @@ rewrite <- !fold_left_rev_right.
 pose proof (Forall2_length H).
 rewrite !rev_combine by auto.
 clear H0.
-apply floatlist_eqv_rev in H.
+apply Forall2_rev in H.
 set (a := rev x) in *. clearbody a.
 set (b := rev x') in *. clearbody b.
 induction H.
@@ -606,10 +600,10 @@ simpl.
 apply BFMA_xx_mor; auto.
 Qed.
 
-Lemma strict_float_eqv_i1:
+Lemma strict_feq_i1:
   forall {t} (x y: ftype t), 
-    finite x -> float_eqv x y ->
-    strict_float_eqv x y.
+    finite x -> feq x y ->
+    strict_feq x y.
 Proof.
  intros.
  red in H.
