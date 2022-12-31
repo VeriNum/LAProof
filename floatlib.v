@@ -57,6 +57,18 @@ Definition matrix_rows_nat {t} (m: matrix t) := length m.
 Definition matrix_cols_nat {t} (m: matrix t) cols :=
     Forall (fun r => length r = cols) m.
 
+Global Instance proper_pair1: forall A B RA1 RA2 RB1 RB2 (RA : relation A) (RB : relation B),
+    Proper (RA1 ==> RA2 ==> Basics.flip Basics.impl) RA
+    -> Proper (RB1 ==> RB2 ==> Basics.flip Basics.impl) RB
+    -> Proper (RA1 * RB1 ==> RA2 * RB2 ==> Basics.flip Basics.impl) (RA * RB)%signature.
+Proof. cbv; intuition eauto. Qed.
+
+Global Instance proper_pair2: forall A B RA1 RA2 RB1 RB2 (RA : relation A) (RB : relation B),
+    Proper (RA1 ==> RA2 ==> Basics.impl) RA
+    -> Proper (RB1 ==> RB2 ==> Basics.impl) RB
+    -> Proper (RA1 * RB1 ==> RA2 * RB2 ==> Basics.impl) (RA * RB)%signature.
+Proof. cbv; intuition eauto. Qed.
+
 Definition feq {t: type} : relation (ftype t) :=
  fun x y =>
   match x, y with
@@ -133,20 +145,37 @@ rewrite H4; auto.
 eapply IHx; eauto.
 Qed.
 
-(*
-Add Parametric Relation {T: Type} (rel: relation T) {EQrel: Equivalence rel}: (list T) (list_eqv rel)
-  reflexivity proved by list_eqv_refl
-  symmetry proved by list_eqv_sym
-  transitivity proved by list_eqv_trans
-   as list_eqv_rel.
-*)
-
 Add Parametric Relation {T: Type} (rel: relation T) {EQrel: Equivalence rel}: (list T) (Forall2 rel)
   reflexivity proved by list_eqv_refl
   symmetry proved by list_eqv_sym
   transitivity proved by list_eqv_trans
    as list_eqv_rel.
 
+
+Lemma test_pair: forall t (a a': ftype t) (b b': vector t),
+  feq a a' -> Forall2 feq b b' ->
+  (feq * Forall2 feq)%signature (a,b) (a',b').
+Proof.
+intros.
+rewrite H. 
+rewrite H0. 
+reflexivity.
+Abort.  (* no need to save this *)
+
+Add Parametric Morphism {T: Type} (rel: relation T): (@Some T)
+  with signature rel ==> option_rel rel
+  as Some_mor.
+Proof.
+intros. constructor; auto.
+Qed.
+
+Add Parametric Morphism {t: Type} (rel: t -> t -> Prop) : (@cons t)
+  with signature rel ==> Forall2 rel ==> Forall2 rel
+  as cons_mor.
+Proof.
+intros.
+constructor; auto.
+Qed.
 
 Definition strict_feq {t: type} : relation (ftype t) :=
  fun x y =>
