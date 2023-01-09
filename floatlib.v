@@ -640,3 +640,26 @@ Proof.
  destruct y; inv H0. constructor. constructor; auto.
 Qed.
 
+Lemma FMA_one: forall {t} (x y: ftype t),
+  feq (BFMA x y (Zconst t 0)) (BMULT t x y).
+Proof.
+unfold BFMA, BMULT, BINOP.
+intros.
+(*unfold Binary.Bmult, Binary.Bfma, Binary.BSN2B, Binary.B2BSN, BinarySingleNaN.Bfma,
+  BinarySingleNaN.Bfma_szero .
+*)
+destruct x,y; try destruct s; try destruct s0; try apply I.
+-
+Abort.  (* Not at all easy to prove, though probably true *)
+
+Lemma nth_map_inrange {A} (d': A) {B: Type}:
+  forall (f: A -> B) i al d,
+   (i < length al)%nat ->
+   nth i (map f al) d = f (nth i al d').
+Proof.
+intros.
+revert i H; induction al; destruct i; simpl; intros; inv H; auto.
+apply IHal; auto. lia.
+apply IHal; auto. lia.
+Qed.
+
