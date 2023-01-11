@@ -4,10 +4,16 @@ Require Import Coq.Relations.Relations Coq.Classes.Morphisms Coq.Classes.Relatio
 
 Set Bullet Behavior "Strict Subproofs".
 
+Compute Zconst Tsingle 0.
+
+
 Definition BFMA {NAN: Nans} {t: type} : forall (x y z: ftype t), ftype t :=
     Binary.Bfma (fprec t) (femax t) (fprec_gt_0 t)
       (fprec_lt_femax t) (fma_nan t) BinarySingleNaN.mode_NE.
 
+Compute BFMA (Binary.B754_zero (fprec Tsingle) (femax Tsingle) false)
+ (Binary.B754_zero (fprec Tsingle) (femax Tsingle) false)
+  (Binary.B754_zero (fprec Tsingle) (femax Tsingle) true).
 
 Definition matrix t := list (list (ftype t)).
 Definition vector t := list (ftype t).
@@ -111,11 +117,6 @@ Add Parametric Relation {t: type}: (ftype t) (@feq t)
   symmetry proved by feq_sym
   transitivity proved by feq_trans
    as feq_rel.
-
-(*
-Definition list_eqv {t: Type} : relation t ->  relation (list t) :=
-  @Forall2 t t.
-*)
 
 Lemma list_eqv_refl: forall {T} {rel: relation T} {EQrel: Equivalence rel},
    reflexive (list T) (Forall2 rel).
@@ -843,6 +844,46 @@ destruct x0, y0; inv H0; simpl; auto.
 destruct x0,y0; inv H1; simpl; auto.
 eapply IHForall2; eauto.
 apply BFMA_mor; auto.
+Qed.
+
+
+Add Parametric Morphism {NAN: Nans}{t}: (BPLUS t)
+ with signature feq ==> feq ==> feq
+ as BPLUS_mor.
+Proof.
+intros.
+destruct x,y; inv H; destruct x0,y0; inv H0; 
+repeat match goal with s: bool |- _ => destruct s end; simpl in *;
+repeat match goal with H: _ /\ _ |- _ => destruct H end;
+subst;
+repeat proof_irr; 
+try constructor; auto.
+Qed.
+
+Add Parametric Morphism {NAN: Nans}{t}: (BMINUS t)
+ with signature feq ==> feq ==> feq
+ as BMINUS_mor.
+Proof.
+intros.
+destruct x,y; inv H; destruct x0,y0; inv H0; 
+repeat match goal with s: bool |- _ => destruct s end; simpl in *;
+repeat match goal with H: _ /\ _ |- _ => destruct H end;
+subst;
+repeat proof_irr; 
+try constructor; auto.
+Qed.
+
+Add Parametric Morphism {NAN: Nans}{t}: (BMULT t)
+ with signature feq ==> feq ==> feq
+ as BMULT_mor.
+Proof.
+intros.
+destruct x,y; inv H; destruct x0,y0; inv H0; 
+repeat match goal with s: bool |- _ => destruct s end; simpl in *;
+repeat match goal with H: _ /\ _ |- _ => destruct H end;
+subst;
+repeat proof_irr; 
+try constructor; auto.
 Qed.
 
 Add Parametric Morphism {NAN: Nans}{t}: (BDIV t)
