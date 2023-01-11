@@ -4,16 +4,9 @@ Require Import Coq.Relations.Relations Coq.Classes.Morphisms Coq.Classes.Relatio
 
 Set Bullet Behavior "Strict Subproofs".
 
-Compute Zconst Tsingle 0.
-
-
 Definition BFMA {NAN: Nans} {t: type} : forall (x y z: ftype t), ftype t :=
     Binary.Bfma (fprec t) (femax t) (fprec_gt_0 t)
       (fprec_lt_femax t) (fma_nan t) BinarySingleNaN.mode_NE.
-
-Compute BFMA (Binary.B754_zero (fprec Tsingle) (femax Tsingle) false)
- (Binary.B754_zero (fprec Tsingle) (femax Tsingle) false)
-  (Binary.B754_zero (fprec Tsingle) (femax Tsingle) true).
 
 Definition matrix t := list (list (ftype t)).
 Definition vector t := list (ftype t).
