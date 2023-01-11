@@ -143,7 +143,7 @@ Fixpoint rowmult {t} (s: ftype t)
  end.
 
 Add Parametric Morphism {t: type}  : rowmult
-  with signature (@feq t) ==> Forall2 strict_feq ==> @eq (list Z) ==> Forall2 strict_feq ==> feq
+  with signature (@feq t) ==> Forall2 feq ==> @eq (list Z) ==> Forall2 feq ==> feq
   as rowmult_mor.
 Proof.
 intros s s' Hs vals vals' Hvals ci vval vval' Hvval.
@@ -156,6 +156,29 @@ destruct ci; simpl.
 auto.
 apply IHHvals; auto.
 apply BFMA_mor; auto.
+pose proof (Forall2_Zlength Hvval).
+destruct (zlt z 0).
+rewrite !Znth_underflow by auto. apply I.
+destruct (zle (Zlength vval) z).
+rewrite !Znth_overflow by lia. apply I.
+apply Forall2_Znth with (i:=z) in Hvval; auto.
+lia.
+Qed.
+
+Add Parametric Morphism {t: type}  : rowmult
+  with signature (@feq t) ==> Forall2 strict_feq ==> @eq (list Z) ==> Forall2 strict_feq ==> feq
+  as rowmult_stricter_mor.
+Proof.
+intros s s' Hs vals vals' Hvals ci vval vval' Hvval.
+revert s s' Hs ci vval vval' Hvval.
+induction Hvals; intros.
+-
+simpl. auto.
+-
+destruct ci; simpl.
+auto.
+apply IHHvals; auto.
+apply BFMA_mor; auto; apply subrelation_strict_feq; auto.
 pose proof (Forall2_Zlength Hvval).
 destruct (zlt z 0).
 rewrite !Znth_underflow by auto. apply I.
@@ -301,9 +324,8 @@ destruct vval as [ | v0 vval'].
    rewrite IHvals; auto.
    apply rowmult_mor; auto. apply BFMA_mor; auto.
    rewrite Znth_pos_cons by list_solve.
-   unfold Z.pred. apply strict_feq_i.
-   apply Forall_Znth; auto.
-   lia. list_solve.
+   replace (Z.pred z) with (z-1) by lia. reflexivity.
+   list_solve.
 Qed.
 
 Lemma rowmult_app:

@@ -222,7 +222,7 @@ Add Parametric Relation {t: type}: (ftype t) (@strict_feq t)
    as strict_feq_rel.
 
 Add Parametric Morphism {t: type} : BFMA
- with signature (@strict_feq t) ==> strict_feq ==> feq ==> feq
+ with signature (@feq t) ==> feq ==> feq ==> feq
   as BFMA_mor.
 Proof.
 intros.
@@ -232,12 +232,12 @@ destruct x1,y1; inv H1; try apply I;
 repeat match goal with H: _ /\ _ |- _ => destruct H end;
 subst; simpl; auto;
 repeat proof_irr;
-try reflexivity.
+try reflexivity;
+repeat match goal with s: bool |- _ => destruct s end;
 unfold BFMA, Binary.Bfma, BinarySingleNaN.Bfma, Binary.BSN2B, Binary.B2BSN;
- simpl;
-destruct s, s2; simpl; try reflexivity;
+ simpl; try reflexivity;
 unfold BinarySingleNaN.Bfma_szero; simpl;
-destruct s0,s1; simpl; try reflexivity.
+try reflexivity.
 Qed.
 
 Lemma matrix_by_index_rows:
@@ -507,6 +507,21 @@ simpl.
 apply Forall2_app; auto.
 Qed.
 
+Lemma Forall2_rel_refl: forall {A: Type} (rel: relation A), 
+   (forall x, rel x x) -> forall al, Forall2 rel al al.
+Proof.
+unfold reflexive; intros.
+induction al; constructor; auto.
+Qed.
+Hint Resolve Forall2_rel_refl  : core.
+
+Lemma Forall2_subrelation: forall {A: Type} (f g: A -> A -> Prop) (al bl: list A),
+  subrelation f g -> Forall2 f al bl  -> Forall2 g al bl.
+Proof.
+induction 2; constructor; auto.
+Qed.
+Hint Resolve Forall2_subrelation: core.
+
 Lemma dotprod_congr {t} (x x' y y' : vector t):
  Forall2 strict_feq x x' ->
  Forall2 strict_feq y y' ->
@@ -524,9 +539,8 @@ Proof.
  set (a := rev x) in *; clearbody a. set (a' := rev x') in *; clearbody a'.
  set (b := rev y) in *; clearbody b. set (b' := rev y') in *; clearbody b'.
  revert b b' H0; induction H; simpl; intros; auto.
- inv H1. auto. simpl. apply BFMA_mor; auto.
+ inv H1. auto. simpl. apply BFMA_mor; auto; apply subrelation_strict_feq; auto.
 Qed.
-
 
 Lemma norm2_congr: 
   forall {t} (x x': vector t), 
@@ -661,5 +675,214 @@ intros.
 revert i H; induction al; destruct i; simpl; intros; inv H; auto.
 apply IHal; auto. lia.
 apply IHal; auto. lia.
+Qed.
+
+Add Parametric Morphism {t: type} : (Binary.is_finite (fprec t) (femax t))
+  with signature feq ==> eq
+  as is_finite_mor.
+Proof.
+intros.
+destruct x, y; inv H; reflexivity.
+Qed.
+
+Lemma strict_floatlist_eqv_i1: 
+   forall {t} (a b: list (ftype t)),
+    Forall finite a -> Forall2 feq a b -> Forall2 strict_feq a b.
+Proof.
+induction 2; inv H;constructor.
+apply strict_feq_i1; auto.
+apply IHForall2; auto.
+Qed.
+
+Lemma finite_is_finite: forall {t} (x: ftype t),
+   finite x <-> Binary.is_finite _ _ x = true.
+Proof.
+split; intros;
+destruct x; inv H; try reflexivity.
+constructor; auto.
+Qed.
+
+Lemma feq_strict_feq:
+ forall {t} (x y: ftype t),
+   finite x -> feq x y -> strict_feq x y.
+Proof.
+ intros.
+ destruct x; inv H; destruct y; inv H0; constructor; auto.
+Qed.
+
+Lemma strict_feq_finite1:
+  forall {t} (x y: ftype t),
+    strict_feq x y -> finite x.
+Proof.
+intros.
+destruct x,y; inv H; constructor; auto.
+Qed.
+
+Lemma finite_dotprod_e: forall {t} (x y: vector t),
+  Zlength x = Zlength y ->
+  finite (dotprod x y) -> Forall finite x /\ Forall finite y.
+Proof.
+intros.
+rewrite !Zlength_correct in H. apply Nat2Z.inj in H.
+unfold dotprod in H0.
+rewrite <- fold_left_rev_right in H0.
+rewrite rev_combine in H0 by auto.
+rewrite <- (rev_length x), <- (rev_length y) in H.
+assert (Forall finite (rev x) /\ Forall finite (rev y)).
+2:rewrite <- (rev_involutive x), <- (rev_involutive y);
+   destruct H1; split; apply Forall_rev; auto.
+forget (rev x) as a; forget (rev y) as b.
+revert b H H0; induction a; destruct b; intros; inv H.
+split; constructor.
+specialize (IHa _ H2).
+simpl in H0.
+set (u := fold_right _ _ _) in *. clearbody u.
+assert (finite a /\ finite f /\ finite u); [ | split; constructor; tauto].
+clear - H0.
+apply finite_is_finite in H0.
+destruct a,f,u; inv H0; try solve [split3; constructor; auto].
+destruct s,s0,s1; inv H1.
+destruct s,s0,s1; inv H1.
+destruct s,s0,s1; inv H1.
+Qed.
+
+
+Lemma finite_norm2_e: forall {t} (x: vector t),
+  finite (norm2 x) -> Forall finite x.
+Proof.
+intros.
+apply finite_dotprod_e in H; auto.
+destruct H; auto.
+Qed.
+
+Lemma matrix_by_index_prop:
+ forall {t} (f: nat -> nat -> ftype t) (P: ftype t -> Prop) rows cols,
+  P (Zconst t 0) ->
+  (forall i j, (i < rows)%nat -> (j < cols)%nat -> P (f i j)) ->
+  Forall (Forall P) (matrix_by_index rows cols f).
+Proof.
+intros.
+unfold matrix_by_index.
+apply Forall_nth; intros.
+rewrite map_length, seq_length in H1.
+rewrite nth_map_seq by auto.
+apply Forall_nth; intros.
+rewrite map_length, seq_length in H2.
+rewrite nth_map_seq by auto.
+apply H0; auto.
+Qed.
+
+Lemma Zmatrix_cols_nat: 
+ forall {t} (m: matrix t) cols,
+  matrix_cols_nat m cols  <-> matrix_cols m (Z.of_nat cols).
+Proof.
+induction m; simpl; intros; split; intro; inv H; constructor; auto.
+apply Zlength_correct.
+clear - H3.
+induction H3; constructor; auto. rewrite <- H; apply Zlength_correct.
+rewrite Zlength_correct in H2. lia.
+clear - H3.
+induction H3; constructor; auto. rewrite Zlength_correct in H; lia.
+Qed.
+
+Lemma Zlength_seq: forall lo n, Zlength (seq lo n) = Z.of_nat n.
+Proof.
+intros. rewrite Zlength_correct. f_equal. apply seq_length.
+Qed.
+#[export] Hint Rewrite Zlength_seq : sublist rep_lia.
+
+Lemma Zmatrix_rows_nat: forall {t} (m: matrix t), Z.of_nat (matrix_rows_nat m) = matrix_rows m.
+Proof.
+unfold matrix_rows.
+induction m; simpl; auto. list_solve.
+Qed.
+
+Add Parametric Morphism {t: type}: (@norm2 t)
+  with signature Forall2 feq ==> feq
+ as norm2_mor.
+Proof.
+exact norm2_congr.
+Qed.
+
+Add Parametric Morphism {t: type}: (@vector_sub t)
+  with signature Forall2 feq ==> Forall2 feq ==> Forall2 feq
+  as vector_sub_mor.
+Proof.
+intros; eapply vector_sub_congr; eauto.
+Qed.
+
+Add Parametric Morphism {T: Type} (rel: relation T): (@Zlength T)
+  with signature Forall2 rel ==> eq
+  as Zlength_mor.
+Proof.
+induction 1; auto.
+rewrite !Zlength_cons; f_equal; auto.
+Qed.
+
+Add Parametric Morphism {t: type}: (@finite t)
+  with signature feq ==> iff
+  as finite_rel.
+Proof.
+destruct x,y; split; intros; inv H0; inv H; constructor; auto.
+Qed.
+
+Add Parametric Morphism {t}: (@dotprod t)
+ with signature Forall2 feq ==> Forall2 feq ==> feq
+ as dotprod_mor.
+Proof.
+intros.
+unfold dotprod.
+set (a := Zconst t 0) at 1.
+set (a' := Zconst t 0).
+assert (feq a a') by reflexivity.
+clearbody a. clearbody a'.
+revert x0 y0 H0 a a' H1; induction H; intros.
+destruct x0, y0; inv H0; simpl; auto.
+destruct x0,y0; inv H1; simpl; auto.
+eapply IHForall2; eauto.
+apply BFMA_mor; auto.
+Qed.
+
+Add Parametric Morphism {t}: (BDIV t)
+ with signature feq ==> strict_feq ==> feq
+ as BDIV_mor.
+Proof.
+intros.
+destruct x,y; inv H; destruct x0,y0; inv H0; 
+repeat match goal with s: bool |- _ => destruct s end; simpl in *;
+repeat match goal with H: _ /\ _ |- _ => destruct H end;
+subst;
+repeat proof_irr; 
+try constructor;
+reflexivity.
+Qed.
+
+Add Parametric Morphism {t}: (@matrix_vector_mult t)
+ with signature Forall2 (Forall2 feq) ==> Forall2 feq ==> Forall2 feq
+ as matrix_vector_mult_mor.
+Proof.
+intros.
+unfold matrix_vector_mult.
+apply Forall2_map.
+induction H; simpl; intros; constructor; auto.
+apply dotprod_mor; auto.
+Qed.
+
+Add Parametric Morphism {t}: (BCMP t) 
+ with signature eq ==> eq ==> strict_feq ==> strict_feq ==> eq
+ as BCMP_mor.
+Proof.
+intros.
+destruct x,y1; inv H; destruct x0,y2; inv H0; simpl.
+destruct y,s,s0,s1,s2;simpl; auto.
+destruct H1; subst.
+proof_irr.
+destruct y0,s,s0,s2; simpl; auto.
+destruct H2; subst.
+proof_irr.
+destruct y0,s,s0,s1; simpl; auto.
+destruct H1,H2; subst.
+repeat proof_irr.
+destruct y0,s0,s1; simpl; auto.
 Qed.
 
