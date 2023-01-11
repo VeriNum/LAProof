@@ -1,6 +1,5 @@
 Require Import VST.floyd.proofauto.
 Require Import vcfloat.VCFloat.
-Require Import vcfloat.FPCompCert.
 Require Import Coq.Relations.Relations Coq.Classes.Morphisms Coq.Classes.RelationPairs Coq.Classes.RelationClasses.
 
 Set Bullet Behavior "Strict Subproofs".
@@ -13,16 +12,16 @@ Definition BFMA {NAN: Nans} {t: type} : forall (x y z: ftype t), ftype t :=
 Definition matrix t := list (list (ftype t)).
 Definition vector t := list (ftype t).
 
-Definition dotprod {t: type} (v1 v2: list (ftype t)) : ftype t :=
+Definition dotprod {NAN: Nans} {t: type} (v1 v2: list (ftype t)) : ftype t :=
   fold_left (fun s x12 => BFMA (fst x12) (snd x12) s) 
                 (List.combine v1 v2)  (Zconst t 0).
 
-Definition norm2 {t} (v: vector t) := dotprod v v.
+Definition norm2 {NAN: Nans} {t} (v: vector t) := dotprod v v.
 
-Definition matrix_vector_mult {t: type} (m: matrix t) (v: vector t) : vector t :=
+Definition matrix_vector_mult {NAN: Nans}{t: type} (m: matrix t) (v: vector t) : vector t :=
       map (fun row => dotprod row v) m.
 
-Definition matrix_matrix_mult {t: type} (m1 m2: matrix t) : matrix t :=
+Definition matrix_matrix_mult {NAN: Nans}{t: type} (m1 m2: matrix t) : matrix t :=
   map (matrix_vector_mult m1) m2.
 
 Definition matrix_cols {t} (m: matrix t) cols :=
@@ -33,16 +32,16 @@ Definition matrix_rows {t} (m: matrix t) : Z := Zlength m.
 Definition map2 {A B C: Type} (f: A -> B -> C) al bl :=
   map (uncurry f) (List.combine al bl).
 
-Definition opp_matrix {t:type} (m: matrix t) : matrix t :=
+Definition opp_matrix {NAN: Nans}{t:type} (m: matrix t) : matrix t :=
   map (map (BOPP t)) m.
 
-Definition matrix_add {t} : matrix t -> matrix t -> matrix t :=
+Definition matrix_add {NAN: Nans}{t} : matrix t -> matrix t -> matrix t :=
   map2 (map2 (BPLUS t)).
 
-Definition vector_add {t:type} (v1 v2 : vector t) :=
+Definition vector_add {NAN: Nans}{t:type} (v1 v2 : vector t) :=
   map2 (BPLUS t) v1 v2.
 
-Definition vector_sub {t:type} (v1 v2 : vector t) :=
+Definition vector_sub {NAN: Nans}{t:type} (v1 v2 : vector t) :=
   map2 (BMINUS t) v1 v2.
 
 Definition matrix_index {t} (m: matrix t) (i j: nat) :=
@@ -221,7 +220,7 @@ Add Parametric Relation {t: type}: (ftype t) (@strict_feq t)
   transitivity proved by strict_feq_trans
    as strict_feq_rel.
 
-Add Parametric Morphism {t: type} : BFMA
+Add Parametric Morphism {NAN: Nans}{t: type} : BFMA
  with signature (@feq t) ==> feq ==> feq ==> feq
   as BFMA_mor.
 Proof.
@@ -234,10 +233,10 @@ subst; simpl; auto;
 repeat proof_irr;
 try reflexivity;
 repeat match goal with s: bool |- _ => destruct s end;
-unfold BFMA, Binary.Bfma, BinarySingleNaN.Bfma, Binary.BSN2B, Binary.B2BSN;
- simpl; try reflexivity;
-unfold BinarySingleNaN.Bfma_szero; simpl;
 try reflexivity.
+all: unfold BFMA, Binary.Bfma, BinarySingleNaN.Bfma, Binary.BSN2B, Binary.B2BSN;
+simpl;
+set (K := _ (proj1 _)); clearbody K; destruct K; simpl; auto.
 Qed.
 
 Lemma matrix_by_index_rows:
@@ -378,7 +377,7 @@ apply H; lia.
 Qed.
 
 Lemma BPLUS_BOPP_diag: 
-  forall {t} (x: ftype t), finite x -> BPLUS t x (BOPP t x) = Zconst t 0.
+  forall {NAN: Nans} {t} (x: ftype t), finite x -> BPLUS t x (BOPP t x) = Zconst t 0.
 Proof.
 intros.
 destruct x,s; inv H; try reflexivity;
@@ -419,7 +418,7 @@ Qed.
 
 #[export] Instance zerof {t} : Inhabitant (ftype t) := (Zconst t 0).
 
-Lemma BFMA_zero1: forall {t} y s, 
+Lemma BFMA_zero1: forall {NAN: Nans} {t} y s, 
   strict_feq y y ->
   feq (BFMA (Zconst t 0) y s) s.
 Proof.
@@ -431,7 +430,7 @@ unfold BFMA, BPLUS, BINOP in *.
 destruct y, s; try discriminate; simpl; auto.
 Qed.
 
-Lemma BFMA_zero2: forall {t} x s, 
+Lemma BFMA_zero2: forall  {NAN: Nans}{t} x s, 
   strict_feq x x ->
   feq (BFMA x (Zconst t 0) s) s.
 Proof.
@@ -443,14 +442,14 @@ unfold BFMA, BPLUS, BINOP in *.
 destruct x, s; try discriminate; simpl; auto.
 Qed.
 
-Lemma BPLUS_0_l: forall t x, finite x -> 
+Lemma BPLUS_0_l: forall  {NAN: Nans} {t} x, finite x -> 
       feq (BPLUS t (Zconst t 0) x) x.
 Proof.
   intros. destruct x; try contradiction;
  destruct s; simpl; auto.
 Qed.
 
-Lemma BPLUS_0_r: forall t x, finite x -> 
+Lemma BPLUS_0_r: forall {NAN: Nans} {t} x, finite x -> 
       feq (BPLUS t x (Zconst t 0)) x.
 Proof.
   intros. destruct x; try contradiction;
@@ -463,7 +462,7 @@ intros; apply I.
 Qed.
 
 Lemma norm2_snoc:
-  forall {t} (al: vector t) (x: ftype t),
+  forall  {NAN: Nans}{t} (al: vector t) (x: ftype t),
    norm2 (al ++ [x]) = BFMA x x (norm2 al).
  Proof.
   intros. unfold norm2, dotprod.
@@ -472,7 +471,7 @@ Lemma norm2_snoc:
  Qed.
 
 Lemma BMULT_congr:
- forall {t} (x x' y y': ftype t), feq x x' -> feq y y' -> 
+ forall  {NAN: Nans}{t} (x x' y y': ftype t), feq x x' -> feq y y' -> 
    feq (BMULT t x y) (BMULT t x' y').
 Proof.
 intros.
@@ -483,7 +482,7 @@ apply feq_refl.
 Qed.
 
 Lemma BMINUS_congr:
- forall {t} (x x' y y': ftype t), feq x x' -> feq y y' -> 
+ forall  {NAN: Nans}{t} (x x' y y': ftype t), feq x x' -> feq y y' -> 
    feq (BMINUS t x y) (BMINUS t x' y').
 Proof.
 intros.
@@ -513,16 +512,16 @@ Proof.
 unfold reflexive; intros.
 induction al; constructor; auto.
 Qed.
-Hint Resolve Forall2_rel_refl  : core.
+#[export] Hint Resolve Forall2_rel_refl  : core.
 
 Lemma Forall2_subrelation: forall {A: Type} (f g: A -> A -> Prop) (al bl: list A),
   subrelation f g -> Forall2 f al bl  -> Forall2 g al bl.
 Proof.
 induction 2; constructor; auto.
 Qed.
-Hint Resolve Forall2_subrelation: core.
+#[export] Hint Resolve Forall2_subrelation: core.
 
-Lemma dotprod_congr {t} (x x' y y' : vector t):
+Lemma dotprod_congr  {NAN: Nans}{t} (x x' y y' : vector t):
  Forall2 strict_feq x x' ->
  Forall2 strict_feq y y' ->
  length x = length y ->
@@ -543,7 +542,7 @@ Proof.
 Qed.
 
 Lemma norm2_congr: 
-  forall {t} (x x': vector t), 
+  forall {NAN: Nans} {t} (x x': vector t), 
            Forall2 feq x x' -> 
            feq (norm2 x) (norm2 x').
 Proof.
@@ -578,7 +577,7 @@ Qed.
 Local Open Scope Z.
 
 Lemma Znth_vector_sub:
- forall {t} i (x y: vector t) , Zlength x = Zlength y ->
+ forall  {NAN: Nans}{t} i (x y: vector t) , Zlength x = Zlength y ->
    0 <= i < Zlength x ->
    Znth i (vector_sub x y) = BMINUS t (Znth i x) (Znth i y).
 Proof.
@@ -590,7 +589,7 @@ reflexivity.
 Qed.
 
 Lemma BFMA_xx_mor:
- forall {t} (x x' s s': ftype t), 
+ forall  {NAN: Nans}{t} (x x' s s': ftype t), 
   feq x x' -> 
   feq s s' ->
   feq (BFMA x x s) (BFMA x' x' s').
@@ -607,11 +606,14 @@ repeat lazymatch goal with
   end;
 repeat proof_irr; 
   simpl; auto;
- destruct (Binary.Bfma _ _ _ _ _ _ _ _ _); auto.
+try solve [destruct (Binary.Bfma _ _ _ _ _ _ _ _ _); auto].
+all:
+unfold Binary.Bfma, Binary.BSN2B, BinarySingleNaN.Bfma, Binary.B2BSN; simpl;
+set (K := _ (proj1 _)); clearbody K; destruct K; simpl; auto.
 Qed.
 
 
-Lemma vector_sub_congr: forall {t} (x x' y y': vector t),
+Lemma vector_sub_congr: forall {NAN: Nans} {t} (x x' y y': vector t),
   Forall2 feq x x' -> Forall2 feq y y' ->
   Forall2 feq (vector_sub x y) (vector_sub x' y').
 Proof.
@@ -625,7 +627,7 @@ apply BMINUS_congr; auto.
 Qed.
 
 Lemma norm2_loose_congr: 
- forall {t} (x x': vector t),  Forall2 feq x x' -> feq (norm2 x) (norm2 x').
+ forall {NAN: Nans}{t} (x x': vector t),  Forall2 feq x x' -> feq (norm2 x) (norm2 x').
 Proof.
 intros.
 unfold norm2.
@@ -644,7 +646,7 @@ apply BFMA_xx_mor; auto.
 Qed.
 
 Lemma strict_feq_i1:
-  forall {t} (x y: ftype t), 
+  forall  {t} (x y: ftype t), 
     finite x -> feq x y ->
     strict_feq x y.
 Proof.
@@ -654,7 +656,7 @@ Proof.
  destruct y; inv H0. constructor. constructor; auto.
 Qed.
 
-Lemma FMA_one: forall {t} (x y: ftype t),
+Lemma FMA_one: forall {NAN: Nans}{t} (x y: ftype t),
   feq (BFMA x y (Zconst t 0)) (BMULT t x y).
 Proof.
 unfold BFMA, BMULT, BINOP.
@@ -718,7 +720,7 @@ intros.
 destruct x,y; inv H; constructor; auto.
 Qed.
 
-Lemma finite_dotprod_e: forall {t} (x y: vector t),
+Lemma finite_dotprod_e: forall {NAN: Nans}{t} (x y: vector t),
   Zlength x = Zlength y ->
   finite (dotprod x y) -> Forall finite x /\ Forall finite y.
 Proof.
@@ -747,7 +749,7 @@ destruct s,s0,s1; inv H1.
 Qed.
 
 
-Lemma finite_norm2_e: forall {t} (x: vector t),
+Lemma finite_norm2_e: forall {NAN: Nans}{t} (x: vector t),
   finite (norm2 x) -> Forall finite x.
 Proof.
 intros.
@@ -797,14 +799,14 @@ unfold matrix_rows.
 induction m; simpl; auto. list_solve.
 Qed.
 
-Add Parametric Morphism {t: type}: (@norm2 t)
+Add Parametric Morphism {NAN: Nans}{t: type}: (@norm2 _ t)
   with signature Forall2 feq ==> feq
  as norm2_mor.
 Proof.
 exact norm2_congr.
 Qed.
 
-Add Parametric Morphism {t: type}: (@vector_sub t)
+Add Parametric Morphism {NAN: Nans}{t: type}: (@vector_sub _ t)
   with signature Forall2 feq ==> Forall2 feq ==> Forall2 feq
   as vector_sub_mor.
 Proof.
@@ -826,7 +828,7 @@ Proof.
 destruct x,y; split; intros; inv H0; inv H; constructor; auto.
 Qed.
 
-Add Parametric Morphism {t}: (@dotprod t)
+Add Parametric Morphism {NAN: Nans}{t}: (@dotprod _ t)
  with signature Forall2 feq ==> Forall2 feq ==> feq
  as dotprod_mor.
 Proof.
@@ -843,7 +845,7 @@ eapply IHForall2; eauto.
 apply BFMA_mor; auto.
 Qed.
 
-Add Parametric Morphism {t}: (BDIV t)
+Add Parametric Morphism {NAN: Nans}{t}: (BDIV t)
  with signature feq ==> strict_feq ==> feq
  as BDIV_mor.
 Proof.
@@ -857,7 +859,7 @@ try constructor;
 reflexivity.
 Qed.
 
-Add Parametric Morphism {t}: (@matrix_vector_mult t)
+Add Parametric Morphism {NAN: Nans} {t}: (@matrix_vector_mult _ t)
  with signature Forall2 (Forall2 feq) ==> Forall2 feq ==> Forall2 feq
  as matrix_vector_mult_mor.
 Proof.
