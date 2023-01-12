@@ -55,6 +55,7 @@ Definition matrix_rows_nat {t} (m: matrix t) := length m.
 Definition matrix_cols_nat {t} (m: matrix t) cols :=
     Forall (fun r => length r = cols) m.
 
+(* see https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/RelationPairs.20rewriting.20really.20slow *)
 Global Instance proper_pair1: forall A B RA1 RA2 RB1 RB2 (RA : relation A) (RB : relation B),
     Proper (RA1 ==> RA2 ==> Basics.flip Basics.impl) RA
     -> Proper (RB1 ==> RB2 ==> Basics.flip Basics.impl) RB
@@ -214,11 +215,15 @@ Add Parametric Relation {t: type}: (ftype t) (@strict_feq t)
   transitivity proved by strict_feq_trans
    as strict_feq_rel.
 
+#[export] Hint Extern 100 (Proper ?R ?x) => 
+ (* See https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/rewriting.20with.20PERs *)
+    (red; auto with typeclass_instances)    : typeclass_instances.
+
 Add Parametric Morphism {NAN: Nans}{t: type} : BFMA
  with signature (@feq t) ==> feq ==> feq ==> feq
   as BFMA_mor.
 Proof.
-intros.
+intros.    
 destruct x,y; inv H; try apply I;
 destruct x0,y0; inv  H0; try apply I;
 destruct x1,y1; inv H1; try apply I;
