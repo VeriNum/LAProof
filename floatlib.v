@@ -11,9 +11,11 @@ Definition BFMA {NAN: Nans} {t: type} : forall (x y z: ftype t), ftype t :=
 Definition matrix t := list (list (ftype t)).
 Definition vector t := list (ftype t).
 
+Definition neg_zero {t: type} := Binary.B754_zero (fprec t) (femax t) true.
+
 Definition dotprod {NAN: Nans} {t: type} (v1 v2: list (ftype t)) : ftype t :=
   fold_left (fun s x12 => BFMA (fst x12) (snd x12) s) 
-                (List.combine v1 v2)  (Zconst t 0).
+                (List.combine v1 v2)  neg_zero.
 
 Definition norm2 {NAN: Nans} {t} (v: vector t) := dotprod v v.
 
@@ -833,8 +835,10 @@ Add Parametric Morphism {NAN: Nans}{t}: (@dotprod _ t)
 Proof.
 intros.
 unfold dotprod.
-set (a := Zconst t 0) at 1.
-set (a' := Zconst t 0).
+set (a := neg_zero) at 1.
+(*set (a := Zconst t 0) at 1. *)
+set (a' := neg_zero).
+(*set (a' := Zconst t 0). *)
 assert (feq a a') by reflexivity.
 clearbody a. clearbody a'.
 revert x0 y0 H0 a a' H1; induction H; intros.
