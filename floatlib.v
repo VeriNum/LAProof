@@ -834,7 +834,6 @@ Proof.
 intros.
 unfold dotprod.
 set (a := Zconst t 0) at 1. 
-set (a' := neg_zero).
 set (a' := Zconst t 0).
 assert (feq a a') by reflexivity.
 clearbody a. clearbody a'.
