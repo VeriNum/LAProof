@@ -217,7 +217,16 @@ Add Parametric Relation {t: type}: (ftype t) (@strict_feq t)
 
 #[export] Hint Extern 100 (Proper ?R ?x) => 
  (* See https://coq.zulipchat.com/#narrow/stream/237977-Coq-users/topic/rewriting.20with.20PERs *)
-    (red; auto with typeclass_instances)    : typeclass_instances.
+    (lazymatch R with respectful _ _ => fail | _ => red; auto with nocore typeclass_instances end)    : typeclass_instances.
+
+(* Here's an alternate version to the Hint Extern above, see the same zulipchat link for discussion
+Lemma PER_valid_l {A} {R : relation A} {HS : Symmetric R} {HT : Transitive R} x y (H : R x y) : Proper R x.
+Proof. hnf; etransitivity; eassumption || symmetry; eassumption. Qed.
+Lemma PER_valid_r {A} {R : relation A} {HS : Symmetric R} {HT : Transitive R} x y (H : R x y) : Proper R y.
+Proof. hnf; etransitivity; eassumption || symmetry; eassumption. Qed.
+#[export] Hint Extern 10 (Proper ?R ?x) => simple eapply (@PER_valid_l _ R); [ | | solve [ auto ] ] : typeclass_instances.
+#[export] Hint Extern 10 (Proper ?R ?x) => simple eapply (@PER_valid_r _ R); [ | | solve [ auto ] ] : typeclass_instances.
+*)
 
 Add Parametric Morphism {NAN: Nans}{t: type} : BFMA
  with signature (@feq t) ==> feq ==> feq ==> feq
