@@ -827,6 +827,18 @@ Proof.
 destruct x,y; split; intros; inv H0; inv H; constructor; auto.
 Qed.
 
+Add Parametric Morphism {A} (rel1: A->Prop)(rel2: relation A)
+          (proper1: Proper (rel2 ==> iff) rel1)  : (Forall rel1)
+ with signature  Forall2 rel2 ==> iff
+ as Forall_Forall2_mor.
+Proof.
+intros.
+induction H. split; auto.
+split; intro H1; inversion H1; clear H1; subst; constructor.
+rewrite <- H; auto. apply IHForall2; auto. rewrite H; auto.
+apply IHForall2; auto.
+Qed.
+
 Add Parametric Morphism {NAN: Nans}{t}: (@dotprod _ t)
  with signature Forall2 feq ==> Forall2 feq ==> feq
  as dotprod_mor.
