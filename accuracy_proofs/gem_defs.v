@@ -74,13 +74,16 @@ Definition mat_sum {T: Type} (A B : matrix) (sum : T -> T -> T) : @matrix T :=
 (* sum matrices of reals *)
 Definition mat_sumR A B :=  mat_sum A B Rplus.
 
+(* generic matrix vector multiplication *)
+Definition MV {A: Type} (DOT : @vector A -> @vector A -> A) (m: matrix) (v: vector) : vector :=
+      map (fun row => DOT row v) m.
+
 (* floating-point matrix vector multiplication *)
-Definition mvF {NAN : Nans}  {t: type} (m: matrix ) (v: vector ) : vector  :=
-      map (fun row => @dotprodF NAN t row v) m.
+Definition mvF {NAN : Nans}  {t: type} : matrix -> vector -> vector  :=
+      MV (@dotprodF NAN t).
 
 (* real valued matrix vector multiplication *)
-Definition mvR  (m: matrix) (v: vector) : vector :=
-      map (fun row => dotprodR row v) m.
+Definition mvR  : matrix -> vector -> vector  := MV dotprodR.
 
 End MVOpDefs.
 
@@ -145,8 +148,8 @@ Proof. destruct row; simpl; auto. Qed.
 
 Lemma mvF_nil {NAN : Nans} {t: type} : forall m, @mvF NAN t m [] = zero_vector (length m) (Zconst t 0).
 Proof. 
-intros; unfold mvF.
-set (f:= (fun row : list (ftype t) => dotprodF row [])).
+intros; unfold mvF, MV.
+set (f:= (fun row : vector => dotprodF row [])).
 replace (map f m) with  (map (fun _ => Zconst t 0) m).
 induction m; simpl; auto.
 { rewrite IHm; auto. }
@@ -156,8 +159,8 @@ Qed.
 
 Lemma mvR_nil : forall m, mvR m [] = zero_vector (length m) 0%R. 
 Proof.
-intros; unfold mvR.
-set (f:= (fun row : list R => dotprodR row [])).
+intros; unfold mvR, MV.
+set (f:= (fun row : vector => dotprodR row [])).
 replace (map f m) with  (map (fun _ => 0%R) m).
 induction m; simpl; auto.
 { rewrite IHm; auto. }
@@ -363,7 +366,7 @@ Lemma length_mvR_mvF {NANS : Nans} {t : type} : forall (m : @matrix (ftype t)) v
 length ((map_mat FT2R m) *r (map FT2R v)) = length (m *fr v).
 Proof.
   intros. 
-  unfold mvR, mvF, map_mat.
+  unfold mvR, mvF, MV, map_mat.
 rewrite !map_length; auto.
 Qed.
 
