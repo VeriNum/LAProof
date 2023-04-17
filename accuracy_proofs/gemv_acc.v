@@ -247,8 +247,8 @@ have HlenA1 : m.+1 = length (map_mat FT2R A +m E) by (subst m; lia).
 have Hlen1 : n.+1 = length (map FT2R v) by 
   (subst n; rewrite !map_length; lia).
 rewrite -Hlen1 in Hin1.
-pose proof vector_to_vc_mulmx_m HlenA1 Hlen1 Hin1.
-rewrite H. clear H.
+pose proof vector_to_vc_mulmx_m (map_mat FT2R A +m E) (map FT2R v) m.+1 n.+1. 
+rewrite H => //. clear H.
 f_equal.
 have HlenA2 : m.+1 = Datatypes.length (map_mat FT2R A) by 
   (subst m;rewrite !map_length; lia).
@@ -270,8 +270,8 @@ rewrite /map_mat/mat_sumR/mat_sum/map2 !map_length combine_length
   map_length; lia.
 split.
 { move => i j Hi Hj.
- rewrite -(matrix_to_mx_index E Hi Hj).
- rewrite -(matrix_to_mx_index (map_mat FT2R A) Hi Hj).
+ rewrite -(matrix_to_mx_index E i j).
+ rewrite -(matrix_to_mx_index (map_mat FT2R A) i j).
 have HA : (length A = m.+1) by (subst m; lia).
 have Hv : (length v = n.+1) by (subst m; lia).
 rewrite HA Hv in H2. 
@@ -325,9 +325,9 @@ have H0 : Ar *m vr + E *m vr + eta - Ar *m vr = E *m vr + eta.
 remember (Ar *m vr) as y. remember (E *m vr) as x. subst m. 
 apply /matrixP => i j; do ![rewrite mxE | ] => /=; ring.
 rewrite H0. clear H0. fold m in H1, H2.
-eapply (le_trans (normv_triang _ _ )). 
+eapply (le_trans (normv_triang _ _ _)). 
 apply ler_add.
-eapply (le_trans (subMultNorm _ _ )).
+eapply (le_trans (subMultNorm _ _ _ )).
 apply ler_pmul => //. 
 apply normM_pos.
 apply normv_pos.
