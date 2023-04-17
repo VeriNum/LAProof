@@ -50,11 +50,11 @@ Lemma mat_vec_mul_mixed_error:
     /\ length eta = m.
 Proof.
 revert Hfin Hlen. 
-elim: A => /= [ Hfin Hlen | a l IH Hfin' Hlen].
+elim: A => /= [ Hfin Hlen | a l IH Hfin' Hlen]. 
 (*case A is nil*)
 { exists (zero_matrix 0 0 0%R), []; repeat split => /= //. }
 have Hfin2 : is_finite_vec (l *f v).  
-  revert Hfin'. rewrite /is_finite_vec => Hf x Hin'. 
+  revert Hfin'. rewrite /is_finite_vec !Forall_forall => Hf x Hin'. 
   apply Hf; right => //.
 have Hin2  : (forall row : list (ftype t), In row l -> length row = length v) by  
   move => row Hrow; apply Hlen; right => //.
@@ -62,7 +62,7 @@ destruct (IH Hfin2 Hin2) as (E & eta & IH1 & IH2 & IH3 & IH4 & IH5);
   clear IH; rewrite IH1; clear IH1.
 have Hlen': length a = n by apply Hlen; left => //. 
 have Hfin1 : Binary.is_finite (fprec t) (femax t) (dotprodF a v) = true by 
-  revert Hfin'; rewrite /is_finite_vec => Hfin'; apply Hfin'; left => /= //.
+  revert Hfin';rewrite /is_finite_vec !Forall_forall => Hfin'; apply Hfin'; left => /= //.
 destruct (dotprod_mixed_error a v Hlen' Hfin1) as (u & ueta & X & Y & Z1 & Z2).
 set (A':= (map FT2R a :: map_mat FT2R l) : matrix).
 have Ha: (length u = length (map FT2R a)) by rewrite map_length; lia.
@@ -172,11 +172,11 @@ Qed.
 
 End MixedErrorList.
 
-Section MixedErrorMath.  
-
 From mathcomp Require Import matrix all_algebra bigop.
 
-Require Import VST.floyd.functional_base.
+Section MixedErrorMath.  
+
+Import VST.floyd.functional_base.
 
 Open Scope R_scope.
 Open Scope ring_scope.
@@ -204,8 +204,6 @@ Hypothesis Hfin : is_finite_vec (A *f v).
 Hypothesis Hlen : forall x, In x A -> length x = n.+1.
 
 Notation " i ' " := (Ordinal i) (at level 40).
-
-From mathcomp.algebra_tactics Require Import ring.
 
 Notation Av := (vector_to_vc (m.+1) (A *fr v)).
 
@@ -289,7 +287,6 @@ Qed.
 End MixedErrorMath.
 
 Section ForwardError.
-From mathcomp Require Import matrix .
 
 Context {NAN: Nans} {t : type}.
 
