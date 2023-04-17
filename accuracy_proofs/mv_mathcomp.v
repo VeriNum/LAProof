@@ -2,35 +2,26 @@
   matrices and vectors to operations on lists. *)
 
 Require Import vcfloat.VCFloat.
-Require Import List Reals.
+Require Import List.
 Require Import common op_defs dotprod_model sum_model.
 Require Import dot_acc float_acc_lems list_lemmas gem_defs.
 Import ListNotations.
 Require Import  FEC.Common.CommonSSR.
 
-From Coq Require Import ZArith Reals Psatz.
-From Coq Require Import Arith.Arith.
-From Coquelicot Require Import Coquelicot.
+From Coq Require Import ZArith Reals Psatz Arith.Arith.
 From mathcomp.analysis Require Import Rstruct.
-From mathcomp Require Import matrix all_ssreflect all_algebra ssralg ssrnum bigop.
+From mathcomp Require Import matrix all_ssreflect all_algebra ssrnum bigop.
 Require Import mc_extra2.
 
-Set Bullet Behavior "Strict Subproofs". 
-
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
 Require Import VST.floyd.functional_base.
-
 
 Open Scope R_scope.
 Open Scope ring_scope.
 
 Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with Re.
+Delimit Scope R_scope with R.
 
 Import Order.TTheory GRing.Theory Num.Def Num.Theory.
-Import List ListNotations.
 
 From mathcomp.algebra_tactics Require Import ring.
 
@@ -57,12 +48,13 @@ End MVtoMC_Defs.
 
 Section MVtoMC_Lems.
 
-Lemma matrix_to_mx_nil n': 
-matrix_to_mx 0 n' [] = 0.
+Lemma matrix_to_mx_nil m n': 
+matrix_to_mx m n' [] = 0.
 Proof.
 by rewrite /matrix_to_mx/getm// /=;
 apply/matrixP =>  k i /[!mxE];
-destruct k. 
+destruct k; destruct i => /=;
+destruct m1; destruct m0 => /=. 
 Qed.
 
 Lemma vector_to_vc_nil : 
@@ -81,8 +73,7 @@ Proof. by apply gem_defs.vec_sum_nth_plus. Qed.
 Lemma matrix_to_mx_plus : forall A E 
   (Hlen1: length A = length E)
   (Hlen2: forall a e, In a A -> In e E -> length a = length e),
-  matrix_to_mx (length A) (length E)
-  (A +m E) = matrix_to_mx (length A) (length E) A + matrix_to_mx(length A) (length E) E.
+  matrix_to_mx (length A) (length E) (A +m E) = matrix_to_mx (length A) (length E) A + matrix_to_mx(length A) (length E) E.
 Proof.
 move => A E Hlen1 Hlen2.
 rewrite /matrix_to_mx/getm => /=.
@@ -174,6 +165,99 @@ apply (Hlen2  (nth i A []) (nth i E [])); apply nth_In;
 destruct i => /= ; lia.
 by destruct Hlen3; etransitivity; [apply H | ].
 Qed.
+
+Lemma hd_nth {A} (a : list A) d : 
+  hd d a = nth 0 a d.
+Proof. destruct a; simpl; auto. Qed.
+
+Lemma nth_mul' : forall (A : list (list R)) b i j
+( Hj : (j < length b)%nat),
+nth 0 (nth i A []) 0%R * nth j b 0%R =
+nth j (nth i (map (fun a0 : R => map (Rmult a0) b) (map (hd 0%R) A)) []) 0%R.
+Proof.
+move =>  A. elim: A => [b i j| a A IH b i j Hj] /=.
+destruct i; destruct j; rewrite mul0r => //.
+destruct i => /= //.
+rewrite hd_nth => /=. 
+rewrite (nth_map' (Rmult (nth 0 a 0%R)) 0%R 0%R j b) => //=.
+apply /ssrnat.ltP => //.
+specialize (IH b i j Hj). rewrite -IH => //.
+Qed.  
+
+Lemma nth_nil i  {T: Type} d: 
+@nth T i [::] d = d.
+Proof. elim: i => //=. Qed.
+
+Lemma nth_tl {T} i a (d : T):
+nth i (tl a) d = nth (i+1) a d.
+Proof.
+move : i. 
+case: a => [ i | a l i /=]. 
+rewrite !nth_nil => //=.
+remember  (i + 1)%nat as n.
+destruct n. rewrite addn1 in Heqn. discriminate.
+have Hc : n = i by lia. rewrite Hc => //.
+Qed.
+
+
+Lemma map_tail : forall  m (A : @gem_defs.matrix R) (i: 'I_m) 
+  (Hord0 : (0 < m)%nat) (Hord1 : (1 < m)%nat),
+\big[Rplus/0]_(0 <= i0 < m)
+   matrix_to_mx m m (map (@tl R) A) i (seq.nth (Ordinal Hord0) (Finite.enum (ordinal_finType m)) i0) = 
+\big[Rplus/0]_(0 <= i0 < m)
+   matrix_to_mx m m A i (seq.nth (Ordinal Hord1) (Finite.enum (ordinal_finType m)) (i0.+1)).
+Proof.
+move => m A i Hord0 Hord1. 
+apply eq_big => // i0 _.
+rewrite !mxE /getm.
+rewrite (map_nth (@tl R) A [::] i).
+rewrite nth_tl.
+Admitted.
+
+Lemma matrix_to_mx_mul : forall A B m
+  (Hm   : m = length A)
+  (Hlen1: length A = length B)
+  (Hlen2: forall a b, In a A -> In b B -> length a =  m 
+    /\ length b = m),
+  matrix_to_mx m m (MMR m m A B) = 
+  matrix_to_mx m m A *m matrix_to_mx m m B.
+Proof.
+move => A B. move: A.
+elim : B  => /= [ A | b B IH A] .
+elim : A => // [m Hm H1 H2].
+rewrite /matrix_to_mx => /=. 
+apply/matrixP=> i j; rewrite !mxE /=.
+destruct m => //; destruct i => //.
+case : A => // [a A m Hm H1 H2].
+have Hb: (Datatypes.length b = m).
+  by (apply (H2 a b) => /=; left). 
+rewrite matrix_to_mx_plus_m.
+rewrite IH . clear IH. 
+apply/matrixP=> i j; rewrite !mxE.
+have Hj : (j < Datatypes.length b)%coq_nat by
+  rewrite Hb /=; destruct j => /=; lia.
+symmetry.
+have Hord: (0 < m)%nat by lia.
+rewrite !(@big_nth _ 0 Rplus _ (Ordinal Hord))
+  (@big_ltn R 0 Rplus) /index_enum  ordinal_enum_size //.
+rewrite !(@ordinal_enum m (Ordinal Hord)) /= RplusE.
+f_equal.
+rewrite  !mxE /= /getm/mul' /=. 
+destruct i => /=; destruct m0 => /=.
+rewrite hd_nth.
+rewrite (nth_map' (Rmult (nth 0 a 0%R)) 0%R 0%R j b) => //.
+rewrite -nth_mul' => //. 
+apply /ssrnat.ltP => //.
+rewrite -(map_cons).
+rewrite /matrix_to_mx/=.
+
+
+pose proof (@big_nat_widenl R 0%R Radd_monoid 1 0 m). 
+rewrite H => //.
+apply eq_big => //=.
+
+
+Admitted. 
 
 Lemma vector_to_vc_plus u1 u2
   (Hlen: length u1 = length u2) : 

@@ -24,7 +24,10 @@ Fixpoint zero_matrix {A: Type} (m n: nat) (zero : A) : matrix :=
   end. 
 
 Definition is_finite_vec {t : type} (v: vector) : Prop := 
-  forall x, In x v -> Binary.is_finite (fprec t) (femax t) x = true.
+  Forall (fun x => Binary.is_finite (fprec t) (femax t) x = true) v.
+
+Definition is_finite_mat {t : type} (A: matrix) : Prop := 
+  Forall (fun x => @is_finite_vec t x) A.
 
 Definition is_zero_vector {A: Type} v (zero : A) : Prop := forall x, In x v -> x = zero.
 
@@ -74,6 +77,9 @@ Definition mat_sum {T: Type} (A B : matrix) (sum : T -> T -> T) : @matrix T :=
 (* sum matrices of reals *)
 Definition mat_sumR A B :=  mat_sum A B Rplus.
 
+(* sum matrices of floats *)
+Definition mat_sumF {NAN : Nans} {t: type} A B := mat_sum A B (@BPLUS NAN t).
+
 (* generic matrix vector multiplication *)
 Definition MV {A: Type} (DOT : @vector A -> @vector A -> A) (m: matrix) (v: vector) : vector :=
       map (fun row => DOT row v) m.
@@ -84,6 +90,25 @@ Definition mvF {NAN : Nans}  {t: type} : matrix -> vector -> vector  :=
 
 (* real valued matrix vector multiplication *)
 Definition mvR  : matrix -> vector -> vector  := MV dotprodR.
+
+(* helper for generic matrix-matrix multiplication *)
+Definition mul' {A: Type} (d : A) (mult: A -> A -> A) (m : @matrix A) (v : @vector A) := 
+  map (fun a => map (mult a) v) (map (hd d) m).
+
+(* generic matrix-matrix multiplication on row major order matrices of size (n x m) *)
+Fixpoint MM {A: Type} (d : A) (mat_sum : @matrix A -> @matrix A -> @matrix A) (mult: A -> A -> A)
+ (n m : nat) (m1 m2: @matrix A) : @matrix A :=
+  match m2 with
+    | row :: b => mat_sum (mul' d mult m1 row) (MM d mat_sum mult m n (map (@tl A) m1) b)
+    | nil => zero_matrix n m d
+  end.
+
+(* floating-point matrix matrix multiplication. *)
+Definition MMF {NAN : Nans}  {t: type} (n m : nat) : matrix -> matrix -> matrix  := 
+  MM (Zconst t 0) (@mat_sumF NAN t) (@BMULT NAN t) n m.
+
+(* real valued matrix matrix multiplication *)
+Definition MMR (n m : nat) : matrix -> matrix -> matrix  := MM 0%R mat_sumR Rmult m n.
 
 End MVOpDefs.
 
@@ -395,5 +420,6 @@ destruct i; try discriminate.
 destruct i; simpl; try ring.
 apply IHu1. simpl in Hlen; lia.
 Qed.
+
 
 End MVLems.
