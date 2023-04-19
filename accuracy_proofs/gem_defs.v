@@ -1,3 +1,9 @@
+(** This file contains the low level list 
+  definitions of matrices and vectors, along with 
+  useful lemmas about these definitions 
+
+  Copyright Ariel Kellison, 2023 *)
+
 Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
@@ -5,6 +11,7 @@ Import ListNotations.
 Require Import common op_defs dotprod_model sum_model.
 Require Import float_acc_lems list_lemmas.
 
+(* General list matrix and vector definitions *)
 Section MVGenDefs. 
 
 Definition matrix {A : Type} := list (list A).
@@ -18,9 +25,9 @@ Fixpoint zero_vector {A: Type} (m : nat) (zero : A) : vector :=
   end. 
 
 Fixpoint zero_matrix {A: Type} (m n: nat) (zero : A) : matrix := 
-  match m with 
-  | S m' => zero_vector n zero :: zero_matrix m' n zero
-  | _ => []
+  match m,n with 
+  | S m', S n' => zero_vector n zero :: zero_matrix m' n zero
+  | _, _ => []
   end. 
 
 Definition is_finite_vec {t : type} (v: vector) : Prop := 
@@ -95,20 +102,20 @@ Definition mvR  : matrix -> vector -> vector  := MV dotprodR.
 Definition mul' {A: Type} (d : A) (mult: A -> A -> A) (m : @matrix A) (v : @vector A) := 
   map (fun a => map (mult a) v) (map (hd d) m).
 
-(* generic matrix-matrix multiplication on row major order matrices of size (n x m) *)
+(* generic matrix-matrix multiplication on row major order matrices of size (m x n) *)
 Fixpoint MM {A: Type} (d : A) (mat_sum : @matrix A -> @matrix A -> @matrix A) (mult: A -> A -> A)
- (n m : nat) (m1 m2: @matrix A) : @matrix A :=
+ (m : nat) (m1 m2: @matrix A) : @matrix A :=
   match m2 with
-    | row :: b => mat_sum (mul' d mult m1 row) (MM d mat_sum mult m n (map (@tl A) m1) b)
-    | nil => zero_matrix n m d
+    | row :: b => mat_sum (mul' d mult m1 row) (MM d mat_sum mult m (map (@tl A) m1) b)
+    | nil => zero_matrix m m d
   end.
 
 (* floating-point matrix matrix multiplication. *)
-Definition MMF {NAN : Nans}  {t: type} (n m : nat) : matrix -> matrix -> matrix  := 
-  MM (Zconst t 0) (@mat_sumF NAN t) (@BMULT NAN t) n m.
+Definition MMF {NAN : Nans}  {t: type} (m : nat) : matrix -> matrix -> matrix  := 
+  MM (Zconst t 0) (@mat_sumF NAN t) (@BMULT NAN t) m.
 
 (* real valued matrix matrix multiplication *)
-Definition MMR (n m : nat) : matrix -> matrix -> matrix  := MM 0%R mat_sumR Rmult m n.
+Definition MMR (m : nat) : matrix -> matrix -> matrix  := MM 0%R mat_sumR Rmult m.
 
 End MVOpDefs.
 
@@ -160,8 +167,13 @@ Lemma map_mat_length {A B: Type} :
 Proof. intros; induction M; [simpl; auto | simpl; rewrite IHM; auto]. Qed. 
 
 Lemma zero_matrix_length {A: Type} (m n: nat) (zero : A) :
+  forall (Hn : (0 < n)%nat),
   length (zero_matrix m n zero) = m .
-Proof. induction m; unfold zero_matrix; simpl; auto. Qed. 
+Proof. revert n. induction m.
+unfold zero_matrix. auto. intros.
+specialize (IHm n Hn). simpl. destruct n. lia.
+simpl. lia.
+Qed. 
 
 Lemma mvF_len {NAN : Nans} t m v:
   length (@mvF NAN t m v)  = length m.
@@ -203,6 +215,10 @@ Lemma zero_vector_length {A : Type} (m : nat) (zero : A) :
   length (zero_vector m zero) =  m.
 Proof. induction m; simpl; auto. Qed.
 
+Lemma nth_zero_vector m i:
+  nth i (zero_vector m 0%R) 0%R = 0%R.
+Proof. revert i. induction m ; simpl; auto; destruct i; simpl ;auto. Qed.
+
 Lemma vec_sumR_cons : 
 forall (u v : vector) u0 v0,
 vec_sum (u0 :: u) (v0 :: v) Rplus = (u0 + v0) :: vec_sum u v Rplus.
@@ -228,13 +244,16 @@ Proof. induction A; destruct B; (intros; unfold mat_sum, vec_sum, map2; simpl; a
 
 Lemma mat_sumR_zero:
   forall (B : matrix) (n : nat)
+  (Hn : (0<n)%nat)
   (Hin : forall row, In row B -> length row  = n), 
   mat_sum B (zero_matrix (length B) n 0%R) Rplus = B.
 Proof.
-intros ? ? ?. induction B; auto.
+intros ? ? ? ?.
+ induction B; auto.
 fold (mat_sumR (a :: B) (zero_matrix (length (a :: B)) n 0)).
 fold (mat_sumR B (zero_matrix (length B) n 0)) in IHB.
-simpl; rewrite mat_sumR_cons.
+simpl. destruct n. lia. 
+rewrite mat_sumR_cons.
 rewrite <- IHB; [ f_equal | intros; apply Hin; simpl; auto].
 rewrite <- vec_sum_zeroR; unfold vec_sumR; repeat f_equal.
 symmetry; apply Hin; simpl; auto.
@@ -421,5 +440,138 @@ destruct i; simpl; try ring.
 apply IHu1. simpl in Hlen; lia.
 Qed.
 
-
 End MVLems.
+
+
+From mathcomp Require Import all_ssreflect all_algebra ssrnum.
+Require Import VST.floyd.functional_base.
+
+Open Scope R_scope.
+Open Scope ring_scope.
+
+Delimit Scope ring_scope with Ri.
+Delimit Scope R_scope with R.
+
+Import Order.TTheory GRing.Theory Num.Def Num.Theory.
+
+Section MxLems.
+
+Lemma mat_sum_nil_l :
+forall (A : Type) (M : gem_defs.matrix) (f : A -> A -> A),
+       mat_sum [::] M f = [::].
+Proof. by []. Qed.
+
+Lemma in_zero_matrix_length m n a: 
+In a (zero_matrix m n 0%R) -> length a = n.
+Proof. move : a . elim: m => //=.
+move => m IH a. destruct n => //= . move => [H|H].
+rewrite -H //=. by rewrite zero_vector_length.
+by apply IH.
+Qed.
+
+End MxLems.
+
+Section MMLems.
+
+Lemma nth_mul' : forall (A : list (list R)) b i j
+( Hj : (j < length b)%nat),
+(nth 0 (nth i A []) 0%R * nth j b 0%R =
+nth j (nth i (map (fun a0 : R => map (Rmult a0) b) (map (hd 0%R) A)) []) 0%R)%R.
+Proof.
+move =>  A. elim: A => [b i j H| a A IH b i j Hj] /=.
+destruct i; destruct j => /=; ring.   
+destruct i => /= //.
+rewrite hd_nth => /=. 
+rewrite (nth_map' (Rmult (nth 0 a 0%R)) 0%R 0%R j b) => //=.
+apply /ssrnat.ltP => //.
+specialize (IH b i j Hj). rewrite -IH => //.
+Qed.
+
+Lemma MM_nil_r {T : Type} (A : list (list T))
+  sum mult d m: 
+(@MM T d sum mult m A [::]) = zero_matrix m m d.
+Proof.  by []. Qed.
+
+Lemma MMR_nil_r A m: 
+(MMR m A [::]) = zero_matrix m m 0%R.
+Proof.  by []. Qed.
+
+Lemma MMR_nil_l B m : 
+B <> nil ->
+MMR m [::] B = [::].
+Proof. destruct B => //. Qed.
+
+Lemma MMF_nil_l {NAN: Nans} {t : type}  B m : 
+B <> nil ->
+@MMF NAN t m [::] B = [::].
+Proof. destruct B => //. Qed.
+
+Lemma MMR_length A B (m : nat) : 
+length A = m -> 
+length A = length (MMR m A B).
+Proof.
+move : B m .
+case : A => // [B| a A].
+  case : B  => /= [ m H1 | a A m H1] //.
+  rewrite MMR_nil_r. by rewrite -H1. 
+move => B. move: a A .  
+elim : B => //= [a A m H1 |b B IH a A m H1].
+   rewrite MMR_nil_r zero_matrix_length //. lia.
+rewrite mat_sum_length.
+by rewrite !map_length.
+rewrite -IH /=.
+rewrite !map_length //.
+rewrite !map_length //.
+Qed.
+
+Lemma in_mul'_length : forall (A : list (list R)) b a0,
+(length A = length b) ->
+In a0 (mul' 0%R Rmult A b) -> length a0 = length b.
+Proof.
+move =>  A b. move: A. 
+elim: b => /= [A a0 | ]. 
+rewrite /mul' /=. move => HA H.
+apply in_map_iff in H. elim H => x H1.
+  elim H1 => H2 H3. rewrite -H2 //.
+move => b0 b IH A a HA.
+rewrite /mul' /=. move => H.
+apply in_map_iff in H. elim H => x H1.
+  elim H1 => /= H2 H3. rewrite -H2 /=.
+rewrite map_length //.
+Qed.
+
+Lemma in_MMR_length A B (m : nat) : 
+length A = m -> 
+(forall b, In b B -> length b = m) ->
+forall v, In v (MMR m A B) -> length v = m.
+Proof. 
+move: A m. 
+elim: B => /= [A m Hlen1 Hlen2 v| b B IH A m H1 H2 v].
+rewrite MMR_nil_r //.
+apply in_zero_matrix_length.
+rewrite /MMR/MM . move => H.
+apply in_map_iff in H. 
+elim H => x H3. clear H.
+move: H3. elim: x => /=. move => x1 x2 H.
+elim H => H3 H4.  clear H.
+rewrite -H3 /map2/= map_length. clear H3.
+rewrite combine_length.
+fold (@MM R 0%R mat_sumR Rmult) in H4.
+fold (@MMR m (map (tl (A:=R)) A) B) in H4.
+have Hm : (Datatypes.length (map (tl (A:=R)) A)) = m.
+  by rewrite map_length.
+have Hm2 : 
+(forall b : seq.seq R, (In b B) -> (Datatypes.length b) = m).
+  move => b0 Hb. apply H2. by right.
+rewrite (IH (map (tl (A:=R)) A) m Hm Hm2 x2). 
+have Hx1 : length x1 = m.
+  rewrite (in_mul'_length A b x1).
+apply H2. by left.
+rewrite H1. symmetry. apply H2. by left.
+by apply in_combine_l in H4.
+rewrite Hx1 => //. lia. 
+by apply in_combine_r in H4.
+Qed.
+ 
+
+End MMLems. 

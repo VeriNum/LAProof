@@ -36,12 +36,12 @@ Notation m := (length A).
 Notation Ar := (map_mat FT2R A).
 Notation Br := (map_mat FT2R B).
 
-Hypothesis Hfin : is_finite_mat (MMF A B). 
+Hypothesis Hfin : is_finite_mat (MMF m A B). 
 Hypothesis Hsize: forall x y, In x A -> In y B -> length x = length y.
 
 Lemma mat_mat_mul_mixed_error:
   exists (E : matrix) (eta : matrix),
-    map_mat FT2R (MMF A B) =  MMR (Ar +m E) Br +m eta 
+    map_mat FT2R (MMF m A B) =  MMR m (Ar +m E) Br +m eta 
     /\ (forall i j, (i < m)%nat -> (j < n)%nat -> 
       Rabs (E _(i,j)) <= g n * Rabs (Ar _(i,j))) 
     /\ (forall i j, (i < m)%nat -> (j < n)%nat -> 
@@ -52,8 +52,9 @@ Proof.
 revert Hfin Hsize. 
 elim: A => [ Hfin Hlen | a Al IH Hfin Hsz].
 (* case A is nil *)
-{ exists (zero_matrix 0 0 0%R), (zero_matrix 0 0 0%R); repeat split => //=. }
-have Hfin2 : is_finite_mat (MMF Al B). move: Hfin => /=.  
+{ exists (zero_matrix 0 0 0%R), (zero_matrix 0 0 0%R); repeat split => //=.
+  rewrite /mat_sumR mat_sum_nil MMF_nil_l //=. }
+have Hfin2 : is_finite_mat (MMF m Al B). move: Hfin => /=.  
  rewrite /is_finite_mat !Forall_forall /is_finite_vec => Hf x Hin.
  apply Hf => /= []; by right. 
 have Hsz2 : forall x y : seq (ftype t), In x Al -> In y B -> length x = length y.
@@ -260,7 +261,7 @@ rewrite H. clear H.
 f_equal.
 have HlenA2 : m.+1 = Datatypes.length (map_mat FT2R A) by 
   (subst m;rewrite !map_length; lia).
-pose proof @matrix_to_mx_plus_m (map_mat FT2R A) E (m.+1) (n.+1) HlenA2.
+pose proof @matrix_to_mx_plus (map_mat FT2R A) E (m.+1) (n.+1) HlenA2.
 unfold map_mat in H. rewrite map_length in H.
 rewrite H. clear H. f_equal.
 destruct H4; lia.

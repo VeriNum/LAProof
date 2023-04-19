@@ -1,4 +1,6 @@
-(* This file contains basic lemmas about lists for this project. *)
+(** This file contains basic lemmas about lists. 
+    Copyright Ariel Kellison, 2023
+*)
 
 Require Import List Arith.
 Import List ListNotations.
@@ -158,3 +160,52 @@ intros.
 rewrite ! fold_symmetric by (intros; lra).
 induction al; simpl; intros; lra.
 Qed.
+
+Lemma hd_nth {A} (a : list A) d : 
+  hd d a = nth 0 a d.
+Proof. destruct a; simpl; auto. Qed.
+
+Lemma nth_nil i  {T: Type} d: 
+@nth T i (@nil T) d = d.
+Proof. induction i; simpl; auto. Qed.
+
+Lemma nth_tl {T} i a (d : T):
+nth i (tl a) d = nth (i+1) a d.
+Proof.
+revert i.
+destruct a; intros.
+rewrite nth_nil; simpl; 
+  destruct i; auto. 
+remember  (i + 1)%nat as n.
+destruct n; simpl; auto.
+lia. 
+assert (n = i)%nat by lia. rewrite H; auto.
+Qed.
+
+Lemma tl_length {A} n (a : list A) :
+  length a  = n -> length (tl a) = (n-1)%nat.
+Proof. 
+revert n. destruct a ; simpl; intros; lia.
+Qed.
+
+Lemma in_tl {T} (A : list (list T)): 
+forall a, In a A -> In (tl a) (map (@tl T) A).
+Proof. intros a H. apply in_map; auto. Qed. 
+
+Lemma in_tl_length {T} (A : list (list T)) n : 
+(forall a, In a A -> length a = n) -> 
+ forall a, In a (map (@tl T) A) -> 
+ length a = (n-1)%nat.
+Proof.
+revert n. induction A; simpl; intros;
+  try contradiction.
+destruct H0.
+rewrite <- H0. 
+apply tl_length. apply H; auto. 
+apply IHA; intros. 
+apply H; auto.
+apply H0; auto. 
+Qed.
+
+
+

@@ -252,7 +252,7 @@ rewrite H => //. clear H.
 f_equal.
 have HlenA2 : m.+1 = Datatypes.length (map_mat FT2R A) by 
   (subst m;rewrite !map_length; lia).
-pose proof @matrix_to_mx_plus_m (map_mat FT2R A) E (m.+1) (n.+1) HlenA2.
+pose proof @matrix_to_mx_plus (map_mat FT2R A) E (m.+1) (n.+1) HlenA2.
 unfold map_mat in H. rewrite map_length in H.
 rewrite H. clear H. f_equal.
 destruct H4; lia.
