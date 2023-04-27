@@ -207,5 +207,14 @@ apply H; auto.
 apply H0; auto. 
 Qed.
 
+Lemma list_cases {T} (A : list T) : 
+  (A = []) \/ ([] <> A).
+Proof. 
+destruct A; simpl; auto. 
+right. apply nil_cons. Qed. 
+
+
+
+
 
 
