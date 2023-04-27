@@ -3,7 +3,7 @@ Require Import List.
 Import ListNotations.
 Require Import common op_defs dotprod_model sum_model.
 Require Import dot_acc float_acc_lems list_lemmas.
-Require Import gem_defs gemv_acc mv_mathcomp.
+Require Import gem_defs mv_mathcomp gemv_acc.
 
 From mathcomp.analysis Require Import Rstruct.
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
@@ -20,342 +20,547 @@ Delimit Scope R_scope with Re.
 
 Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
-From mathcomp.algebra_tactics Require Import ring.
+Section DEFS.
+(* TODO : PUT THESE IN GEM_DEFS *)
+Definition size_col {T} (A : list (list T)) m n :=
+  length A = n /\
+  forall a, In a A -> length a = m.
 
-Section MixedErrorList. 
-(* mixed error bounds over lists *)
+Definition size_row {T} (A : list (list T)) m n :=
+  length A = m /\
+  forall a, In a A -> length a = n.
+
+End DEFS.
+
+Section LEMS. 
+(* TODO : PUT THESE IN GEM_DEFS *)
+Context {NAN: Nans} {t : type}.
+
+Lemma dotprodR_dist a b v : 
+length a = length b -> 
+dotprodR (a +v b) v = (dotprodR a v + dotprodR b v).
+Proof.
+move: a b.
+elim : v => //=.
+{ intros.
+rewrite! dotprodR_nil_r -!RplusE; nra. } 
+move => v0 v IH a. 
+case : a => //=.
+{ intros. 
+symmetry in H.
+rewrite length_zero_iff_nil in H.
+rewrite H. rewrite !dotprodR_nil_l -!RplusE; nra. } 
+move => a0 a b. case b => //=.
+intros. 
+rewrite /dotprodR. simpl. 
+rewrite !fold_left_Rplus_Rplus -RplusE.
+specialize (IH a l).
+rewrite /dotprodR/vec_sumR/vec_sum/map2 in IH.
+rewrite IH; [|lia].  rewrite -!RplusE; nra.
+Qed.
+
+Lemma MVR_dist A B v : 
+forall (Hlen : forall a b, In a A -> In b B -> 
+  length a = length b),  
+(A +m B) *r v = (A *r v) +v (B *r v).
+Proof.
+move : A v.
+elim: B => //=.
+{intros; rewrite /vec_sumR/vec_sum/map2/= 
+  combine_nil map_nil /mat_sumR mat_sum_nil
+  /mvR/MV//=. } 
+move => b B IH A.
+case : A => //=.
+move => a A v H.
+rewrite IH. clear IH.
+rewrite /vec_sumR vec_sum_cons. 
+f_equal.
+set (y:= vec_sumR a b).
+fold (vec_sum Rplus a b).
+fold (vec_sumR a b).
+apply dotprodR_dist.
+apply H; by left.
+move => a0 b0 H1 H2.
+apply H; by right.
+Qed.
+
+Lemma GEMM_nilC {T} (dot : vector -> vector -> T) 
+  (sum mul : T -> T -> T) (A B : @gem_defs.matrix T) (x y : T) : 
+  GEMM dot sum mul A B [] x y = [].
+Proof. by rewrite /GEMM/scaleM mat_sum_nil. Qed.
+
+Lemma GEMM_nilB {T} (dot : vector -> vector -> T) 
+  (sum mul : T -> T -> T) (A C : @gem_defs.matrix T) (x y : T) : 
+  GEMM dot sum mul A [] C x y = [].
+Proof. by rewrite /GEMM/scaleM/MMC/=mat_sum_nil_l. Qed.
+
+Lemma GEMM_cons {T} (dot : vector -> vector -> T) 
+  (sum mul : T -> T -> T) 
+  (A B C : @gem_defs.matrix T) b c (x y : T) :
+let hd := vec_sum sum (scaleV mul x (MV dot A b)) (scaleV mul y c) in
+GEMM dot sum mul A (b :: B) (c :: C) x y =  
+  hd :: GEMM dot sum mul A B C x y.
+Proof. rewrite /GEMM/mat_sum -(vec_sum_cons) /vec_sum /scaleM//=. Qed.
+
+Lemma scaleMR_cons y d D :
+scaleMR y (d :: D) = ((scaleVR y d) :: scaleMR y D).
+Proof. by []. Qed.
+
+
+Lemma GEMMR_distC  (A B C D: gem_defs.matrix ) (x y : R) :
+(forall c, In c C -> length c = length A) -> 
+length C = length B ->
+eq_size C D -> 
+GEMMR A B (C +m D) x y = (GEMMR A B C x y) +m (scaleMR y D).
+Proof.
+move : A B C.
+elim: D.
+{ intros. rewrite /scaleMR/scaleM/=.
+by rewrite /mat_sumR !mat_sum_nil/GEMMR GEMM_nilC. } 
+move => d D IH A B C. 
+case: C => //. 
+{ intros. destruct H1 => //. }  
+move => c C. 
+case: B => //.
+move => b B. intros. 
+simpl in H0. 
+rewrite mat_sumR_cons => //; try lia.
+rewrite /GEMMR !GEMM_cons.
+fold GEMMR vec_sumR scaleVR.
+rewrite IH; try lia. rewrite scaleMR_cons mat_sumR_cons. 
+rewrite !(vec_sumR_assoc). 
+f_equal. f_equal. 
+by rewrite -scaleVR_dist.
+rewrite !map_length;
+symmetry. by apply H; left. 
+rewrite !map_length. 
+destruct H1;
+by symmetry ;apply H2 => /=; left.
+rewrite !map_length combine_length !map_length.
+have HB : length B = length C by lia.
+have HC : length C = length D .
+destruct H1; simpl in H1. lia.
+rewrite HB HC. apply Nat.min_id.
+intros; apply H => /=; by right.
+destruct H1. simpl in H1.
+rewrite /eq_size; split; try lia.
+intros; apply H2 => /=; by right.
+destruct H1; simpl in H1; lia.
+Qed.
+
+(* END TODO *)
+
+End LEMS.
+
+Section MMERROR. 
+Context {NAN: Nans} {t : type}.
+
+Notation g := (@common.g t).
+Notation g1 := (@common.g1 t).
+
+Variable (A B: @matrix (ftype t)) (n : nat).
+
+Notation Ar := (map_mat FT2R A).
+Notation Br := (map_mat FT2R B).
+Notation m := (length A). (* m x n row matrix*)
+Notation p := (length B). (* n x p col matrix*)
+
+Hypothesis Hn : forall x, In x A -> length x = n.
+Hypothesis Hp : forall x, In x B -> length x = n.
+Hypothesis Hfin: is_finite_mat (MMCF A B).
+
+Theorem MMC_error:
+  exists (E eta: matrix),
+     map_mat FT2R (MMCF A B) = MMCR Ar Br +m E +m eta
+    /\ (forall k , (k < p)%nat-> 
+      exists (E0 : matrix) ,
+      (* the p elements of E are cols of length m *)
+      List.nth k E [] = E0 *r (List.nth k Br []) /\ 
+      (* the m elements of E0 are rows of length n *)
+      (forall i j, (i < m)%nat -> (j < n)%nat ->
+      Rabs (E0 _(i,j)) <= g n * Rabs (Ar _(i,j))))
+    /\ (forall i j, (i < p)%nat -> (j < m)%nat -> 
+      Rabs (eta _(i,j)) <= g1 n n) 
+    /\ size_col E m p
+    /\ size_col eta m p.
+Proof.
+revert Hfin Hn Hp. revert A n.  
+elim: B.
+{ rewrite /MMCF/MMCR/MMC/MV. 
+exists [],[]. repeat split => //=. }
+clear B. move => b B IH A. intros => /=.
+destruct (mat_vec_mul_mixed_error A b) as
+  (E & eta & Heq1 & HE & Heta & H1 & H2).
+{ apply is_finite_mat_cons in Hfin; by destruct Hfin. }
+{ move => row Hr. rewrite Hn => //=.
+by rewrite Hp => //=; left. }
+rewrite Heq1.
+rewrite CommonSSR.map_map_equiv.
+rewrite MVR_dist. 
+destruct (IH A n) as 
+  (E' & eta' & Heq & HE' & Heta' & H3 & H4).
+{ apply is_finite_mat_cons in Hfin; by destruct Hfin. }
+{ move => x Hx. 
+by apply Hn. } 
+{ move => x Hx. 
+by apply Hp; right. }
+rewrite Heq. clear IH.
+have Hb : length b = n.
+rewrite Hp => //=; by left.
+destruct H1; destruct H3; destruct H4.
+exists 
+  ((E *r List.map FT2R b) :: E'), (eta :: eta');
+repeat split => /=; try lia.
+{ intros. rewrite /matrix_index.
+destruct k => //=.
+exists E ; split => //.
+rewrite Hb in HE. by apply HE. 
+have Hk : is_true (k < p)%nat by lia.
+destruct (HE' k Hk) as (E0 & Heq2 & HE0). 
+exists E0; split => //. }
+{ intros. rewrite /matrix_index.
+destruct i => /=. 
+rewrite Hb in Heta. 
+apply Heta.
+apply nth_In;
+ rewrite H2 => //; lia.
+apply Heta' => //. }
+{ move => x [|] Hx. 
+rewrite -Hx. 
+by rewrite !map_length.
+by apply H3. } 
+{ move => x [|] Hx. 
+by rewrite -Hx. 
+by apply H5. } 
+move => a b0 Ha Hb0.
+destruct H1.
+apply in_map_iff in Ha. 
+destruct Ha as (x & Hx &Hx').
+rewrite -Hx map_length.
+symmetry; apply  (H0 b0 x Hb0 Hx').
+Qed.
+
+End MMERROR.
+
+Section SCALEERROR.
+Context {NAN: Nans} {t : type}.
+
+Notation g := (@common.g t).
+Notation g1 := (@common.g1 t).
+
+Variable (A : @matrix (ftype t)).
+Variable (x : ftype t) (n: nat).
+
+Notation m := (length A).
+Hypothesis Hp : forall x, In x A -> length x = n. (* A is (m x n) *)
+Hypothesis Hfin: is_finite_mat (scaleMF x A).
+
+Notation Ar := (map_mat FT2R A).
+
+Theorem scaleM_error:
+  exists (E eta: matrix),
+     map_mat FT2R (scaleMF x A) = scaleMR (FT2R x) (Ar +m E)
+    /\ (forall i j, (i < m)%nat -> (j < n)%nat -> 
+      Rabs (E _(i,j)) <= g n * Rabs (Ar _(i,j))) 
+    /\ (forall i j, (i < m)%nat -> (j < n)%nat -> 
+      Rabs (eta _(i,j)) <= g1 n n) 
+    /\ eq_size E A 
+    /\ eq_size eta A.
+Proof.
+Admitted.
+
+End SCALEERROR.
+
+Section MATADDERROR.
 Context {NAN: Nans} {t : type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
 
 Variable (A B: @matrix (ftype t)).
+Variable (m n p: nat).
 
-Notation n := (length B).
-Notation m := (length A).
+Hypothesis HA : size_row A m n.
+Hypothesis HB : size_row B n p.
+Hypothesis Hfin: is_finite_mat (mat_sumF A B).
+
 Notation Ar := (map_mat FT2R A).
 Notation Br := (map_mat FT2R B).
 
-Hypothesis Hfin : is_finite_mat (MMF m A B). 
-Hypothesis Hsize: forall x y, In x A -> In y B -> length x = length y.
-
-Lemma mat_mat_mul_mixed_error:
-  exists (E : matrix) (eta : matrix),
-    map_mat FT2R (MMF m A B) =  MMR m (Ar +m E) Br +m eta 
+Theorem mat_sum_error:
+  exists (EA EB eta: matrix),
+     map_mat FT2R (mat_sumF A B) = (mat_sumR (Ar +m EA) (Br +m EB)) +m eta
     /\ (forall i j, (i < m)%nat -> (j < n)%nat -> 
-      Rabs (E _(i,j)) <= g n * Rabs (Ar _(i,j))) 
+      Rabs (EA _(i,j)) <= g n * Rabs (Ar _(i,j))) 
+   /\ (forall i j, (i < m)%nat -> (j < n)%nat -> 
+      Rabs (EB _(i,j)) <= g n * Rabs (Br _(i,j))) 
     /\ (forall i j, (i < m)%nat -> (j < n)%nat -> 
-      Rabs (E _(i,j)) <= g1 n n)
-    /\ eq_size E A 
+      Rabs (eta _(i,j)) <= g1 n n) 
+    /\ eq_size EA A 
+    /\ eq_size EB A 
     /\ eq_size eta A.
 Proof.
-revert Hfin Hsize. 
-elim: A => [ Hfin Hlen | a Al IH Hfin Hsz].
-(* case A is nil *)
-{ exists (zero_matrix 0 0 0%R), (zero_matrix 0 0 0%R); repeat split => //=.
-  rewrite /mat_sumR mat_sum_nil MMF_nil_l //=. }
-have Hfin2 : is_finite_mat (MMF m Al B). move: Hfin => /=.  
- rewrite /is_finite_mat !Forall_forall /is_finite_vec => Hf x Hin.
- apply Hf => /= []; by right. 
-have Hsz2 : forall x y : seq (ftype t), In x Al -> In y B -> length x = length y.
-  move => x y Hx Hy. apply Hsz => //=; by right.
-destruct (IH Hfin2 Hsz2) as (E & eta & IH1 & IH2 & IH3 & IH4 & IH5) => /=.
-  clear IH; rewrite IH1; clear IH1.
-destruct (mat_vec_mul_mixed_error B a) as (u & ueta & X & Y & Z1 & Z2).
-  { move : Hfin => /=. rewrite /is_finite_mat !Forall_forall => Hx. 
-  apply Hx => /=. by left. }    
-  { move => row Hrow. by rewrite (Hsz a row) => //=; left. } 
-  rewrite X. rewrite !CommonSSR.map_map_equiv 
-  revert Hfin'; rewrite /is_finite_vec => Hfin'; apply Hfin'; left => /= //.
-have Hlen': length a = n by apply Hlen; left => //. 
-have Hfin1 : Binary.is_finite (fprec t) (femax t) (dotprodF a v) = true by 
-  revert Hfin'; rewrite /is_finite_vec => Hfin'; apply Hfin'; left => /= //.
-destruct (dotprod_mixed_error a v Hlen' Hfin1) as (u & ueta & X & Y & Z1 & Z2).
-set (A':= (map FT2R a :: map_mat FT2R l) : matrix).
-have Ha: (length u = length (map FT2R a)) by rewrite map_length; lia.
-have : (length l = 0)%nat \/ (0 < length l)%nat by lia. move => [Hl | Hl].
-{  apply length_zero_iff_nil in Hl; subst => /=.
-exists (vec_sum u (map FT2R a) Rminus :: []) , ([ueta]); repeat split.
-{ rewrite Y => /=. 
-rewrite !CommonSSR.map_map_equiv.
-rewrite CommonSSR.map_map_equiv map_length in Ha.
-suff Hs: map2 Rplus (List.map FT2R a)
-         (u -v List.map FT2R a) = u.
-rewrite Hs vec_sumR_bounds => /= //.
-fold (@vec_sum R (List.map FT2R a) (u -v List.map FT2R a) Rplus).
-fold (vec_sumR (List.map FT2R a) (u -v List.map FT2R a)).
-rewrite vec_sumR_comm. rewrite vec_sumR_opp => //.
-fold (@vec_sumR u (List.map Ropp (List.map FT2R a))).
-rewrite vec_sumR_assoc. rewrite vec_sumR_minus.
-rewrite /vec_sumR map_length -Ha vec_sum_zeroR => //.
-1, 2, 3 : by rewrite !map_length => //.
-rewrite /vec_sum/map2 !map_length 
-  combine_length map_length Ha; lia. }
-{ move =>  i j Hi Hj.
-rewrite !CommonSSR.map_map_equiv; rewrite /vec_sum/map2 /= in IH2.
-assert (i = 0)%nat by lia; subst.
-subst A'. rewrite /matrix_index => /=.
-rewrite nth_vec_sum => /= //; [|nra].
-have Hj' : (j < n)%coq_nat by lia.
-destruct (Z1 j Hj') as (x & HB & HC); rewrite HB.
-have H1 : (FT2R (List.nth j a neg_zero) = List.nth j (List.map FT2R a) 0%R) by
-pose proof @map_nth (ftype t) R (FT2R) a neg_zero j. 
-rewrite H1; apply /RleP; field_simplify_Rabs.
-rewrite Rabs_mult Rmult_comm.
-by apply Rmult_le_compat_r => //; apply Rabs_pos => /= . }
-move => k /= [H | H] //. subst; apply /RleP => //. 
-rewrite !CommonSSR.map_map_equiv => /=.
-move => x y [Hx|Hx] [Hy|Hy]; subst => //.
-rewrite /vec_sum/map2 map_length combine_length Ha 
-  CommonSSR.map_map_equiv map_length; lia. }
-exists (vec_sum u (map FT2R a) Rminus :: E) , (ueta::eta); repeat split.
-{
-rewrite CommonSSR.map_map_equiv map_length in Ha.
- rewrite Y; clear Y => /=.
-rewrite !CommonSSR.map_map_equiv => /=.
-suff: map2 Rplus (List.map FT2R a) (u -v List.map FT2R a) =  u.
-move => Hs. rewrite Hs vec_sumR_bounds => //.
-fold (@vec_sum R (List.map FT2R a) (u -v List.map FT2R a) Rplus).
-fold (vec_sumR (List.map FT2R a) (u -v List.map FT2R a)).
-rewrite vec_sumR_comm. rewrite vec_sumR_opp => //.
-fold (@vec_sumR u (List.map Ropp (List.map FT2R a))).
-rewrite vec_sumR_assoc. rewrite vec_sumR_minus.
-rewrite map_length -Ha /vec_sumR vec_sum_zeroR => //.
-1, 2, 3: rewrite !map_length => //.
-rewrite /vec_sum/map2 !map_length 
-  combine_length map_length Ha; lia. }
-{ revert Ha. rewrite CommonSSR.map_map_equiv map_length. 
-destruct u => /=. 
-{ move => Ha i j Hi Hj; symmetry in Ha; rewrite length_zero_iff_nil in Ha; 
-subst => /=; rewrite /matrix_index => /=.
-destruct i; destruct j => /= //. 
-1, 2: rewrite Rabs_R0 -RmultE Rmult_0_r; apply /RleP; nra.
-1, 2: apply IH2; lia. }
-{ move => Ha i j Hi Hj. revert Ha.
-rewrite vec_sumR_opp. destruct a => /= //.
-subst A' => /= Ha.
-have H1 : (j < n)%coq_nat by lia.
-destruct (Z1 j H1) as (d & Hd1 & Hd2).
-destruct i; rewrite /matrix_index; destruct j => /= //.
-revert Hd1 => /= Hd1; rewrite Hd1. 
-  apply /RleP; field_simplify_Rabs; rewrite Rabs_mult Rmult_comm.
-  apply Rmult_le_compat; 
-  [ apply Rabs_pos | apply Rabs_pos | | apply Req_le ] => //.
-{ fold (map2 Rplus u (List.map Ropp (List.map FT2R a))).
-fold (vec_sum u (List.map Ropp (List.map FT2R a)) Rplus).
-fold (vec_sumR u (List.map Ropp (List.map FT2R a))).
-rewrite /vec_sumR -(vec_sumR_opp) => //.
-rewrite -(vec_sumR_nth); revert Hd1 => /= Hd1. rewrite Hd1.
-suff: List.nth j (List.map FT2R a) 0 =
- (List.nth j (List.map FT2R a) (@FT2R t neg_zero)).
-move => Hs; rewrite Hs map_nth; apply /RleP; field_simplify_Rabs. 
-rewrite Rabs_mult Rmult_comm; apply Rmult_le_compat; 
-  [ apply Rabs_pos | apply Rabs_pos | apply Hd2 | apply Req_le; auto].
-f_equal.  
-1, 2 : rewrite map_length; simpl in Ha; lia. }
-1, 2 : by unfold matrix_index in IH2; apply IH2.
-rewrite X map_length. lia. } } 
-move => k /=. move => [Hk | Hk]. 
-  subst. apply /RleP; apply Z2.
-  apply IH3 => //.
-by rewrite CommonSSR.map_map_equiv /vec_sum /=;
-  destruct IH4; lia.
-move => x y /=. 
-  rewrite CommonSSR.map_map_equiv. move => [Hx | Hx] [Hy | Hy] /= .
-  subst; rewrite /vec_sum/map2 map_length combine_length.
-  rewrite CommonSSR.map_map_equiv in Ha. rewrite Ha map_length; lia.
-  subst; rewrite /vec_sum/map2 map_length combine_length.
-  rewrite CommonSSR.map_map_equiv in Ha. rewrite Ha map_length.
-  rewrite (Hin2 y) => //; rewrite Hlen' ; lia.
-  destruct IH4. rewrite (Hlen y); [|left] => //.
-set (l0 := List.nth 0 l [neg_zero]).
-assert (In l0 l). apply nth_In; lia.
-specialize (H0 x l0 Hx H1). rewrite H0.
-apply Hin2 => //.
-destruct IH4.
-specialize (H0 x y Hx Hy). rewrite H0 => //.
-simpl; lia.
-Qed.
 
-End MixedErrorList.
+Admitted.
 
-Section MixedErrorMath.  
+End MATADDERROR.
 
-From mathcomp Require Import matrix all_algebra bigop.
-
-Require Import VST.floyd.functional_base.
-
-Open Scope R_scope.
-Open Scope ring_scope.
-
-Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with Re.
-
+Section VECSUMERROR.
 Context {NAN: Nans} {t : type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
 
-Variable (A: @gem_defs.matrix (ftype t)).
-Variable (v: @gem_defs.vector (ftype t)).
-
-Hypothesis Hlenv : ( 0 < length v)%nat.
-Hypothesis HlenA : ( 0 < length A)%nat.
-Let m := (length A - 1)%nat.
-Let n := (length v - 1)%nat.
-
-Notation Ar := (matrix_to_mx (m.+1) (n.+1) (map_mat FT2R A)).
-Notation vr := (vector_to_vc (n.+1) (map FT2R v)).
-
-Hypothesis Hfin : is_finite_vec (A *f v).
-Hypothesis Hlen : forall x, In x A -> length x = n.+1.
-
-Notation " i ' " := (Ordinal i) (at level 40).
-
-From mathcomp.algebra_tactics Require Import ring.
-
-Notation Av := (vector_to_vc (m.+1) (A *fr v)).
-
-Lemma mat_vec_mul_mixed_error':
-  exists (E : 'M[R]_(m.+1,n.+1)) (eta : 'cV[R]_m.+1),
-    Av =  (Ar + E) *m vr + eta 
-    /\ (forall i j (Hi : (i < m.+1)%nat) (Hj : (j < n.+1)%nat), 
-      Rabs (E  (Hi ') (Hj ')) <= g n.+1 * Rabs (Ar  (Hi ') (Hj ')))
-    /\ forall i (Hi: (i < m.+1)%nat), Rabs (eta (Hi ')  0) <= g1 n.+1 n.+1 .
+Lemma vec_sumF_mixed_error :
+  forall (u v: @vector (ftype t))
+    (Hfinv : is_finite_vec (vec_sumF u v))
+    (Hlen : length u = length v),
+    let vr:= map FT2R v in
+    let ur:= map FT2R u in
+    let m := length v in
+  exists (e1 e2 : vector),
+  map FT2R (vec_sumF u v) = vec_sumR (ur +v e1) (vr +v e2)
+  /\ (forall i, (i < m)%nat -> exists d,
+      List.nth i e1 0 = (List.nth i ur 0%R) * d
+        /\ Rabs d <= g m)
+  /\ (forall i, (i < m)%nat -> exists d,
+      List.nth i e2 0 = (List.nth i vr 0%R) * d
+        /\ Rabs d <= g m)
+  /\ length e1   = length u
+  /\ length e2   = length v.
 Proof.
-have Hlen' : forall x : seq.seq (ftype t), In x A -> Datatypes.length x = length v.
-  move => x Hin. rewrite Hlen => //. lia. 
-destruct (mat_vec_mul_mixed_error A v Hfin Hlen') as 
-  (E & eta & H1 & H2 & H3 & H4 & H5).
-exists (matrix_to_mx m.+1 n.+1 E), (vector_to_vc m.+1 eta); 
-  split. rewrite H1.
-have He : (m.+1 = Datatypes.length eta) by lia.
-pose proof @vector_to_vc_plus' ((map_mat FT2R A +m E) *r map FT2R v) eta (m.+1) He.
-  rewrite H5 in H. rewrite H. clear H.
-f_equal.
-have Hlen2: length (map_mat FT2R A +m E) = length A.
-  destruct H4.
-  rewrite /map_mat map_length combine_length H !map_length; lia.
-have Hin1 : 
-(forall x : seq.seq R,
-      In x (map_mat FT2R A +m E) -> Datatypes.length x = Datatypes.length (List.map FT2R v)). 
-apply matrix_sum_preserves_length'.
-destruct H4. intros.
-rewrite map_length.
-set (y := nth 0 A []).
-have Hy : In y A. subst y; apply nth_In; lia.
-specialize (H0 x y H4 Hy); rewrite H0.
-apply Hlen'; auto.
-move => x Hx. 
-apply list_in_map_inv in Hx.
-destruct Hx as (x0 & Hx0 & Hx0').
-subst.
-rewrite !map_length.
-apply Hlen'; auto.
-have HlenA1 : m.+1 = length (map_mat FT2R A +m E) by (subst m; lia).
-have Hlen1 : n.+1 = length (map FT2R v) by 
-  (subst n; rewrite !map_length; lia).
-rewrite -Hlen1 in Hin1.
-pose proof vector_to_vc_mulmx_m HlenA1 Hlen1 Hin1.
-rewrite H. clear H.
-f_equal.
-have HlenA2 : m.+1 = Datatypes.length (map_mat FT2R A) by 
-  (subst m;rewrite !map_length; lia).
-pose proof @matrix_to_mx_plus (map_mat FT2R A) E (m.+1) (n.+1) HlenA2.
-unfold map_mat in H. rewrite map_length in H.
-rewrite H. clear H. f_equal.
-destruct H4; lia.
-move => a e Ha Hep; split. 
-apply list_in_map_inv in Ha.
-destruct Ha as (x0 & Hx0 & Hx0').
-subst. rewrite map_length. apply Hlen; auto.
-destruct H4.
-apply list_in_map_inv in Ha.
-destruct Ha as (x0 & Hx0 & Hx0').
-subst. pose proof (H4 e x0 Hep Hx0').
-rewrite H6. apply Hlen; auto.
-destruct H4.
-rewrite /map_mat/mat_sumR/mat_sum/map2 !map_length combine_length
-  map_length; lia.
-split.
-{ move => i j Hi Hj.
- rewrite -(matrix_to_mx_index E Hi Hj).
- rewrite -(matrix_to_mx_index (map_mat FT2R A) Hi Hj).
-have HA : (length A = m.+1) by (subst m; lia).
-have Hv : (length v = n.+1) by (subst m; lia).
-rewrite HA Hv in H2. 
-specialize (H2 i j Hi Hj).
-subst n => /= //. }
-move => i Hi.
-rewrite vector_to_vc_index => /= //.
-have Hv : (length v = n.+1) by (subst m; lia).
-rewrite Hv in H3.
-apply H3. apply nth_In. lia.
+move => u. 
+(* main induction on right vector *)
+elim u. 
+{ move => v /=; intros. 
+exists [], [] => /=; repeat split => //=.
+rewrite -Hlen. intros => //.
+rewrite -Hlen. intros => //. }  
+clear u; move => u0 u IH v.
+(* main induction *)
+case: v => //. 
+move => v0 v. intros. 
+rewrite /vec_sumF vec_sum_cons.
+have Hfin:  is_finite_vec (vec_sum BPLUS u v) /\
+  (Binary.is_finite  _ _ (BPLUS u0 v0) = true).
+simpl in Hfinv. rewrite /vec_sumF vec_sum_cons in Hfinv.  
+apply is_finite_vec_cons in Hfinv.
+destruct Hfinv => //.
+destruct Hfin as (H1f & H2f).
+rewrite /vec_sumF in IH. 
+destruct (IH v) as (e1 & e2 & Heq & H) => //; clear IH.
+simpl in Hlen; lia.
+simpl; rewrite Heq.
+destruct (BPLUS_accurate' u0 v0) as (del & Hd & H1) => //.
+rewrite H1; clear H1.
+rewrite !CommonSSR.map_map_equiv/=.
+exists (((FT2R u0) * del) :: e1), (((FT2R v0) * del) :: e2);
+  repeat split. 
+{ rewrite /ur/vr/=/vec_sumR !vec_sum_cons.
+f_equal. 
+rewrite -!RmultE; nra. }
+{ move => i Hi; destruct i => /=.
+exists del; split => //=.
+apply /RleP. 
+eapply Rle_trans. 
+apply Hd. apply d_le_g_1; lia. 
+destruct H as (H & H1).
+elim: (H i). 
+clear H; move => d' Hd'.
+destruct Hd' as (Hd' & Hd'').
+exists d'; split => //=.
+eapply le_trans. apply Hd''.
+unfold m => //=. apply /RleP; auto with commonDB.
+unfold m in Hi; simpl in Hi; lia. } 
+{ move => i Hi; destruct i => /=.
+exists del; split => //=.
+apply /RleP. 
+eapply Rle_trans. 
+apply Hd. apply d_le_g_1; lia. 
+destruct H as (_ & H1 & _).
+elim: (H1 i). 
+clear H1; move => d' Hd'.
+destruct Hd' as (Hd' & Hd'').
+exists d'; split => //=.
+eapply le_trans. apply Hd''.
+unfold m => //=. apply /RleP; auto with commonDB.
+unfold m in Hi; simpl in Hi; lia. } 
+all : simpl; lia. 
 Qed.
 
-End MixedErrorMath.
+End VECSUMERROR.
 
-Section ForwardError.
-From mathcomp Require Import matrix .
-
+Section SCALEVERROR.
 Context {NAN: Nans} {t : type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
 
-Variable (A: @gem_defs.matrix (ftype t)).
-Variable (v: @gem_defs.vector (ftype t)).
-
-Hypothesis Hlenv : ( 0 < length v)%nat.
-Hypothesis HlenA : ( 0 < length A)%nat.
-Let m := (length A - 1)%nat.
-Hypothesis Hlenv1: (length v - 1)%nat = m.
-
-Notation Ar := (matrix_to_mx m.+1 m.+1 (map_mat FT2R A)).
-Notation vr := (vector_to_vc m.+1 (map FT2R v)).
-
-Hypothesis Hfin : is_finite_vec (A *f v).
-Hypothesis Hlen : forall x, In x A -> length x = m.+1.
-
-Notation " i ' " := (Ordinal i) (at level 40).
-
-Notation Av' := (vector_to_vc m.+1 (map FT2R (mvF A v))).
-
-Notation "| u |" := (normv u) (at level 40).
-
-Theorem forward_error :
- |Av' - (Ar *m vr)| <= (g m.+1 * normM Ar * |vr|) + g1 m.+1 m.+1.
+Lemma scaleV_mixed_error :
+  forall (v: @vector (ftype t)) (a : ftype t)
+    (Hfinv : is_finite_vec (scaleVF a v)),
+    let vr:= map FT2R v in
+    let m := length v in
+  exists (e eta: vector),
+  map FT2R (scaleVF a v) =  scaleVR (FT2R a) (vr +v e) +v eta
+  /\ (forall i, (i < m)%nat -> exists d,
+      List.nth i e 0 = (List.nth i vr 0%R) * d
+        /\ Rabs d <= g m) 
+  /\ (forall e0, In e0 eta -> Rabs e0 <= g1 m m) 
+  /\ length e   = length v
+  /\ length eta = length v .
 Proof.
-destruct (mat_vec_mul_mixed_error' A v) as (E & eta & HE & H1 & H2) => //.
-rewrite Hlenv1 => //.
-rewrite HE mulmxDl. fold m. clear HE.  
-have Hvr : vector_to_vc m.+1 (List.map FT2R v) = vr => //=.
-move: H1. move: E. rewrite Hlenv1 Hvr. move => E H1.
-have H0 : Ar *m vr + E *m vr + eta - Ar *m vr = E *m vr + eta. 
-remember (Ar *m vr) as y. remember (E *m vr) as x. subst m. 
-apply /matrixP => i j; do ![rewrite mxE | ] => /=; ring.
-rewrite H0. clear H0. fold m in H1, H2.
-eapply (le_trans (normv_triang _ _ )). 
-apply ler_add.
-eapply (le_trans (subMultNorm _ _ )).
-apply ler_pmul => //. 
-apply normM_pos.
-apply normv_pos.
-rewrite /normM mulrC big_max_mul.
-apply le_bigmax2 => i0 _. 
-rewrite /sum_abs.
-rewrite big_mul =>  [ | i b | ]; try ring.
-apply ler_sum => i _.
-rewrite mulrC.
-  destruct i0. destruct i. apply H1.
-apply /RleP; auto with commonDB.
-apply /RleP; auto with commonDB.
-rewrite /normv.
-apply bigmax_le => [|i _].  
-apply /RleP; auto with commonDB.
-destruct i. 
-rewrite Hlenv1 in H2.
-apply H2.
+move => v.
+elim: v => /= [a _|].
+{ rewrite /vec_sumR/vec_sum/map2/=. 
+  by exists [], []. }
+move => v0 v IH. intros. 
+have Hfin':  is_finite_vec (scaleVF a v) /\
+Binary.is_finite _ _ (BMULT a v0).
+  by apply is_finite_vec_cons in Hfinv.
+case Hfin' =>  HA HB.
+destruct (IH a) as 
+  (e & eta & Heq & He & Heta) => //.
+clear IH. rewrite Heq. clear Heq.
+destruct (BMULT_accurate a v0) as 
+  (del & eps & HD & HE & HF & Heq).
+by apply is_finite_BMULT_no_overflow.
+rewrite Heq. clear Heq.
+remember ((FT2R v0) * del) as d.
+exists (d :: e), (eps :: eta); repeat split.
+{ rewrite /scaleVR/vec_sumR/vec_sum/map2/= Heqd -RmultE;
+f_equal; nra. }
+{ move => i Hi. rewrite Heqd.
+destruct i => /=.
+exists del; split; [nra|].
+apply /RleP. eapply Rle_trans.
+apply HE => /=. rewrite -Nat.add_1_r;
+auto with commonDB. 
+have Hi': (i < length v)%nat by lia.
+destruct (He i Hi') as (x & He' & Hx).
+rewrite He'. 
+exists x; split => //=. 
+eapply le_trans. apply Hx. 
+apply /RleP; auto with commonDB. }
+move => e0 [Hin| Hin].
+{ rewrite -Hin. apply /RleP.
+  eapply Rle_trans; [apply HF|].
+  apply e_le_g1; lia. }
+eapply le_trans. apply Heta => //.
+apply /RleP. apply g1n_le_g1Sn'.
+all: simpl; lia.
 Qed.
 
-End ForwardError. 
+End SCALEVERROR.
+
+Section GEMMERROR.
+Context {NAN: Nans} {t : type}.
+
+Notation g := (@common.g t).
+Notation g1 := (@common.g1 t).
+
+Variable (A B C : @matrix (ftype t)).
+Variable (x y : ftype t).
+Variable (m n p : nat).
+
+Notation Ar := (map_mat FT2R A).
+Notation Br := (map_mat FT2R B).
+Notation Cr := (map_mat FT2R C).
+
+Hypothesis Hn : forall x, In x A -> length x = n.
+Hypothesis Hp : forall x, In x B -> length x = n.
+Hypothesis Hfin: is_finite_mat (GEMMF A B C x y).
+Hypothesis HA : size_row A m n.
+Hypothesis HB : size_col B n p.
+Hypothesis HC : size_col C m p.
+
+Theorem GEMM_error:
+  exists (EC E eta: matrix),
+     map_mat FT2R (GEMMF A B C x y) = 
+          (GEMMR Ar Br (Cr +m EC) (FT2R x) (FT2R y)) +m E +m eta
+    /\ (forall k , (k < p)%nat-> 
+      exists (E0 : matrix) ,
+      (* the p elements of E are cols of length m *)
+      List.nth k E [] = E0 *r (List.nth k Br []) /\ 
+      (* the m elements of E0 are rows of length n *)
+      (forall i j, (i < m)%nat -> (j < n)%nat ->
+      Rabs (E0 _(i,j)) <= g n * Rabs (Ar _(i,j))))
+    /\ (forall i j, (i < p)%nat -> (j < m)%nat -> 
+      Rabs (eta _(i,j)) <= g1 n n) 
+    /\ eq_size EC C
+    /\ size_col E m p
+    /\ size_col eta m p.
+Proof.
+revert Hn HA HB HC Hp Hfin.
+revert A C x y m n p.
+elim : B. clear B.
+{ intros. exists [], [], [].
+rewrite /GEMMF/GEMMR GEMM_nilB /mat_sumR/=. 
+rewrite GEMM_nilB. rewrite mat_sum_nil; repeat split => //=.
+{ intros. exists []; split. 
+rewrite /mvR/MV/=. destruct k => //.
+intros. rewrite /matrix_index/=.
+destruct i; destruct j => //=;
+rewrite Rabs_R0 -RmultE; apply mulr_ge0; apply /RleP;
+  auto with commonDB; apply Rabs_pos. }
+intros. rewrite /matrix_index/=.
+destruct i; destruct j => //=;
+rewrite Rabs_R0; apply /RleP;
+auto with commonDB.
+all : (destruct HC; destruct HB; 
+simpl in H1; lia). } 
+clear B. move => b B IH A C. 
+elim: C => //.
+{ exists [], [], []. 
+rewrite /GEMMF GEMM_nilC/=. admit. }
+clear C. move => c C. intros => /=.
+destruct HB as (HB1 & HB2). 
+clear HB; destruct p => //; clear p.
+destruct (IH A C x y m n n0) as
+  (E1 & E2 & E3 & Heq & H4) => //;
+clear H.
+(* IH conds *)
+{ rewrite /size_col; split.
+simpl in HB1; lia.
+by intros; apply HB2 => /=; right. }
+{ rewrite /size_col; split; destruct HC.
+simpl in H; lia.
+by intros; apply H0; right. } 
+{by intros; apply Hp; right. }
+{ move: Hfin. rewrite /GEMMF GEMM_cons.
+apply is_finite_mat_cons. } 
+(* main *)
+rewrite Heq. clear Heq IH.
+remember (List.map (BMULT x) (MV dotprodF A b))
+  as U.
+remember (List.map (BMULT y) c) as V.
+(* apply vector sum mixed error *)
+destruct (vec_sumF_mixed_error U V)
+ as (e1 & e2 & Heq1 & He).
+admit. admit.
+rewrite !CommonSSR.map_map_equiv in Heq1.
+rewrite Heq1.
+(* apply vec scale mixed error *)
+destruct (scaleV_mixed_error (MV dotprodF A b) x) as
+  (e3 & eta3 & Heq3 & H3).
+admit. 
+rewrite !CommonSSR.map_map_equiv in Heq3.
+subst U. rewrite Heq3; clear Heq3.
+destruct (scaleV_mixed_error c y) as
+  (e4 & eta4 & Heq4 & H4').
+admit. 
+rewrite !CommonSSR.map_map_equiv in Heq4.
+subst V. rewrite Heq4; clear Heq4.
+(* apply matrix vector mized error *)
+destruct (mat_vec_mul_mixed_error A b)
+  as (E & eta & HeqE & H5).
+admit.
+admit.
+rewrite !CommonSSR.map_map_equiv in HeqE.
+rewrite HeqE. clear HeqE.
+rewrite  MVR_dist.
+rewrite GEMMR_distC.
+Admitted.
+
+End GEMMERROR.
+
