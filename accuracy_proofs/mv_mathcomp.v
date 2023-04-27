@@ -59,13 +59,14 @@ destruct k; destruct i => /=;
 destruct m1; destruct m0 => /=. 
 Qed.
 
-Lemma vector_to_vc_nil : 
-vector_to_vc 0 [] = 0.
+Lemma vector_to_vc_nil m: 
+vector_to_vc m [] = 0.
 Proof. 
-by rewrite /vector_to_vc/getv // /=;
-apply/matrixP =>  k i /[!mxE] /=;
-destruct k. 
+rewrite /vector_to_vc/getv // /=.
+apply/matrixP =>  k i /[!mxE] /=.
+by destruct (nat_of_ord k).
 Qed.
+
 
 Lemma matrix_sum_preserves_length' B E m0:
 (forall x, In x E -> length x = m0 ) -> 
@@ -139,68 +140,6 @@ Lemma vec_sum_nth_plus : forall u1 u2
 nth i (u1 +v u2) 0 = nth i u1 0 + nth i u2 0.
 Proof. by apply gem_defs.vec_sum_nth_plus. Qed.
 
-(*
-Lemma matrix_to_mx_plus : forall A E 
-  (Hlen1: length A = length E)
-  (Hlen2: forall a e, In a A -> In e E -> length a = length e),
-  matrix_to_mx (length A) (length E) (A +m E) = 
-matrix_to_mx (length A) (length E) A + matrix_to_mx(length A) (length E) E.
-Proof.
-move => A E Hlen1 Hlen2.
-rewrite /matrix_to_mx/getm => /=.
-apply /matrixP => i j; do ![rewrite mxE | ].
-rewrite  -(vec_sum_nth_plus).
-f_equal. clear j. revert Hlen1 Hlen2 i. revert E.
-elim :A  => [| a l IH E Hlen1 Hin i].
-  destruct i => //.
-destruct E => //. destruct i; destruct m => /= //.
-have Hlen3 : length l = length E. simpl in Hlen1 . lia.
-have Hin1 : (forall a e : seq.seq R,
-     In a l ->
-     In e E -> Datatypes.length a = Datatypes.length e) by
-  (move => a0 e Ha He; apply Hin; simpl; right => //).
-have Hn : (m < length E)%nat. simpl in i. rewrite -Hlen3. lia. 
-rewrite -Hlen3 in Hn.
-have Hnord : (nat_of_ord (Ordinal Hn) = m) => //.
-specialize (IH E Hlen3 Hin1 (Ordinal Hn)). rewrite Hnord in IH. 
-rewrite -IH. f_equal.
-by symmetry; apply Hlen2; apply nth_In => //; destruct i => /= ; lia.
-Qed.
-
-Lemma matrix_to_mx_plus' : forall A E m
-  (Hlen1: length A = length E)
-  (Hlen2: forall a e, In a A -> In e E -> length a =  m 
-    /\ length e = m),
-  matrix_to_mx (length A) m (A +m E) = 
-  matrix_to_mx (length A) m A + matrix_to_mx (length A) m E.
-Proof.
-move => A E m Hlen1 Hlen2.
-rewrite /matrix_to_mx/getm => /=.
-apply /matrixP => i j; do ![rewrite mxE | ].
-rewrite -(vec_sum_nth_plus).
-f_equal. clear j. revert Hlen1 Hlen2 i. revert E.
-elim :A  => [  |  a l IH E Hlen1 Hin i].
-by destruct i.
-destruct E => //. 
-destruct i; destruct m0 => /= //.
-have Hlen3 : length l = length E. simpl in Hlen1 . lia.
-have Hin1 : (forall a e : seq.seq R,
-     In a l ->
-     In e E -> length a = m /\ length e = m).
-  move => a0 e Ha He. 
-specialize (Hin a0 e). apply Hin; simpl; auto.
-have Hm0 : (m0 < length E)%nat. simpl in i. 
-rewrite -Hlen3. lia. rewrite -Hlen3 in Hm0.
-have Hnord : (nat_of_ord (Ordinal Hm0) = m0) => //.
-specialize (IH E Hlen3 Hin1 (Ordinal Hm0)). rewrite Hnord in IH. 
-rewrite -IH. f_equal. symmetry.
-have Hlen3 : (length (nth i A []) = m /\ length (nth i E []) = m).
-apply (Hlen2  (nth i A []) (nth i E [])); apply nth_In;
-destruct i => /= ; lia.
-by destruct Hlen3; etransitivity; [apply H | ].
-Qed.
-*)
-
 Lemma matrix_to_mx_plus : forall A E m n
   (Hm   : m = length A)
   (Hlen1: length A = length E)
@@ -238,260 +177,134 @@ destruct i => /= ; lia.
 by destruct Hlen3; etransitivity; [apply H | ].
 Qed.
 
+Lemma nth_rowM_big a B m n i:
+forall
+(Hn : length a = n)
+(Hm : forall b, In b B -> length b = m)
+(Hord : (0 < 1)%nat)
+(Hordi : (i < m)%nat),
+(nth i (rowM 0%R vec_sumR Rmult m a B) 0%R) = 
+  \sum_(j < n) (vector_to_vc n a) j (Ordinal Hord) * 
+                    (matrix_to_mx n m B) j (Ordinal Hordi).
+Proof.
+move: a B m i. 
+elim: n => /=.
+{ intros.
+rewrite length_zero_iff_nil in Hn.
+by rewrite big_ord0 Hn /= nth_zero_vector. }
+move=> n IH a. 
+case: a => //. 
+move => a0 a B.
+case: B => /=.
+{ intros.
+rewrite nth_zero_vector big1 //= => Hi _.
+by rewrite matrix_to_mx_nil !mxE mulr0. } 
+move => b B m /=. intros.
+have Hm' : 
+(forall b : seq.seq R, (In b B) -> 
+  (Datatypes.length b) = m).
+intros; apply Hm; simpl; auto.
+rewrite nth_vec_sum; [| |nra]. 
+pose proof (IH a B).
+rewrite H. 
+rewrite big_ord_recl -RplusE -RmultE /=.
+f_equal. 
+by rewrite !mxE /getm/getv/scaleV/=
+   -(map_nth (Rmult a0) b 0%R i) Rmult_0_r.
+apply eq_big =>  k // _ /[!mxE].
+by rewrite /getv/getm /=. lia.
+move => b0 Hb0. by apply Hm; right.
+rewrite /scaleV rowM_length. rewrite map_length.
+rewrite Hm //; by left.
+move => b0 Hb0. by apply Hm; right. 
+Qed.
+
+Ltac nth_destruct :=
+  match goal with 
+  |- context[(nth ?A (nth ?B _ _) _) ] => 
+  destruct B; destruct A; simpl; auto 
+end.
+
 (* matrix addition over real lists to matrix addition over mathcomp matrices *)
 Lemma matrix_to_mx_mul: forall A B m n
-  (Hm : length A = m)
-  (Hn : length B = n)
   (Hlen1: forall b, In b B ->  length b = m)
   (Hlen2: forall a, In a A ->  length a = n), 
-  matrix_to_mx m m (MMR m A B) = 
+  matrix_to_mx m m (MMR A B) = 
   matrix_to_mx m n A *m matrix_to_mx n m B.
 Proof.
-move => A B. move: B.
-case : A => // [B| a A].
-  case : B  => [ m n H1 H2 H3 H4 | a A m n H1 H2 H3 H4].
-  apply/matrixP=> i j; rewrite !mxE /=.
-  destruct m => //; destruct i => //.
-  apply/matrixP=> i j; rewrite !mxE /=.
-  destruct m => //; destruct i => //.
-have: (A = [::] \/ A <> [::]). 
-  destruct A. by left. by right.
-move => [HA| HA].
-{ (* case a:: A with A = nil *)
-move => B . 
-rewrite HA. clear HA. clear A.
-move: a.
-(*  need more info about B *) 
-elim: B. 
-move => B m n H1 H2 H3 H4.
-by rewrite MMR_nil_r matrix_to_mx_zero 
-  matrix_to_mx_nil mulmx0.
-move => b B IH a m n H1 H2 H3 H4.
-have Hm : (m = 1)%nat by simpl in H1; lia.
-rewrite Hm matrix_to_mx_plus //.
-have: (B = [::] \/ B <> [::]). 
-  destruct B. by left. by right.
-move => [HB| HB].
-(* case b::B with B = nil *) 
-move: H2 H3.
-rewrite HB. clear HB. 
-move => H2 H3.
-apply/matrixP=> i j; rewrite !mxE /getm.
-have Hi : (nat_of_ord i = 0)%nat.
-   destruct i. by destruct m0. 
-have Hj : (nat_of_ord j = 0)%nat.
-   destruct j. by destruct m0.
-rewrite Hi Hj /=. 
-have Ho : (n = 1)%nat by simpl in H2; lia.
-rewrite Ho/=. clear Ho.
-rewrite big_ord1.
-rewrite !mxE /getm Hi Hj /=. 
-suff : 
-  nth 0 (map (Rmult (hd 0%R a)) b) ((hd 0 a) * 0)%R
-  = ((nth 0 a 0%R) * (nth 0 b 0%R))%R.
-move => Hs. rewrite -!RmultE -Hs addr0.
-f_equal. by rewrite RmultE mulr0.
-by rewrite (map_nth (Rmult (hd 0%R a)) b 0%R 0%nat) 
-  hd_nth.
-(* case b::B with b <> nil *)
-rewrite (IH (tl a) 1%nat n.-1) //. 
-apply/matrixP=> i j; rewrite !mxE.
-have Hi : (nat_of_ord i = 0)%nat.
-   destruct i. by destruct m0. 
-have Hj : (nat_of_ord j = 0)%nat.
-   destruct j. by destruct m0.
-rewrite Hi Hj /=. 
-have Hord1 : ( 0 < n.-1)%nat.
-suff : ( 1 < n)%nat by lia.
-  simpl in H2.
-  have Hb : (0 < length B )%coq_nat.
-  apply length_not_empty_nat => //. 
-  by lia.
-have Hord: (0 < n)%nat.
-  by simpl in H2; lia.
-rewrite (@big_nth _ 0 Rplus _ (Ordinal Hord)) 
-   !ordinal_enum_size /= (@big_ltn R 0 Rplus) //. 
-rewrite (@big_nth _ 0 Rplus _ (Ordinal Hord1))
- !ordinal_enum_size RplusE /index_enum /=.
-f_equal.
-rewrite !(@ordinal_enum n (Ordinal Hord)) /= . 
-rewrite  !mxE /= /getm/mul' Hi Hj /=.
-suff : 
-  nth 0 (map (Rmult (hd 0%R a)) b) ((hd 0 a) * 0)%R
-  = ((nth 0 a 0%R) * (nth 0 b 0%R))%R.
-move => Hs. rewrite -!RmultE -Hs.
-f_equal. by rewrite RmultE mulr0.
-by rewrite (map_nth (Rmult (hd 0%R a)) b 0%R 0%nat) 
-  hd_nth. 
-{
-rewrite big_add1.
-match goal with |- ?A = ?B => set  X := A end.
-rewrite big_nat_cond.
-unfold X. clear X.
-match goal with |- ?A = ?B => set  X := B end.
-rewrite big_nat_cond.
-unfold X. clear X.
-apply eq_big => //= i0 Hi0. 
-have Hi0' : (i0 < n.-1)%nat by lia.
-rewrite (@ordinal_enum n.-1 (Ordinal Hi0')
-  (Ordinal Hord1)).
-have Heq: (nat_of_ord (Ordinal Hi0') = i0) by [].
-rewrite  !mxE Heq. 
-have Hi0'' : (i0.+1 < n)%nat by lia.
-rewrite (@ordinal_enum n (Ordinal Hi0'')
-  (Ordinal Hord)).
-have Heq': (nat_of_ord (Ordinal Hi0'') = i0.+1) by [].
-rewrite Heq'/getm. clear Heq'.
-rewrite (map_nth (@tl R) [::a] [::]) nth_tl Nat.add_1_r.
-f_equal. 
-}
-move: H2 => /=. move=> H2. lia.
-move => b1 Hb1. 
-rewrite -Hm. apply H3=> /=. by right.
-move: H2 => /=. move=> H2 a1 [Ha1 | ] //.
-rewrite -Ha1 Minus.pred_of_minus_stt. apply tl_length.
-apply H4 => /=. by left. 
-rewrite !map_length //.
-rewrite -MMR_length.
-rewrite !map_length //.
-rewrite !map_length //.
-fold (@MM R 0%R mat_sumR Rmult).
-move => a0 e0 Hin1 Hin2.
-split.
-rewrite 
-  (in_mul'_length [:: a] b a0) => //.
-rewrite -Hm.
-apply H3 => /=. by left.
-rewrite H1. symmetry.
-apply H3 => /=. by left.
-rewrite (in_MMR_length
-  (map (tl (A:=R)) [:: a]) B 1) => //.
-move => b0 Hb0. rewrite -Hm. apply H3 => /=. by right.
-}
-(* case A <> nil *)
-(* we don't want A <> nil in the inductive hyp;
-  only use for length info *)
-clear HA. move => B. move: a A.
-(* need more info about B *)
-elim : B => // [a A m n H1 H2 H3 H4 |b B IH a A m n H1 H2 H3 H4].
-  by rewrite MMR_nil_r matrix_to_mx_zero matrix_to_mx_nil mulmx0.
-have: (B = [::] \/ B <> [::]). 
-  destruct B. by left. by right.
-move => [HB | HB ].
-{ (* case b::B with B = nil *) 
-move: H2 H3.
-rewrite HB. clear IH HB. 
-move => H2 H3.
-rewrite matrix_to_mx_plus.
-apply/matrixP=> i j; rewrite !mxE /getm.
-have Hn : (n = 1)%nat by simpl in H2; lia.
-rewrite nth_zero_matrix addr0.
-rewrite Hn. clear Hn.
-rewrite big_ord1.
-Search nth mul'.
-rewrite !mxE /getm /=.
-destruct (nat_of_ord i) => //. 
-suff : 
-  nth j (map (Rmult (hd 0%R a)) b) ((hd 0 a) * 0)%R
-  = ((nth 0 a 0%R) * (nth j b 0%R))%R.
-move => Hs. rewrite -!RmultE -Hs.
-f_equal. by rewrite RmultE mulr0.
-by rewrite (map_nth (Rmult (hd 0%R a)) b 0%R j) hd_nth.
-symmetry. apply (nth_mul' A b n0 j).
-elim: j => /= m0.
-rewrite -(H3 b) //=. by left.
-rewrite !map_length.
-rewrite -(H3 b). rewrite H1. 
-apply H3 =>  /=. by left. by left.
-rewrite zero_matrix_length. rewrite !map_length //.
-move: H1 => //=. by lia.
-move => a0 e In1 In2. split.
-apply (in_mul'_length (a::A) b a0) in In1.
-rewrite In1.
-apply H3 => /=. by left.
-rewrite H1. symmetry.
-apply H3 => /=. by left.
-apply in_zero_matrix_length in In2 => //.
-}
-(* case B <> nil *) 
-rewrite matrix_to_mx_plus.
-rewrite ( IH (tl a) (map (@tl R) A) m (n.-1)). 
-clear IH. 
-apply/matrixP=> i j; rewrite !mxE.
-have Hjb : (j < (Datatypes.length b))%coq_nat.
-  rewrite H3 /=. elim : j => //=. by lia. by left.
-have Hord: (0 < n)%nat.
-  by simpl in H2; lia. 
-pose proof (@big_nth _ 0 Rplus _ (Ordinal Hord)). 
-rewrite !H. rewrite !ordinal_enum_size /=.
- rewrite (@big_ltn R 0 Rplus). 
-have Hord1: (0 < n.-1)%nat.
- suff : ( 1 < n)%nat by lia.
-  simpl in H2.
-  have Hb : (0 < length B )%coq_nat.
-  apply length_not_empty_nat => //. 
-  by lia.
-pose proof (@big_nth _ 0 Rplus _ (Ordinal Hord1)). 
-rewrite !H0. clear H0.
-rewrite !ordinal_enum_size RplusE /index_enum /=.
-f_equal.
-{ rewrite !(@ordinal_enum n (Ordinal Hord)) /= . 
-rewrite  !mxE /= /getm/mul' /=. 
-destruct i => /=. destruct m0 => /=.
-rewrite hd_nth.
-rewrite (nth_map' (Rmult (nth 0 a 0%R)) 0%R 0%R j b) => //.
-rewrite -nth_mul' => //. lia. } 
-rewrite -(map_cons) /matrix_to_mx/=.
-rewrite big_add1.
-match goal with |- ?A = ?B => set  X := A end.
-rewrite big_nat_cond.
-unfold X. clear X.
-match goal with |- ?A = ?B => set  X := B end.
-rewrite big_nat_cond.
-unfold X. clear X.
-apply eq_big => //= i0 Hi0. 
-have Hi0' : (i0 < n.-1)%nat by lia.
-rewrite (@ordinal_enum n.-1 (Ordinal Hi0')
-  (Ordinal Hord1)).
-have Heq: (nat_of_ord (Ordinal Hi0') = i0) by [].
-rewrite  !mxE Heq. 
-have Hi0'' : (i0.+1 < n)%nat by lia.
-rewrite (@ordinal_enum n (Ordinal Hi0'')
-  (Ordinal Hord)).
-have Heq': (nat_of_ord (Ordinal Hi0'') = i0.+1) by [].
-rewrite Heq'-(map_cons) /getm. 
-rewrite (map_nth (@tl R) (a::A) [::]) nth_tl Nat.add_1_r.
-f_equal. 
-lia.
-rewrite -(map_cons) map_length => //.
-move: H2 => /=. by lia.
-move => b0 Hb0. apply H3 => //=. by right.
-move => a0 [Ha0 | Ha0] //.
-rewrite -Ha0 Minus.pred_of_minus_stt.
-apply tl_length. 
-  rewrite H4 => /=. lia. by left.
-rewrite Minus.pred_of_minus_stt.
-apply (@in_tl_length R A) => //.
-  move => a1 Ha1 => //. apply H4 => /=. by right. 
-rewrite !map_length //.
-rewrite !map_length //.
-rewrite -MMR_length.
-rewrite !map_length //.
-rewrite !map_length //.
-fold (@MM R 0%R mat_sumR Rmult).
-fold (@MMR m (map (tl (A:=R)) (a :: A)) B).
-move => a0 e0 Hin1 Hin2.
-split.
-rewrite 
-  (in_mul'_length (a::A) b a0) => //.
-apply H3 => /=. by left.
-rewrite H1. symmetry. 
-apply H3 => /=. by left.
-rewrite (in_MMR_length
-  (map (tl (A:=R)) (a :: A)) B m) => //.
-by rewrite map_length.
-move => b0 Hb0. apply H3 => /=. by right.
+intros.
+apply/matrixP=> i j; rewrite !mxE /=.
+move: Hlen1 Hlen2 i j. move: A B m .
+case: n => /=. 
+{ intros. rewrite big_ord0.
+move: B m Hlen1 Hlen2 i j. elim: A. intros.
+rewrite /getm; nth_destruct. 
+intros.
+have Ha : length a =0%nat.
+apply Hlen2 => /=. by left.
+have Hl : 
+(forall a : seq.seq R, (In a l) -> 
+  (Datatypes.length a) = (0%N)).
+move => a0 Ha0. apply Hlen2 => /=.  
+  by right.
+move: Hlen1.
+rewrite length_zero_iff_nil in Ha.
+rewrite Ha. 
+case: B =>  [Hlen1| b B Hlen1]. 
+rewrite /MMR MM_nil_r/getm; nth_destruct.
+rewrite /getm in H.
+rewrite /MMR/=/getm.
+have Hi: ( ((nat_of_ord i)=0)%nat \/
+  ( 0 < (nat_of_ord i) )%nat) by lia.
+destruct Hi. 
+{ by rewrite H0 nth_zero_vector. }
+move: H0. elim: i => m0 Hm0 Hord'.
+replace (nat_of_ord (Hm0 ')) with m0.
+move : Hm0 Hord'. case : m0 => //= m0 Hm0 Hord'.
+have Hord : (m0 < m)%nat by lia.
+by rewrite (H (b::B) m Hlen1 Hl
+(Ordinal Hord) j). by []. }
+move=> n A B. move: n B.
+elim: A. 
+{ intros. 
+rewrite /MMR MM_nil_l matrix_to_mx_nil/getm big1.
+nth_destruct. move => i0 _. by rewrite !mxE mul0r. }
+move=> a A IH n B. move: a A IH n.
+case: B. 
+{ intros.
+rewrite /MMR MM_nil_r matrix_to_mx_nil/getm big1.
+nth_destruct. move => i0 _. by rewrite !mxE mulr0. }
+move=> b B. intros.
+rewrite /MMR/=.
+have H2 : 
+  forall a0 : seq.seq R, 
+  (In a0 A) -> (Datatypes.length a0) = (n.+1).
+move => a0 Ha0. apply Hlen2 => /=. by right.
+rewrite /getm.
+have H: ( ((nat_of_ord i)=0)%nat \/
+  ( 0 < (nat_of_ord i) )%nat) by lia.
+destruct H. 
+{ rewrite H. simpl.
+have Hb : Datatypes.length b = m.
+  apply Hlen1 => /=. by left.
+have Ha : Datatypes.length a = n.+1.
+  apply Hlen2 => /=. by left.
+rewrite Hb.
+rewrite (nth_rowM_big a (b::B) m n.+1
+  (nat_of_ord j) Ha Hlen1).
+apply eq_big =>  k // _ /[!mxE].
+by rewrite H. }
+move: H. elim: i => m0 Hm0.
+replace (nat_of_ord (Hm0 ')) with m0.
+move : Hm0. case : m0 => //= m0 Hm0 Hord'.
+have Hord : (m0 < m)%nat by lia.
+rewrite /getm in IH.
+rewrite (IH n (b::B) m Hlen1 H2
+  (Ordinal Hord) j).
+apply eq_big =>  k // _ /[!mxE] //=.
+by [].
 Qed.
+
 
 Lemma vector_to_vc_plus u1 u2
   (Hlen: length u1 = length u2) : 
@@ -641,9 +454,9 @@ End MVtoMC_opLems.
 
 Section Norms.
 
-Definition sum_abs {m} (A: 'M[R]_m) i : R:= \sum_j (Rabs (A i j)).
+Definition sum_abs {m n} (A: 'M[R]_(m,n)) i : R:= \sum_j (Rabs (A i j)).
 Definition normv   {m} (v: 'cV[R]_m)  : R:= \big[maxr/0]_(i < m) Rabs (v i 0).
-Definition normM   {m} (A: 'M[R]_m)   : R:= \big[maxr/0]_i (sum_abs A i).
+Definition normM   {m n} (A: 'M[R]_(m,n))   : R:= \big[maxr/0]_i (sum_abs A i).
 
 (* generally useful lemmmas for max operator *)
 Lemma maxrC : @commutative R R maxr. 
