@@ -419,6 +419,23 @@ rewrite S_O_plus_INR; simpl; nra.
 Qed.
 Hint Resolve g1n_le_g1Sn : commonDB.
 
+Lemma g1n_le_g1Sn' n:
+g1 n n <= g1 (S n) (S n).
+Proof.
+rewrite /g1. 
+replace (S n) with (n + 1)%nat by lia.
+replace (INR (n + 1)) with (INR n + 1).
+apply: Rmult_le_compat.
+apply: Rmult_le_pos; auto with commonDB.
+rewrite /g; field_simplify; apply pow_le;
+auto with commonDB.
+apply: Rmult_le_compat; try nra; auto with commonDB.
+apply: Rplus_le_compat_l; auto with commonDB.
+rewrite Nat.add_comm; auto with commonDB. 
+rewrite plus_INR; simpl; nra.
+Qed.
+Hint Resolve g1n_le_g1Sn' : commonDB.
+
 Lemma Rplus_le_lt_compat a1 a2 b1 b2 :
  a1 <= a2 -> b1 < b2 ->  a1 + b1 < a2 + b2.
 Proof.  nra. Qed.
