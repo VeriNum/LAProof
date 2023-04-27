@@ -68,19 +68,19 @@ set (A':= (map FT2R a :: map_mat FT2R l) : matrix).
 have Ha: (length u = length (map FT2R a)) by rewrite map_length; lia.
 have : (length l = 0)%nat \/ (0 < length l)%nat by lia. move => [Hl | Hl].
 {  apply length_zero_iff_nil in Hl; subst => /=.
-exists (vec_sum u (map FT2R a) Rminus :: []) , ([ueta]); repeat split.
+exists (vec_sum Rminus u (map FT2R a) :: []) , ([ueta]); repeat split.
 { rewrite Y => /=. 
 rewrite !CommonSSR.map_map_equiv.
 rewrite CommonSSR.map_map_equiv map_length in Ha.
 suff Hs: map2 Rplus (List.map FT2R a)
          (u -v List.map FT2R a) = u.
 rewrite Hs vec_sumR_bounds => /= //.
-fold (@vec_sum R (List.map FT2R a) (u -v List.map FT2R a) Rplus).
+fold (@vec_sum R Rplus (List.map FT2R a) (u -v List.map FT2R a) ).
 fold (vec_sumR (List.map FT2R a) (u -v List.map FT2R a)).
 rewrite vec_sumR_comm. rewrite vec_sumR_opp => //.
 fold (@vec_sumR u (List.map Ropp (List.map FT2R a))).
 rewrite vec_sumR_assoc. rewrite vec_sumR_minus.
-rewrite /vec_sumR map_length -Ha vec_sum_zeroR => //.
+rewrite /vec_sumR map_length -Ha. apply (vec_sum_zeroR) => //.
 1, 2, 3 : by rewrite !map_length => //.
 rewrite /vec_sum/map2 !map_length 
   combine_length map_length Ha; lia. }
@@ -101,19 +101,19 @@ rewrite !CommonSSR.map_map_equiv => /=.
 move => x y [Hx|Hx] [Hy|Hy]; subst => //.
 rewrite /vec_sum/map2 map_length combine_length Ha 
   CommonSSR.map_map_equiv map_length; lia. }
-exists (vec_sum u (map FT2R a) Rminus :: E) , (ueta::eta); repeat split.
+exists (vec_sum Rminus  u (map FT2R a) :: E) , (ueta::eta); repeat split.
 {
 rewrite CommonSSR.map_map_equiv map_length in Ha.
  rewrite Y; clear Y => /=.
 rewrite !CommonSSR.map_map_equiv => /=.
 suff: map2 Rplus (List.map FT2R a) (u -v List.map FT2R a) =  u.
 move => Hs. rewrite Hs vec_sumR_bounds => //.
-fold (@vec_sum R (List.map FT2R a) (u -v List.map FT2R a) Rplus).
+fold (@vec_sum R Rplus (List.map FT2R a) (u -v List.map FT2R a)).
 fold (vec_sumR (List.map FT2R a) (u -v List.map FT2R a)).
 rewrite vec_sumR_comm. rewrite vec_sumR_opp => //.
 fold (@vec_sumR u (List.map Ropp (List.map FT2R a))).
 rewrite vec_sumR_assoc. rewrite vec_sumR_minus.
-rewrite map_length -Ha /vec_sumR vec_sum_zeroR => //.
+rewrite map_length -Ha /vec_sumR. apply vec_sum_zeroR => //.
 1, 2, 3: rewrite !map_length => //.
 rewrite /vec_sum/map2 !map_length 
   combine_length map_length Ha; lia. }
@@ -135,7 +135,7 @@ revert Hd1 => /= Hd1; rewrite Hd1.
   apply Rmult_le_compat; 
   [ apply Rabs_pos | apply Rabs_pos | | apply Req_le ] => //.
 { fold (map2 Rplus u (List.map Ropp (List.map FT2R a))).
-fold (vec_sum u (List.map Ropp (List.map FT2R a)) Rplus).
+fold (vec_sum Rplus u (List.map Ropp (List.map FT2R a))).
 fold (vec_sumR u (List.map Ropp (List.map FT2R a))).
 rewrite /vec_sumR -(vec_sumR_opp) => //.
 rewrite -(vec_sumR_nth); revert Hd1 => /= Hd1. rewrite Hd1.
