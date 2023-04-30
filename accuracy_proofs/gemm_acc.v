@@ -403,7 +403,7 @@ Qed.
 End MATADDERROR.
 
 
-Section SMATADDERROR.
+Section MATAXPBY.
 
 Context {NAN: Nans} {t : type}.
 
@@ -415,6 +415,7 @@ Variables (x y : ftype t).
 Variable (n : nat).
 
 Notation m := (length A).
+
 Hypothesis Hn : forall x, In x A -> length x = n. (* A is (m x n) *)
 Hypothesis Hn2 : forall x, In x B -> length x = n. (* B is (m x n) *)
 Hypothesis HA : eq_size A B.
@@ -423,7 +424,7 @@ Hypothesis Hfin: is_finite_mat (mat_sumF (scaleMF x A) (scaleMF y B)).
 Notation Ar := (map_mat FT2R A).
 Notation Br := (map_mat FT2R B).
 
-Theorem Smat_sum_error:
+Theorem mat_axpby_error:
   exists (EA EB ea eb eta1 eta2: matrix),
      map_mat FT2R (mat_sumF (scaleMF x A) (scaleMF y B)) = 
      mat_sumR (scaleMR (FT2R x) (Ar +m EA) +m eta1 +m ea) 
@@ -444,10 +445,10 @@ Theorem Smat_sum_error:
        matrix_index eb i j 0%R =
        matrix_index (scaleMR (FT2R y) (Br +m EB) +m eta2) i j 0%R * d
         /\ Rabs d <= @default_rel t)
-    /\ forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-      Rabs (matrix_index eta1 i j 0%Re) <= g1 n n
-    /\ forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-      Rabs (matrix_index eta2 i j 0%Re) <= g1 n n
+    /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
+      Rabs (matrix_index eta1 i j 0%Re) <= g1 n n)
+    /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
+      Rabs (matrix_index eta2 i j 0%Re) <= g1 n n)
     /\ eq_size EA A 
     /\ eq_size EB A 
     /\ eq_size ea A 
@@ -488,9 +489,8 @@ exists x0. apply H16. }
 intros. destruct (H2 i j) => //.
 exists x0. apply H16. } 
   split => //.
-{ by apply  H7 . }
   split => //.
-{ apply H13; lia. } 
+{ rewrite HB in H13. by apply  H13 . }
   split => //.
   split => //.
 { apply (eq_size_trans EB B A) => //.
@@ -517,7 +517,104 @@ apply (eq_size_trans A B (scaleMF y B)) => //.
 Qed.
  
 
-End SMATADDERROR.
+End MATAXPBY.
+
+Section GEMM.
+
+Context {NAN: Nans} {t : type}.
+
+Notation g := (@common.g t).
+Notation g1 := (@common.g1 t).
+
+Variable (A B Y: @matrix (ftype t)).
+Variables (s1 s2 : ftype t).
+Variable (n : nat).
+
+Notation m := (length A). (* m x n row matrix*)
+Notation p := (length B). (* n x p col matrix*)
+Hypothesis Hn : forall x, In x A -> length x = n. (* A is (m x n) *)
+Hypothesis Hp : forall x, In x B -> length x = n. (* B is (n x p) *)
+Hypothesis HY : size_col Y m p. (* Y is (m x p) *)
+Hypothesis Hfin: is_finite_mat (mat_sumF (scaleMF s1 (MMCF A B)) (scaleMF s2 Y)).
+
+Notation Ar := (map_mat FT2R A).
+Notation Br := (map_mat FT2R B).
+Notation Yr := (map_mat FT2R Y).
+
+Theorem GEMM_error:
+  exists (ab1 ab2 ab3 ab4 ab5 y1 y2 y3: matrix),
+     map_mat FT2R (mat_sumF (scaleMF s1 (MMCF A B)) (scaleMF s2 Y)) = 
+  ((scaleMR (FT2R s1) (((MMCR Ar Br +m ab1) +m ab2) +m ab3) +m ab4) +m ab5) +m
+  ((scaleMR (FT2R s2) (Yr +m y1) +m y2) +m y3)
+  /\ (forall k : nat,(k < p)%nat ->
+      exists E0 : matrix,
+        List.nth k ab1 [::] = E0 *r List.nth k Br [] /\
+        (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
+         Rabs (matrix_index E0 i j 0%Re) <= g n * Rabs (matrix_index Ar i j 0%Re))) 
+  /\ (forall i j : nat, (i < p)%nat -> (j < m)%nat ->
+      Rabs (matrix_index ab2 i j 0%Re) <= g1 n n)
+  /\ (forall i j : nat, (i < p)%nat -> (j < m)%nat ->
+      Rabs (matrix_index ab3 i j 0%Re) <= 
+        g m * Rabs (matrix_index ((MMCR Ar Br +m ab1) +m ab2) i j 0%Re)) 
+  /\ (forall i j : nat,
+      (i < p)%nat -> (j < m)%nat ->
+     Rabs (matrix_index y1 i j 0%Re) <=
+        g m * Rabs (matrix_index Yr i j 0%Re)) 
+  /\ (forall i j : nat, (i < p)%nat -> (j < m)%nat ->
+        exists d,
+        matrix_index ab5 i j 0%Re =
+        matrix_index
+          (scaleMR (FT2R s1)
+             (((MMCR Ar Br +m ab1) +m ab2) +m ab3) +m ab4) i j 0%Re * d 
+          /\ Rabs d <= @default_rel t) 
+  /\ (forall i j : nat, (i < p)%nat -> (j < m)%nat ->
+      exists d ,
+        matrix_index y3 i j 0%Re =
+        matrix_index
+          (scaleMR (FT2R s2) (Yr +m y1) +m y2) i j 0%Re * d 
+          /\ Rabs d <= @default_rel t)
+  /\ (forall i j : nat,
+      (i < p)%nat -> (j < m)%nat ->
+      Rabs (matrix_index ab4 i j 0%Re) <= g1 m m)
+  /\ (forall i0 j0 : nat, (i0 < p)%nat -> (j0 < m)%nat ->
+       Rabs (matrix_index y2 i0 j0 0%Re) <= g1 m m).
+Proof.
+(* len hyps for composing errors *)
+have Hlen1 : forall v : seq (ftype t),
+    In v (MMCF A B) -> length v = m.
+{ by apply (in_MMC_length A B (@BPLUS NAN t) 
+  (@BMULT NAN t) m (Zconst t 0)). }
+have Hleny : forall a : seq (ftype t), In a Y -> length a = m.
+{ move : HY. rewrite /size_col; move => HY1; destruct HY1; intros.
+by apply H0. } 
+have Hlen2 :  eq_size (MMCF A B) Y.
+{ move : HY. rewrite /size_col /eq_size; move => HY1; destruct HY1;
+  split. by rewrite H !map_length.
+intros. symmetry; rewrite H0 => //. by symmetry; apply Hlen1. }
+have Hsz : eq_size (scaleMF s1 (MMCF A B)) (scaleMF s2 Y).
+{ apply (eq_size_trans (scaleMF s1 (MMCF A B)) (MMCF A B) (scaleMF s2 Y)).
+apply (eq_size_scale  s1 (MMCF A B) (@BMULT NAN t) m) => //.
+apply (eq_size_trans (MMCF A B) Y (scaleMF s2 Y)) => //.
+apply eq_size_symm. apply (eq_size_scale  s2 Y (@BMULT NAN t) m) => //. } 
+(* compose errors from axpby and MMC *)
+destruct (mat_axpby_error (MMCF A B) Y s1 s2 m)  
+  as (ab3 & y1 & ab5 & y3 & ab4 & y2 & Heq1 & H1) => //.
+destruct (MMC_error A B n)  
+  as (ab1 & ab2 & Heq2 & H2) => //. 
+{ clear H1. apply is_finite_mat_sum in Hfin => //; destruct Hfin.
+by apply is_finite_scaleM in H => //. } 
+(* invoke errors *)
+rewrite Heq2 in H1. rewrite Heq1 Heq2.
+rewrite !map_length in H1.
+clear Heq1 Heq2.
+exists ab1, ab2, ab3, ab4, ab5, y1, y2, y3; split => //.
+destruct H2 as (Hab1 & Hab2 & _).
+destruct H1 as (Hab3 & Hy1 & Hab5 & Hy3 & Hab4 & Hy2 & _); repeat
+split => //.
+(* we don't keep lengths for gemm error, but could *)
+Qed.
+
+End GEMM.
 
 
 
