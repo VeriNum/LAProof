@@ -186,8 +186,8 @@ Lemma Svec_sumF_mixed_error :
       List.nth i e6 0 =  (List.nth i (scaleVR (FT2R b) (vr +v e4) +v e5) 0%R) * d 
         /\ Rabs d <= @default_rel t)  
   (* absolute error terms *)
-  /\ forall k : R, In k e5 -> Rabs k <= g1 m m
-  /\ forall k : R, In k e2 -> Rabs k <= g1 m m
+  /\ (forall k : R, In k e5 -> Rabs k <= g1 m m)
+  /\ (forall k : R, In k e2 -> Rabs k <= g1 m m)
   (* length info is kept *)
   /\ length e1 = m
   /\ length e2 = m
@@ -221,7 +221,6 @@ fold m in H2; exists x; apply H2. }
 rewrite !map_length. fold m; lia.
 rewrite !CommonSSR.map_map_equiv in H2.
 fold m in H2; exists x. apply H2. }
-by apply Hbeta.
 rewrite -Hu.
 by apply Haeta. 
 rewrite !map_length in HD1; lia.
@@ -308,6 +307,75 @@ by apply H2.
 Qed.
 
 End SCALEFMV. 
+
+Section GEMV. 
+(* mixed error bounds over lists *)
+Context {NAN: Nans} {t : type}.
+
+Notation g := (@common.g t).
+Notation g1 := (@common.g1 t).
+
+Variable (A: @matrix (ftype t)).
+Variable (x y: @vector (ftype t)).
+Variable (s1 s2: ftype t).
+
+Notation n := (length x).
+Notation m := (length A).
+Notation Ar := (map_mat FT2R A).
+Notation xr := (map FT2R x).
+Notation yr := (map FT2R y).
+
+Hypothesis Hfin : is_finite_vec 
+  (vec_sumF (scaleVF s1 (A *f x)) (scaleVF s2 y)).
+Hypothesis Hlen: forall row, In row A -> length row = length x.
+Hypothesis Hleny: length y = m.
+
+Lemma gemv_error:
+  exists (e1 : matrix) (e2 e3 e4 e5 e6 e7 e8: vector),
+    map FT2R (vec_sumF (scaleVF s1 (A *f x)) (scaleVF s2 y)) =  
+  ((scaleVR (FT2R s1) ((((Ar +m e1) *r xr) +v e2) +v e3) +v e4) +v e5) +v
+  ((scaleVR (FT2R s2) (List.map FT2R y +v e6) +v e7) +v e8)
+
+  /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
+      Rabs (matrix_index e1 i j 0%Re) <= g n * Rabs (matrix_index Ar i j 0%Re)) 
+  /\ (forall k : R, In k e2 -> Rabs k <= g1 n n) 
+  /\ (forall i : nat, (i < m)%nat -> exists d,
+        List.nth i e3 0 = List.nth i (((Ar +m e1) *r xr) +v e2) 0%Re * d 
+        /\ Rabs d <= g m ) 
+  /\ (forall i : nat, (i < m)%nat -> exists d,
+        List.nth i e6 0 = List.nth i (List.map FT2R y) 0%Re * d 
+        /\ Rabs d <= g m) 
+  /\ (forall i : nat, (i < m)%nat -> exists d,
+        List.nth i e5 0 = List.nth i (scaleVR (FT2R s1) ((((Ar +m e1) *r xr) +v e2) +v e3) +v e4) 0%Re * d 
+        /\ Rabs d <= @default_rel t) 
+  /\ (forall i : nat, (i < m)%nat -> exists d ,
+        List.nth i e8 0 = List.nth i (scaleVR (FT2R s2) (List.map FT2R y +v e6) +v e7) 0%Re * d 
+        /\ Rabs d <= @default_rel t) 
+  /\ (forall k : R, In k e7 -> Rabs k <= g1 m m)
+  /\ (forall k0 : R, In k0 e4 -> Rabs k0 <= g1 m m).
+
+Proof.
+(* proof follows from previous bounds for axpby and mul *)
+destruct (Svec_sumF_mixed_error (A *f x) y s1 s2)
+  as (e3 & e4 & e5 & e6 & e7 & e8 & Heq1 & H1) => //.
+{ by symmetry; rewrite !map_length.  }
+rewrite Heq1.
+rewrite !CommonSSR.map_map_equiv.
+destruct (mat_vec_mul_mixed_error A x)
+  as (e1 & e2 & Heq2 & H2).
+{ apply is_finite_vec_sum in Hfin; destruct Hfin.
+by apply is_finite_scaleV in H.
+all: rewrite !map_length; by rewrite Hleny. }
+{ by intros; apply Hlen. }
+rewrite Heq2. 
+rewrite !CommonSSR.map_map_equiv in H1.
+rewrite Heq2 in H1. rewrite Hleny in H1, H2.
+destruct H2 as (He1 & He2 & _).
+destruct H1 as (He3 & He4 & He5 & He6 & He7 & He8 & _).
+exists e1, e2, e3, e4, e5, e6, e7, e8; repeat split => //.
+Qed.
+
+End GEMV.
 
 
 
