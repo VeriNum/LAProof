@@ -101,7 +101,8 @@ rewrite !CommonSSR.map_map_equiv => /=.
 move => x y [Hx|Hx] [Hy|Hy]; subst => //.
 rewrite /vec_sum/map2 map_length combine_length Ha 
   CommonSSR.map_map_equiv map_length; lia. }
-exists (vec_sum Rminus  u (map FT2R a) :: E) , (ueta::eta); repeat split.
+exists (vec_sum Rminus  u (map FT2R a) :: E) , 
+  (ueta::eta); repeat split.
 {
 rewrite CommonSSR.map_map_equiv map_length in Ha.
  rewrite Y; clear Y => /=.
