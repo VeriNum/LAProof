@@ -11,7 +11,7 @@ Import ListNotations.
 Section DotProdGeneric.
 
 
-Definition dotprod {A} (mult plus: A -> A -> A) (zero : A) (v1 v2: list A):=
+Definition dotprod {A} (mult plus: A -> A -> A) (zero : A) (v1 v2: list A):A :=
   fold_left (fun s x12 => plus (mult (fst x12) (snd x12)) s) 
                 (combine v1 v2) zero.
 

@@ -221,10 +221,11 @@ simpl. unfold dotprodR. simpl. repeat f_equal ;field_simplify; nra. Qed.
 Definition MMCR := MMC dotprodR.
 Definition MMCF {NAN : Nans} {t: type}  := MMC (@dotprodF NAN t).
 
-Definition scaleM {T} (mul : T -> T -> T) a M := map_mat (mul a) M.
+Definition scaleM {T} (mul : T -> T -> T) a M :=  map_mat (mul a) M.
 
 Definition scaleMR := scaleM Rmult.
 Definition scaleMF {NAN : Nans} {t: type} := scaleM (@BMULT NAN t).
+
 
 Definition GEMM {T} (dot : vector -> vector -> T) 
   (sum mul : T -> T -> T) (A B C: matrix) (a b : T) := 
@@ -611,6 +612,88 @@ Delimit Scope R_scope with R.
 
 Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
+Section SIZEDEFS.
+
+Definition size_col {T} (A : list (list T)) m n :=
+  length A = n /\
+  forall a, In a A -> length a = m.
+
+Definition size_row {T} (A : list (list T)) m n :=
+  length A = m /\
+  forall a, In a A -> length a = n.
+
+Lemma eq_size_cons {T1 T2} (a: list T1) (b: list T2) A B: 
+eq_size (a :: A) (b :: B) ->
+eq_size A B /\ length a = length b.
+Proof.
+rewrite /eq_size => /=; intros.
+destruct H; repeat split; try lia.
+intros; apply H0; by right. 
+intros; apply H0; by  left.
+Qed.
+
+Lemma eq_size_scaleM {T} mul (x : T) A n :
+  (forall a, In a A -> length a = n) -> 
+  forall y, In y (scaleM mul x A) -> length y = n.
+Proof.
+elim : A => //.
+intros; destruct H1. 
+rewrite -H1 -(H0 a). by rewrite !map_length.
+simpl; by left.
+apply H => //. 
+intros; apply H0; simpl; by right.
+Qed.
+
+Lemma eq_size_trans {T1 T2 T3} (A : list (list T1))
+  (B : list (list T2)) (C : list (list T3)) : 
+  eq_size A B -> eq_size B C -> eq_size A C.
+Proof.
+revert A B.
+elim: C. 
+{ rewrite /eq_size/=; intros; split; 
+[lia|]; intros => //. } 
+move => c C IH A.
+case: A. 
+{ rewrite /eq_size/=; intros; split; 
+[lia|]; intros => //. } 
+move => a A B.
+case: B. 
+{ rewrite /eq_size/=; intros; split; 
+[lia|]. destruct H0 => //. } 
+move => b B.
+intros.
+have H1 : eq_size A C.
+destruct (eq_size_cons a b A B) => //.
+destruct (eq_size_cons b c B C) => //.
+by apply (IH A B). 
+move: H H0.
+rewrite /eq_size; intros; split;
+destruct H; destruct H0.
+by rewrite H -H0 .
+move => x y [|]Hx [|]Hy.
+{ rewrite -Hx -Hy.
+rewrite (H2 a b) => /=; try left => //. 
+rewrite -(H3 b c) => //=; by left. } 
+{ rewrite -Hx. 
+rewrite (H2 a b) => /=; try left => //.
+rewrite -(H3 b y) => //=; [by left| by right]. }
+rewrite -Hy. 
+rewrite -(H3 b c) => /=; try left => //.
+rewrite -(H2 x b) => //=; [by right| by left].
+destruct H1. apply H4 => //. 
+Qed.
+
+Lemma eq_size_symm {T1 T2} (A : list (list T1))
+  (B : list (list T2)) : 
+  eq_size A B -> eq_size B A.
+Proof.
+rewrite /eq_size. intros; destruct H; split => //.
+intros. by rewrite -(H0 y x).
+Qed.
+
+
+End SIZEDEFS.
+
 Section MxLems.
 
 
@@ -626,6 +709,209 @@ move => m IH a. destruct n => //= . move => [H|H].
 rewrite -H //=. by rewrite zero_vector_length.
 by apply IH.
 Qed.
+
+Lemma dotprodR_dist a b v : 
+length a = length b -> 
+dotprodR (a +v b) v = (dotprodR a v + dotprodR b v)%R.
+Proof.
+move: a b.
+elim : v => //=.
+{ intros.
+rewrite! dotprodR_nil_r; nra. } 
+move => v0 v IH a. 
+case : a => //=.
+{ intros. 
+symmetry in H.
+rewrite length_zero_iff_nil in H.
+rewrite H. rewrite !dotprodR_nil_l; nra. } 
+move => a0 a b. case b => //=.
+intros. 
+rewrite /dotprodR. simpl. 
+rewrite !fold_left_Rplus_Rplus.
+specialize (IH a l).
+rewrite /dotprodR/vec_sumR/vec_sum/map2 in IH.
+rewrite IH; [|lia].  nra.
+Qed.
+
+Lemma MVR_dist A B v : 
+forall (Hlen : forall a b, In a A -> In b B -> 
+  length a = length b),  
+(A +m B) *r v = (A *r v) +v (B *r v).
+Proof.
+move : A v.
+elim: B => //=.
+{intros; rewrite /vec_sumR/vec_sum/map2/= 
+  combine_nil map_nil /mat_sumR mat_sum_nil
+  /mvR/MV//=. } 
+move => b B IH A.
+case : A => //=.
+move => a A v H.
+rewrite IH. clear IH.
+rewrite /vec_sumR vec_sum_cons. 
+f_equal.
+set (y:= vec_sumR a b).
+fold (vec_sum Rplus a b).
+fold (vec_sumR a b).
+apply dotprodR_dist.
+apply H; by left.
+move => a0 b0 H1 H2.
+apply H; by right.
+Qed.
+
+Lemma GEMM_nilC {T} (dot : vector -> vector -> T) 
+  (sum mul : T -> T -> T) (A B : @gem_defs.matrix T) (x y : T) : 
+  GEMM dot sum mul A B [] x y = [].
+Proof. by rewrite /GEMM/scaleM mat_sum_nil. Qed.
+
+Lemma GEMM_nilB {T} (dot : vector -> vector -> T) 
+  (sum mul : T -> T -> T) (A C : @gem_defs.matrix T) (x y : T) : 
+  GEMM dot sum mul A [] C x y = [].
+Proof. by rewrite /GEMM/scaleM/MMC/=mat_sum_nil_l. Qed.
+
+Lemma GEMM_cons {T} (dot : vector -> vector -> T) 
+  (sum mul : T -> T -> T) 
+  (A B C : @gem_defs.matrix T) b c (x y : T) :
+let hd := vec_sum sum (scaleV mul x (MV dot A b)) (scaleV mul y c) in
+GEMM dot sum mul A (b :: B) (c :: C) x y =  
+  hd :: GEMM dot sum mul A B C x y.
+Proof. rewrite /GEMM/mat_sum -(vec_sum_cons) /vec_sum /scaleM//=. Qed.
+
+Lemma scaleMR_cons y d D :
+scaleMR y (d :: D) = ((scaleVR y d) :: scaleMR y D).
+Proof. by []. Qed.
+
+Lemma scaleVR_dist : forall a u v,
+scaleVR a (u +v v) = scaleVR a u +v (scaleVR a v).
+Proof.
+rewrite /scaleVR/scaleV/vec_sumR/vec_sum/map2/=. 
+intros. rewrite map_map/=.
+rewrite (combine_map' R R (Rmult a)
+  (fun x : R * R => (a * (uncurry Rplus x))%R)) => //.
+intros; simpl; nra.
+Qed.
+
+Lemma scaleMR_dist x A B: 
+length A = length B -> 
+scaleMR x (A +m B) = scaleMR x A +m scaleMR x B.
+Proof. 
+revert A x. 
+elim: B => //.
+{ intros. by rewrite /mat_sumR !mat_sum_nil /=. }
+move =>  b B IH A.
+case: A => //. 
+move => a A /=. intros.
+rewrite IH; try lia. 
+rewrite mat_sumR_cons.
+rewrite -scaleVR_dist => //.
+rewrite !map_length; lia.
+Qed.
+
+Lemma mat_sumR_assoc A B C: 
+eq_size A B -> eq_size B C -> 
+(A +m B) +m C = A +m (B +m C).
+Proof. 
+revert A B. 
+elim: C => //.
+{ intros. by rewrite /mat_sumR !mat_sum_nil /=. }
+move =>  c C IH A.
+case: A => //. 
+move => a A B /=.
+case: B => //. move => b B. intros.
+have HA : length A = length B;  
+   destruct H; simpl in H. lia.
+have HC : length B = length C;  
+   destruct H0; simpl in H0. lia.
+rewrite !mat_sumR_cons => //.
+rewrite IH. rewrite vec_sumR_assoc => //.
+destruct H;
+rewrite (H1 a b) => //=; by left.
+symmetry;
+rewrite (H2 b c) => //=; by left.
+by apply (eq_size_cons a b A B).
+by apply (eq_size_cons b c B C).
+by rewrite mat_sum_length.
+rewrite mat_sum_length => //. lia.
+Qed.
+
+Lemma mat_sumR_comm A B : 
+eq_size A B ->  
+(A +m B)= (B +m A).
+Proof. 
+revert B. 
+elim: A => //.
+{ intros. by rewrite /mat_sumR !mat_sum_nil /=. }
+move => a A IH B.
+case: B => //. 
+move => b B /=. intros.
+have HA : length A = length B;  
+   destruct H; simpl in H. lia.
+have HB : eq_size A B 
+by apply (eq_size_cons a b A B).
+rewrite !mat_sumR_cons => //.
+rewrite IH => //. rewrite vec_sumR_comm => //.
+apply (H0 a b) => //=; by left.
+Qed.
+
+Lemma GEMMR_distC  (A B C D: gem_defs.matrix ) (x y : R) :
+(forall c, In c C -> length c = length A) -> 
+length C = length B ->
+eq_size C D -> 
+GEMMR A B (C +m D) x y = (GEMMR A B C x y) +m (scaleMR y D).
+Proof.
+move : A B C.
+elim: D.
+{ intros. rewrite /scaleMR/scaleM/=.
+by rewrite /mat_sumR !mat_sum_nil/GEMMR GEMM_nilC. } 
+move => d D IH A B C. 
+case: C => //. 
+{ intros. destruct H1 => //. }  
+move => c C. 
+case: B => //.
+move => b B. intros. 
+simpl in H0. 
+rewrite mat_sumR_cons => //; try lia.
+rewrite /GEMMR !GEMM_cons.
+fold GEMMR vec_sumR scaleVR.
+rewrite IH; try lia. rewrite scaleMR_cons mat_sumR_cons. 
+rewrite !(vec_sumR_assoc). 
+f_equal. f_equal. 
+by rewrite -scaleVR_dist.
+rewrite !map_length;
+symmetry. by apply H; left. 
+rewrite !map_length. 
+destruct H1;
+by symmetry ;apply H2 => /=; left.
+rewrite !map_length combine_length !map_length.
+have HB : length B = length C by lia.
+have HC : length C = length D .
+destruct H1; simpl in H1. lia.
+rewrite HB HC. apply Nat.min_id.
+intros; apply H => /=; by right.
+destruct H1. simpl in H1.
+rewrite /eq_size; split; try lia.
+intros; apply H2 => /=; by right.
+destruct H1; simpl in H1; lia.
+Qed.
+
+Lemma mat_sumR_scale_opp A n: 
+  (0 < n) %nat -> 
+  (forall a, In a A -> length a = n) -> 
+  A -m A = zero_matrix (length A) n 0%R.
+Proof.
+elim : A . 
+{ intros.  by rewrite /mat_sumR mat_sum_nil. } 
+intros. rewrite mat_sumR_cons. rewrite H => //.
+rewrite {1}vec_sumR_comm.
+rewrite vec_sumR_minus.
+suff Ha : length a = n%nat.
+rewrite Ha => //=.
+destruct n => //=.
+apply H1 => /=. by left.
+by rewrite !map_length.
+intros; apply H1 => /=; by right.
+by rewrite !map_length.
+Qed.
+
 
 End MxLems.
 
@@ -707,6 +993,20 @@ rewrite IH; [lia | ].
 move => b0 Hb0. apply H => /=. by right.
 Qed.
 
+Lemma scaleM_length {T} (x : T) A n mul :
+(forall a, In a A -> length a  = n) -> 
+forall a', In a' (scaleM mul x A) -> length a' = n.
+Proof.
+elim: A => //.
+move => a A. intros.
+destruct H1. 
+rewrite -H1 !map_length.
+apply H0 => /=; by left.
+apply H => //. 
+intros; apply H0 =>/=; by right.
+Qed.
+
+
 Lemma in_mul'_length : forall (A : list (list R)) b a0,
 (length A = length b) ->
 In a0 (mul' 0%R Rmult A b) -> length a0 = length b.
@@ -737,6 +1037,20 @@ have Hb : (length b = m).
 by rewrite -H2 Hb /= rowM_length.
 by apply (IH (b::B) m).
 Qed.
+
+Lemma in_MMC_length {T : Type} (A B: list (list T)) 
+ sum mul m d:
+length A = m -> 
+forall v, In v (MMC (dotprod mul sum d) A B) -> length v = m.
+Proof. 
+move: A m . 
+elim: B => // . 
+move => b B IH A m H2 v/= [|]Hv.
+rewrite -Hv !map_length => //. 
+apply (IH A m) => //. 
+Qed.
+
+ 
 
 Lemma  in_MM {T : Type} (A B: list (list T)) 
  a sum mul d x:
@@ -962,14 +1276,81 @@ move => x Hx.
 by apply H0; right.
 Qed.
 
-Lemma scaleVR_dist : forall a u v,
-scaleVR a (u +v v) = scaleVR a u +v (scaleVR a v).
+Lemma is_finite_vec_cons2 {NAN : Nans} {t} a0 (a : list (ftype t)) : 
+ Binary.is_finite _ _ a0 = true -> 
+  is_finite_vec a -> is_finite_vec (a0 :: a).
 Proof.
-rewrite /scaleVR/scaleV/vec_sumR/vec_sum/map2/=. 
-intros. rewrite map_map/=.
-rewrite (combine_map' R R (Rmult a)
-  (fun x : R * R => (a * (uncurry Rplus x))%R)) => //.
-intros; simpl; nra.
+rewrite /is_finite_vec !Forall_forall; intros. 
+destruct H1; subst => //.
+by apply H0. Qed.
+
+Lemma is_finite_vec_mapBPLUS {NAN : Nans} {t}  (a : list (ftype t)) b : 
+length a = length b -> 
+is_finite_vec (map (uncurry BPLUS) (combine a b)) -> 
+is_finite_vec a /\ is_finite_vec b.
+Proof.
+move : a. elim: b => //.
+{ intros.
+rewrite length_zero_iff_nil in H; subst => //. } 
+move =>  b0 b IH a. case : a => //. intros. simpl in H.
+simpl in H0. apply is_finite_vec_cons in H0.
+destruct H0.
+intros; split; apply is_finite_vec_cons2.
+destruct a; destruct b0; destruct s; destruct s0; simpl; auto. 
+apply IH => //; lia.
+destruct a; destruct b0; destruct s; destruct s0; simpl; auto. 
+apply (IH l) => //; lia.
+Qed.
+
+
+Lemma is_finite_scaleM {NAN : Nans} {t : type} x A : 
+is_finite_mat (scaleM BMULT x A) ->
+  @is_finite_mat t A .
+Proof.
+rewrite /is_finite_mat !Forall_forall /scaleM //.
+intros. pose proof in_map ( map (BMULT x) ) A x0 H0. 
+specialize (H (map (BMULT x) x0) H1).
+destruct A; destruct x0 => //.
+simpl in H; apply is_finite_vec_cons in H; destruct H.
+apply is_finite_vec_cons2.
+destruct x; destruct b; destruct  s; destruct s0 => //.
+by apply (is_finite_scaleV x).
+Qed.
+
+Lemma is_finite_mat_sum {NAN : Nans} {t} 
+(A B : @gem_defs.matrix (ftype t)) : 
+eq_size A B -> 
+is_finite_mat (mat_sumF A B) -> is_finite_mat A /\ is_finite_mat B.
+Proof.
+move : A. elim: B.
+{ move => A. 
+rewrite /mat_sumF mat_sum_nil.
+move => H. destruct H => //.
+rewrite length_zero_iff_nil in H; subst => //. } 
+move => b B IH A.  case: A => //.
+{ intros. destruct H => //. }
+rewrite /mat_sumF/mat_sum/map2/=.
+move => a A. intros.
+apply eq_size_cons in H; destruct H.
+pose proof (IH A H).
+apply is_finite_mat_cons in H0.
+destruct H0. 
+have HA: is_finite_mat A. apply H2 => //.
+have HB: is_finite_mat B. apply H2 => //.
+split.
+all: (apply is_finite_mat_cons2 => //;
+apply is_finite_vec_mapBPLUS in H3; destruct H3 => //).
+Qed.
+
+Lemma eq_size_scale {T} (x : T) A mul n: 
+ (forall a, In a A -> length a = n) -> 
+ eq_size (scaleM mul x A) A.
+Proof.
+rewrite /eq_size; split.
+by rewrite !map_length.
+intros. apply (eq_size_scaleM mul x A) => //.
+intros. rewrite H => //.
+symmetry; by apply H.
 Qed.
 
 End MMLems.
