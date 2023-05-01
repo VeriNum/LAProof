@@ -225,7 +225,7 @@ Ltac nth_destruct :=
   destruct B; destruct A; simpl; auto 
 end.
 
-(* matrix addition over real lists to matrix addition over mathcomp matrices *)
+(* matrix multiplication over real lists to matrix addition over mathcomp matrices *)
 Lemma matrix_to_mx_mul: forall A B m n
   (Hlen1: forall b, In b B ->  length b = m)
   (Hlen2: forall a, In a A ->  length a = n), 
@@ -304,6 +304,7 @@ rewrite (IH n (b::B) m Hlen1 H2
 apply eq_big =>  k // _ /[!mxE] //=.
 by [].
 Qed.
+
 
 
 Lemma vector_to_vc_plus u1 u2
@@ -404,6 +405,7 @@ destruct i; destruct m => /= //.
 all: lia.
 Qed.
 
+
 Lemma vector_to_vc_mulmx : forall B u2
   (Hlen: forall x, In x B -> length x = length u2),
   vector_to_vc (length B) (B *r u2) = 
@@ -448,6 +450,89 @@ rewrite H => //.
 rewrite mxE /getv/matrix_to_mx/vector_to_vc/getm/getv /= .
 rewrite Hlen'. subst n.
 apply: eq_bigr => k _; rewrite !mxE => //.
+Qed.
+
+Lemma dotprod_sum: forall v1 v2 (i j : 'I_1),
+  length v1 = length v2 -> 
+  dotprodR v1 v2 = \sum_(k < length v1) ((vector_to_vc (length v1) v1)^T i k * (vector_to_vc (length v1) v2) k j).
+Proof.
+move => v1. elim : v1. move => v2; case : v2 => //=.
+{ intros. rewrite big_ord0 /dotprod//. } 
+move => v0 v1 IH v2. case : v2 => //. intros.
+rewrite /dotprodR/=. rewrite fold_left_Rplus_Rplus.
+rewrite big_ord_recl -RplusE -RmultE /=.
+f_equal.  
+by rewrite !mxE /getv/=.
+rewrite /dotprodR in IH.
+rewrite (IH l i j).
+apply: eq_bigr => k _; rewrite !mxE /getm => //=.
+simpl in H; lia.
+Qed.
+
+Lemma MVR_sum : forall A b m n (i : 'I_1) (j : 'I_m)
+  (Hlen2: forall a, In a A ->  length a = n)
+  (Hb : length b = n),
+nth (nat_of_ord j) (mvR A b) 0%R = \sum_(k < n) matrix_to_mx m n A %SEQ j k * (matrix_to_mx 1 n [b] %SEQ)^T k i.
+Proof.
+move => A b. move : b. elim : A => //=. 
+{ intros => //=. rewrite !matrix_to_mx_nil /matrix_to_mx/getm. destruct (nat_of_ord j);
+symmetry; rewrite big1 => //=; intros; by rewrite !mxE mul0r. }
+move => a A IH. intros. 
+destruct j; destruct m0 => /=.
+rewrite (dotprod_sum a b i i).
+have Ha : Datatypes.length a = n.
+apply Hlen2; by left. rewrite Ha.
+apply: eq_bigr => k _; rewrite !mxE /getv/getm => //=.
+destruct i => //=; destruct m0 => //.
+rewrite Hb. apply Hlen2; by left. 
+have Hm : (m0 < m)%nat by lia.
+rewrite (IH b m n i (Ordinal Hm)) => //.
+apply: eq_bigr => k _; rewrite !mxE /getv/getm => //=.
+intros; apply Hlen2; by right.
+Qed.
+
+
+(* matrix multiplication -MMC- over real lists to matrix addition over mathcomp matrices *)
+Lemma matrix_to_mx_mul_MCR: forall A B m n p
+  (Hlen1: forall b, In b B ->  length b = n)
+  (Hlen2: forall a, In a A ->  length a = n), 
+  matrix_to_mx p m (MMCR A B) = 
+  (matrix_to_mx m n A *m (matrix_to_mx p n B)^T)^T.
+Proof.
+intros.
+apply/matrixP=> i j; rewrite !mxE /=.
+move: Hlen1 Hlen2 i j. move: A m n p.
+elim: B.
+{ intros => /=. rewrite !matrix_to_mx_nil /getm/= . 
+symmetry; rewrite big1 => //=; intros.
+destruct (nat_of_ord i) ; destruct (nat_of_ord j) => //.
+  by rewrite !mxE mulr0. }
+move => b B IH A. intros. simpl. rewrite /getm.
+destruct i => /=. destruct j; destruct m0 => /=.
+{  have H1 : (0 < 1)%nat by lia.
+destruct A => /=.
+{  destruct m1; rewrite !matrix_to_mx_nil /getm/= ; 
+symmetry; rewrite big1 => //=; intros; by rewrite !mxE mul0r. }
+destruct m1.
+{ rewrite (dotprod_sum l b (Ordinal H1) (Ordinal H1)).
+rewrite Hlen2 ; [ | by left].
+apply: eq_bigr => k _; rewrite !mxE => //.
+rewrite Hlen2; [| by left]. rewrite Hlen1 => //; by left. } 
+fold mvR. have H01 : (0 < 1)%nat by lia. 
+have H0 : (m1 < m)%nat by lia.
+have Hord: (nat_of_ord (Ordinal H0) = m1) by [].
+rewrite (MVR_sum A b m n (Ordinal H01) (Ordinal H0)).
+apply: eq_bigr => k _; rewrite !mxE => //=.
+intros; apply Hlen2 => /=; by right.
+apply Hlen1 => /=; by left. }
+rewrite /getm in IH. 
+have Hb : (forall b : seq.seq R, In b B -> Datatypes.length b = n).
+{ intros; apply Hlen1 => /=; by right. } 
+have H0 : (m0 < p)%nat by lia.
+have Hord: (nat_of_ord (Ordinal H0) = m0) by []. 
+specialize (IH A m  n p Hb Hlen2 (Ordinal H0) (Ordinal i0)).
+rewrite Hord in IH. rewrite IH.
+apply: eq_bigr => k _. rewrite !mxE /getm => //=.
 Qed.
 
 End MVtoMC_opLems.
