@@ -1,10 +1,9 @@
 Require Import VST.floyd.proofauto.
-Require Import Sparse.sparse.
+Require Import Iterative.floatlib.
+From Iterative.sparse Require Import sparse sparse_model spec_sparse.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
 Require Import VSTlib.spec_math.
-Require Import Sparse.floatlib Sparse.sparse_model.
-Require Import Sparse.spec_sparse.
 
 Set Bullet Behavior "Strict Subproofs".
 
@@ -48,7 +47,6 @@ semax (func_tycontext f_crs_matrix_vector_multiply Vprog Gprog [])
    LOCAL (temp _i (Vint (Int.repr i));
    temp _next (Vint (Int.repr (Znth i row_ptr))); 
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _cols (Vint (Int.repr cols));
    temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (FRAME;
@@ -62,11 +60,10 @@ semax (func_tycontext f_crs_matrix_vector_multiply Vprog Gprog [])
       the_loop_body
   (normal_ret_assert
     (EX r: ftype Tdouble,
-     (PROP (float_eqv r (dotprod (Znth i mval) vval))
+     (PROP (feq r (dotprod (Znth i mval) vval))
       LOCAL (temp _i (Vint (Int.repr i));
       temp _next (Vint (Int.repr (Znth (i + 1) row_ptr)));
       temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-      temp _cols (Vint (Int.repr cols));
       temp _rows (Vint (Int.repr (matrix_rows mval))); 
       temp _m m; temp _v v; temp _p p)
       SEP (FRAME;
@@ -99,7 +96,6 @@ forward_loop
    temp _h (Vint  (Int.repr h));
    temp _next (Vint (Int.repr (Znth (i+1) row_ptr))); 
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _cols (Vint (Int.repr cols));
    temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (FRAME;
@@ -112,13 +108,12 @@ forward_loop
    data_at sh3 (tarray tdouble (matrix_rows mval)) partial_result p)))
   break:
   (EX r: ftype Tdouble,
-   PROP (float_eqv r (dotprod (Znth i mval) vval))
+   PROP (feq r (dotprod (Znth i mval) vval))
    LOCAL (
    temp _s (Vfloat r);
    temp _i (Vint (Int.repr i));
    temp _next (Vint (Int.repr (Znth (i+1) row_ptr))); 
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _cols (Vint (Int.repr cols));
    temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (FRAME;
@@ -214,7 +209,6 @@ forward.
 forward.
 forward.
 forward.
-forward.
 freeze FR1 := (data_at sh1 _ _ _).
 rename v0 into vp.
 assert_PROP (0 <= 0 < Zlength row_ptr)
@@ -222,10 +216,10 @@ assert_PROP (0 <= 0 < Zlength row_ptr)
 forward.
 forward_for_simple_bound (matrix_rows mval)
   (EX i:Z, EX result: list (ftype Tdouble),
-   PROP(floatlist_eqv result (sublist 0 i (matrix_vector_mult mval vval))) 
+   PROP(Forall2 feq result (sublist 0 i (matrix_vector_mult mval vval))) 
    LOCAL (temp _next (Vint (Int.repr (Znth i row_ptr))); 
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
-   temp _cols (Vint (Int.repr cols));
+(*   temp _cols (Vint (Int.repr cols));*)
    temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
    SEP (FRZL FR1;
@@ -238,13 +232,13 @@ forward_for_simple_bound (matrix_rows mval)
    data_at sh3 (tarray tdouble (matrix_rows mval)) 
       (map Vfloat result ++ Zrepeat Vundef (matrix_rows mval - i)) p))%assert.
 -
-Exists (@nil (ftype Tdouble)).
-entailer!. rewrite sublist_nil. constructor. 
+Exists (@nil (ftype Tdouble)). simpl app.
+entailer!.
 apply derives_refl.
 -
 Intros.
 eapply semax_post_flipped'.
-apply crs_multiply_loop_body; auto.
+eapply crs_multiply_loop_body; eassumption; auto.
 Intros r.
 Exists (result ++ [r]).
 entailer!.
@@ -254,7 +248,6 @@ assert (matrix_rows mval = Zlength (matrix_vector_mult mval vval)). {
 }
 rewrite (sublist_split 0 i (i+1)) by list_solve.
 rewrite sublist_len_1 by list_solve.
-red.
 apply Forall2_app; auto.
 constructor; auto.
 unfold matrix_rows in H6.

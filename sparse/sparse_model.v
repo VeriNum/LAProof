@@ -2,26 +2,11 @@ Require Import VST.floyd.proofauto.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
 Require Import VSTlib.spec_math.
-Require Import Sparse.floatlib.
+Require Import Iterative.floatlib.
 
 Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
-
-Definition matrix t := list (list (ftype t)).
-Definition vector t := list (ftype t).
-
-Definition dotprod {t: type} (v1 v2: list (ftype t)) : ftype t :=
-  fold_left (fun s x12 => BFMA (fst x12) (snd x12) s) 
-                (List.combine v1 v2)  (Zconst t 0).
-
-Definition matrix_vector_mult {t: type} (m: matrix t) (v: vector t) : vector t :=
-      map (fun row => dotprod row v) m.
-
-Definition matrix_cols {t} (m: matrix t) cols :=
-    Forall (fun r => Zlength r = cols) m.
-
-Definition matrix_rows {t} (m: matrix t) : Z := Zlength m.
 
 Inductive crs_row_rep {t: type}: forall (cols: Z) (vals: list (ftype t)) (col_ind: list Z) (v: list  (ftype t)), Prop :=
  | crs_row_rep_nil: crs_row_rep 0%Z nil nil nil
@@ -158,11 +143,10 @@ Fixpoint rowmult {t} (s: ftype t)
  end.
 
 Add Parametric Morphism {t: type}  : rowmult
-  with signature (@float_eqv t) ==> strict_floatlist_eqv ==> @eq (list Z) ==> strict_floatlist_eqv ==> float_eqv
+  with signature (@feq t) ==> Forall2 feq ==> @eq (list Z) ==> Forall2 feq ==> feq
   as rowmult_mor.
 Proof.
 intros s s' Hs vals vals' Hvals ci vval vval' Hvval.
-red in Hvals, Hvval.
 revert s s' Hs ci vval vval' Hvval.
 induction Hvals; intros.
 -
@@ -172,6 +156,29 @@ destruct ci; simpl.
 auto.
 apply IHHvals; auto.
 apply BFMA_mor; auto.
+pose proof (Forall2_Zlength Hvval).
+destruct (zlt z 0).
+rewrite !Znth_underflow by auto. apply I.
+destruct (zle (Zlength vval) z).
+rewrite !Znth_overflow by lia. apply I.
+apply Forall2_Znth with (i:=z) in Hvval; auto.
+lia.
+Qed.
+
+Add Parametric Morphism {t: type}  : rowmult
+  with signature (@feq t) ==> Forall2 strict_feq ==> @eq (list Z) ==> Forall2 strict_feq ==> feq
+  as rowmult_stricter_mor.
+Proof.
+intros s s' Hs vals vals' Hvals ci vval vval' Hvval.
+revert s s' Hs ci vval vval' Hvval.
+induction Hvals; intros.
+-
+simpl. auto.
+-
+destruct ci; simpl.
+auto.
+apply IHHvals; auto.
+apply BFMA_mor; auto; apply subrelation_strict_feq; auto.
 pose proof (Forall2_Zlength Hvval).
 destruct (zlt z 0).
 rewrite !Znth_underflow by auto. apply I.
@@ -198,18 +205,17 @@ autorewrite with sublist.
 reflexivity.
 Qed.
 
-Lemma strict_float_eqv_i:
- forall {t} (x: ftype t), finite x -> strict_float_eqv x x.
+Lemma strict_feq_i:
+ forall {t} (x: ftype t), finite x -> strict_feq x x.
 Proof. auto. Qed.
 
 Lemma strict_floatlist_eqv_i:
-  forall {t} (vec: list (ftype t)), Forall finite vec -> strict_floatlist_eqv vec vec.
+  forall {t} (vec: list (ftype t)), Forall finite vec -> Forall2 strict_feq vec vec.
 Proof.
 intros.
 induction H; constructor; auto.
 Qed.
-
-#[export] Hint Resolve strict_float_eqv_i strict_floatlist_eqv_i : core.
+#[export] Hint Resolve strict_feq_i strict_floatlist_eqv_i : core.
 
 Lemma partial_row_end:
  forall {t} i (mval: matrix t) cols vals col_ind row_ptr vval
@@ -218,7 +224,7 @@ Lemma partial_row_end:
   (LEN: Zlength vval = cols),
   0 <= i < matrix_rows mval ->
   crs_rep_aux mval cols vals col_ind row_ptr ->
-  float_eqv (partial_row i (Znth (i+1) row_ptr) vals col_ind row_ptr vval)
+  feq (partial_row i (Znth (i+1) row_ptr) vals col_ind row_ptr vval)
       (Znth i (matrix_vector_mult mval vval)).
 Proof.
 intros.
@@ -249,7 +255,7 @@ reflexivity.
 destruct vval as [ | v0 vval'].
  +
   simpl.
-  pose proof (float_eqv_refl s).
+  pose proof (feq_refl s).
   clear - FINvals' FINvval FINrow H.
   revert s col_ind H; induction vals; intros; destruct col_ind; simpl; auto.
   rewrite Znth_nil. unfold default, zerof.
@@ -281,7 +287,7 @@ destruct vval as [ | v0 vval'].
    inv H0; auto. clear; list_solve.
  * clear - FINvval FINrow.
     inv FINvval.
-    assert (float_eqv s (BFMA (Zconst t 0) v0 s)). symmetry; apply BFMA_zero1; auto.
+    assert (feq s (BFMA (Zconst t 0) v0 s)). symmetry; apply BFMA_zero1; auto.
     forget (BFMA (Zconst t 0) v0 s) as s'. clear v0 H1.
     revert s s' H vval' H2; induction v; simpl; intros; auto.
     destruct vval'; simpl; auto.
@@ -318,9 +324,8 @@ destruct vval as [ | v0 vval'].
    rewrite IHvals; auto.
    apply rowmult_mor; auto. apply BFMA_mor; auto.
    rewrite Znth_pos_cons by list_solve.
-   unfold Z.pred. apply strict_float_eqv_i.
-   apply Forall_Znth; auto.
-   lia. list_solve.
+   replace (Z.pred z) with (z-1) by lia. reflexivity.
+   list_solve.
 Qed.
 
 Lemma rowmult_app:
