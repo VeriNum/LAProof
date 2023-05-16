@@ -28,3 +28,4 @@ C/sparse.v
 C/spec_sparse.v
 C/verif_sparse.v
 C/verif_sparse_byrows.v
+C/VSU_sparse.v

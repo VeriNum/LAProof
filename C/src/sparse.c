@@ -2,11 +2,11 @@
 #include <math.h>
 #include <sparse.h>
 
-void *surely_malloc(size_t n) {
+/*void *surely_malloc(size_t n) {
   void *p = malloc(n);
   if (!p) exit(1);
   return p;
-}
+  }*/
 
 double crs_row_vector_multiply(struct crs_matrix *m, double *v, unsigned i) {
   double *val = m->val;
@@ -56,7 +56,7 @@ void crs_matrix_vector_multiply (struct crs_matrix *m, double *v, double *p) {
 /* Let D be a diagonal matrix, whose diagonal is represented
    as the vector diag.  Let A be a matrix with number of rows equal
    to dimension of D.  let m represent A.
-   Then diag_mult(diag,m) sets m to represent D*A */
+   Then diag_mult(diag,m) sets m to represent D*A 
 void diag_mult(double *diag, struct crs_matrix *m) {
   unsigned i, h, rows=m->rows;
   for (i=0; i<rows; i++) {
@@ -66,6 +66,7 @@ void diag_mult(double *diag, struct crs_matrix *m) {
       m->val[h] *= x;
   }
 }
+*/
 
 unsigned crs_matrix_rows (struct crs_matrix *m) {
   return m->rows;

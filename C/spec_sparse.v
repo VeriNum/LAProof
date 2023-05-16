@@ -110,3 +110,6 @@ Definition SparseASI : funspecs := [
    crs_row_vector_multiply_spec;
    crs_matrix_vector_multiply_byrows_spec;
    crs_matrix_vector_multiply_spec ].
+
+Definition SubsetMathASI := [fma_spec].
+Definition Gprog: funspecs := SparseASI ++ SubsetMathASI.

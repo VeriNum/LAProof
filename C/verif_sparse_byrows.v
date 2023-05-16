@@ -9,8 +9,6 @@ Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
 
-Definition Gprog: funspecs := SparseASI ++ MathASI.
-
 Lemma fold_crs_rep:
   forall sh  (p v ci rp: val) mval cols (vals: list (ftype Tdouble))  col_ind row_ptr,
      crs_rep_aux mval cols vals col_ind row_ptr ->

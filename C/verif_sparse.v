@@ -9,8 +9,6 @@ Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
 
-Definition Gprog: funspecs := SparseASI ++ MathASI.
-
 Definition the_loop_body : statement.
 let c := constr:(f_crs_matrix_vector_multiply) in
 let c := eval red in c in 
