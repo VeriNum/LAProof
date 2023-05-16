@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
-#include "sparse.h"
+#include <sparse.h>
 
 void *surely_malloc(size_t n) {
   void *p = malloc(n);

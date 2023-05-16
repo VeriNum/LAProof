@@ -5,8 +5,8 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
-Require Import common float_acc_lems op_defs list_lemmas.
-Require Import dotprod_model dot_acc_lemmas.
+From LAProof.accuracy_proofs Require Import common float_acc_lems op_defs list_lemmas.
+From LAProof.accuracy_proofs Require Import dotprod_model dot_acc_lemmas.
 
 Require Import Reals.
 Open Scope R.

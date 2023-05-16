@@ -1,6 +1,6 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
-Require Import common op_defs list_lemmas float_acc_lems.
+From LAProof.accuracy_proofs Require Import common op_defs list_lemmas float_acc_lems.
 Require Import FunctionalExtensionality.
 
 Require Import Reals.

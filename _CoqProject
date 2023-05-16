@@ -1,4 +1,4 @@
--R . lib
+-Q . LAProof
 
 FEC/Common/CommonSSR.v
 
@@ -21,3 +21,10 @@ accuracy_proofs/mc_extra2.v
 accuracy_proofs/gemv_acc.v
 accuracy_proofs/vec_op_acc.v
 accuracy_proofs/gemm_acc.v
+
+floatlib.v
+C/sparse_model.v
+C/sparse.v
+C/spec_sparse.v
+C/verif_sparse.v
+C/verif_sparse_byrows.v

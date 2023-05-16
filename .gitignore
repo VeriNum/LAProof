@@ -1,3 +1,6 @@
+C/sparse.v
+CoqMakefile
+CoqMakefile.conf
 .*.aux
 .*.d
 *.a

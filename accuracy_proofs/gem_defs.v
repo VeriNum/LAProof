@@ -8,8 +8,8 @@ Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
 
-Require Import common op_defs dotprod_model sum_model.
-Require Import float_acc_lems list_lemmas.
+From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
+From LAProof.accuracy_proofs Require Import float_acc_lems list_lemmas.
 
 (* General list matrix and vector definitions *)
 Section MVGenDefs. 
