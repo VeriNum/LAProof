@@ -2,7 +2,7 @@
   operations such as BPLUS, BFMA, and BMULT. *)
 
 Require Import vcfloat.VCFloat.
-Require Import common op_defs.
+From LAProof.accuracy_proofs Require Import common op_defs.
 
 Section GenFloat.
 Context {t : type}.

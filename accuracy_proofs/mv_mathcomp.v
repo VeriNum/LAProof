@@ -3,15 +3,15 @@
 
 Require Import vcfloat.VCFloat.
 Require Import List.
-Require Import common op_defs dotprod_model sum_model.
-Require Import dot_acc float_acc_lems list_lemmas gem_defs.
+From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
+From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas gem_defs.
 Import ListNotations.
-Require Import  FEC.Common.CommonSSR.
+From LAProof Require Import  FEC.Common.CommonSSR.
 
 From Coq Require Import ZArith Reals Psatz Arith.Arith.
 From mathcomp.analysis Require Import Rstruct.
 From mathcomp Require Import matrix all_ssreflect all_algebra ssrnum bigop.
-Require Import mc_extra2.
+From LAProof.accuracy_proofs Require Import mc_extra2.
 
 Require Import VST.floyd.functional_base.
 

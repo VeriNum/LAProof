@@ -7,7 +7,7 @@ Import List ListNotations.
 
 Require Import Sorting Permutation.
 
-Require Import common.
+From LAProof.accuracy_proofs Require Import common.
 
 Require Import Reals.
 Open Scope R.
@@ -266,10 +266,9 @@ specialize (IHx (l' ++ l'') H ).
 simpl. rewrite IHx, sumR_app_cons; auto.
 Qed.
 
-Section NAN.
-
-
 From vcfloat Require Import IEEE754_extra.
+
+Section NAN.
 
 Lemma plus_zero {NAN: Nans}  a:
 Binary.is_finite _ _ a = true -> 
