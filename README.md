@@ -7,13 +7,12 @@ of programs implementing operations defined by the basic linear algebra subprogr
 LAProof provides formal machine-checked proofs of the accuracy of basic linear algebra operations:
 inner product using conventional multiply and add, inner product
 using fused multiply-add, scaled matrix-vector and matrix-matrix
-multiplication, and scaled vector and matrix addition. These
-proofs can connect to concrete implementations of low-level
-basic linear algebra subprograms; as a proof of concept we
-present a machine-checked correctness proof of a C function
-implementing compressed-row-storage (CRS) sparse matrix-
-vector multiplication. Our accuracy proofs are backward error
+multiplication, and scaled vector and matrix addition. LAProof error bounds are give as backward error
 bounds and mixed backward-forward error bounds that account
 for underflow, proved subject to no assumptions except a low-
 level formal model of IEEE-754 arithmetic. We treat low-order
 error terms concretely, not approximating as $O(u^2)$.
+
+The LAProof repository contains a machine-checked correctness proof of a C function
+implementing compressed-row-storage (CRS) sparse matrix-
+vector multiplication as an example of functionality.
