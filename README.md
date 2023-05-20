@@ -15,4 +15,4 @@ error terms concretely, not approximating as $O(u^2)$.
 
 The LAProof repository contains a machine-checked correctness proof of a C function
 implementing compressed-row-storage (CRS) sparse matrix-
-vector multiplication as an example of functionality.
+vector multiplication as an example of connecting LAProof functions to concrete programs.
