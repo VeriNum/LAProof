@@ -7,7 +7,7 @@ of programs implementing operations defined by the basic linear algebra subprogr
 LAProof provides formal machine-checked proofs of the accuracy of basic linear algebra operations:
 inner product using conventional multiply and add, inner product
 using fused multiply-add, scaled matrix-vector and matrix-matrix
-multiplication, and scaled vector and matrix addition. LAProof error bounds are give as backward error
+multiplication, and scaled vector and matrix addition. LAProof error bounds are backward error
 bounds and mixed backward-forward error bounds that account
 for underflow, proved subject to no assumptions except a low-
 level formal model of IEEE-754 arithmetic. We treat low-order
