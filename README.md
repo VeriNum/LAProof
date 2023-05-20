@@ -14,5 +14,5 @@ level formal model of IEEE-754 arithmetic. We treat low-order
 error terms concretely, not approximating as $O(u^2)$.
 
 The LAProof repository contains a machine-checked correctness proof of a C function
-implementing compressed-row-storage (CRS) sparse matrix-
-vector multiplication as an example of connecting LAProof functions to concrete programs.
+implementing compressed sparse row matrix-
+vector multiplication as an example of connecting LAProof to concrete programs.
