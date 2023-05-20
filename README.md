@@ -1,9 +1,6 @@
 # LAProof: a library of formal proofs of accuracy and correctness for linear algebra programs
 
-This repositroy contains the [VeriNum](https://verinum.org/) development of the Linear Algebra
-Proof Library (LAProof), a library of formal proofs of
-rounding error analyses for basic linear algebra operations.
-LAProof serves as a modular, portable proof layer between
+LAProof is a modular, portable proof layer between
 the verification of application software and the verification
 of programs implementing operations defined by the basic linear algebra subprograms (BLAS) specification.
 
