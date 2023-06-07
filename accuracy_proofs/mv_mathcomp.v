@@ -6,7 +6,7 @@ Require Import List.
 From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
 From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas gem_defs.
 Import ListNotations.
-From LAProof Require Import  FEC.Common.CommonSSR.
+From LAProof Require Import  mathcomp_compat.CommonSSR.
 
 From Coq Require Import ZArith Reals Psatz Arith.Arith.
 From mathcomp.analysis Require Import Rstruct.
