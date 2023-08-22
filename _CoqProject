@@ -1,6 +1,6 @@
 -Q . LAProof
 
-mathcomp-compat/CommonSSR.v
+mathcomp_compat/CommonSSR.v
 
 accuracy_proofs/common.v
 accuracy_proofs/op_defs.v
