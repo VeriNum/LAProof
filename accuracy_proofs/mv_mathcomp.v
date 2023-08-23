@@ -614,7 +614,7 @@ Lemma subMultNorm m (A: 'M[R]_m.+1)  (u : 'cV_m.+1) :
 Proof.
 remember (normv u) as umax.
 rewrite /normr /normM /normv /sum_abs /= big_max_mul.
-apply le_bigmax2 => i0 _. 
+apply: le_bigmax2 => i0 _.
 rewrite mxE => /=.
 eapply le_trans.
 apply Rabs_sum .
