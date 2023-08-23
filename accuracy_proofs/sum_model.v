@@ -47,7 +47,7 @@ apply IHl;
 auto.
 Qed.
 
-Lemma sum_rel_R_Rabs_pos : 
+Lemma sum_rel_R_Rabs_pos :
 forall l s,
 sum_rel_R (map Rabs l) s -> 0 <= s.
 Proof.
@@ -79,7 +79,7 @@ nra.
 intros.
 inversion H; subst; clear H.
 unfold sum.
-replace (Rabs(Rabs a + s0)) with 
+replace (Rabs(Rabs a + s0)) with
   (Rabs a  + s0); try nra.
 symmetry.
 rewrite Rabs_pos_eq; try nra.
@@ -113,7 +113,7 @@ fold sum_rel_R in H3.
 unfold sum.
 eapply Rle_trans.
 apply Rabs_triang.
-replace (Rabs(Rabs a + s0)) with 
+replace (Rabs(Rabs a + s0)) with
   (Rabs a  + s0).
 eapply Rplus_le_compat; try nra.
 eapply Rle_trans with (Rabs s0).
@@ -147,18 +147,18 @@ forall (a : R) , sum_rel_R [a] a.
 Proof.
 intros.
 unfold sum_rel_R.
-replace a with (a + 0) at 2 by nra. 
+replace a with (a + 0) at 2 by nra.
 apply sum_rel_cons. apply sum_rel_nil.
-Qed. 
+Qed.
 
 Lemma sum_rel_R_app_cons :
 forall l' l'' a s,
 sum_rel_R (l' ++  l'') s ->
 sum_rel_R (l' ++ a :: l'') (a + s).
 Proof.
-induction l'; simpl.  
+induction l'; simpl.
 { intros; apply sum_rel_cons; auto. }
-intros. 
+intros.
 inversion H; subst; clear H.
 specialize (IHl' l'' a0 s0 H3).
 unfold sum.
@@ -174,15 +174,15 @@ Lemma sum_rel_bound  :
 Proof.
 induction l; intros.
 { inversion Hrs; subst; simpl; rewrite Rabs_R0; nra. }
-  inversion Hrs; subst. 
+  inversion Hrs; subst.
   unfold sum; eapply Rle_trans; [apply Rabs_triang|].
   eapply Rle_trans; [apply Rplus_le_compat;
-  [apply Hin; simpl; auto| apply IHl; 
+  [apply Hin; simpl; auto| apply IHl;
                         [ apply H2 | intros; apply Hin; simpl; auto ] ] | ].
   apply Req_le. replace (length (a :: l)) with (length l + 1)%nat by (simpl; lia).
   rewrite plus_INR; simpl; nra.
 Qed.
-  
+
 Lemma sum_rel_R_permute :
   forall (l l0: list R)
   (Hper: Permutation l l0) (rs: R)
@@ -242,11 +242,11 @@ eapply Rle_trans.
 2: rewrite Rabs_pos_eq.
 apply Rabs_triang.
 apply Rplus_le_compat_l; auto.
-apply Rplus_le_le_0_compat; 
+apply Rplus_le_le_0_compat;
 [apply Rabs_pos|  apply sumRabs_pos].
 Qed.
 
-Lemma sumR_app_cons l' l'' a: 
+Lemma sumR_app_cons l' l'' a:
 a + sumR (l' ++ l'') = sumR (l' ++ a :: l'').
 Proof. induction l'; simpl; [nra | rewrite <- IHl'; nra]. Qed.
 
@@ -271,7 +271,7 @@ From vcfloat Require Import IEEE754_extra.
 Section NAN.
 
 Lemma plus_zero {NAN: Nans}  a:
-Binary.is_finite _ _ a = true -> 
+Binary.is_finite _ _ a = true ->
 (a + -0)%F32 = a.
 Proof.
 destruct a; simpl; auto;
@@ -288,10 +288,10 @@ Lemma sum_rel_bound'  :
 Proof.
 induction l; intros.
 { inversion Hrs; subst; simpl; rewrite Rabs_R0; nra. }
-  inversion Hrs; subst. 
+  inversion Hrs; subst.
   unfold sum; eapply Rle_trans; [apply Rabs_triang|].
   eapply Rle_trans; [apply Rplus_le_compat;
-  [apply Hin; simpl; auto| apply IHl; 
+  [apply Hin; simpl; auto| apply IHl;
                         [ apply H2 | intros; apply Hin; simpl; auto ] ] | ].
   apply Req_le. replace (length (a :: l)) with (length l + 1)%nat by (simpl; lia).
   rewrite plus_INR; simpl; nra.
@@ -308,19 +308,19 @@ induction l; intros.
   inversion Hrs; subst.
   unfold sum. fold sum_rel_R in H2.
   eapply Rle_trans; [apply Rplus_le_compat;
-  [apply Hin; simpl; auto| apply IHl; 
+  [apply Hin; simpl; auto| apply IHl;
                         [ apply H2 | intros; apply Hin; simpl; auto ] ] | ].
   apply Req_le. replace (length (a :: l)) with (length l + 1)%nat by (simpl; lia).
   rewrite plus_INR; simpl; nra.
-Qed. 
+Qed.
 
 
-Lemma sum_rel_R_fold : forall l rs, 
+Lemma sum_rel_R_fold : forall l rs,
    sum_rel_R l rs -> rs = sumR l.
-Proof. 
+Proof.
 induction l.
 intros; inversion H; simpl; auto.
-intros; inversion H. 
+intros; inversion H.
 fold sum_rel_R in H3.
 specialize (IHl s H3).
 subst; simpl.
@@ -328,9 +328,9 @@ unfold sum; auto.
 Qed.
 
 Lemma sum_map_Rmult (l : list R) (s a: R):
-sum_rel_R l s -> 
-sum_rel_R (map (Rmult a) l) (a * s). 
-Proof. 
+sum_rel_R l s ->
+sum_rel_R (map (Rmult a) l) (a * s).
+Proof.
 revert l s a. induction l.
 { intros. simpl. inversion H; subst; rewrite Rmult_0_r; auto. }
 intros. inversion H. destruct l.
@@ -351,7 +351,7 @@ Proof.
 intros.
 inversion H0.
 inversion H4; subst.
-unfold sum, BPLUS; destruct a; try discriminate; 
+unfold sum, BPLUS; destruct a; try discriminate;
   simpl; auto.
 destruct s; simpl; auto.
 Qed.
@@ -363,10 +363,10 @@ Lemma sum_rel_R_exists {NAN: Nans}:
 Proof.
 intros ?. induction l.
 { simpl; exists 0. apply sum_rel_nil. }
-intros. inversion Hfs; subst. 
+intros. inversion Hfs; subst.
 fold (@sum_rel_Ft NAN t) in H2.
 destruct (IHl s H2) as (rs & Hrs); clear IHl.
-exists (FT2R a + rs); simpl. 
+exists (FT2R a + rs); simpl.
 apply sum_rel_cons; auto.
 Qed.
 
@@ -377,25 +377,25 @@ Lemma sum_rel_R_abs_exists {NAN: Nans}:
 Proof.
 intros ?. induction l.
 { simpl; exists 0. apply sum_rel_nil. }
-intros. inversion Hfs; subst. 
+intros. inversion Hfs; subst.
 fold (@sum_rel_Ft NAN t) in H2.
 destruct (IHl s H2) as (rs & Hrs); clear IHl.
-exists (Rabs (FT2R a) + rs); simpl. 
+exists (Rabs (FT2R a) + rs); simpl.
 apply sum_rel_cons; auto.
 Qed.
- 
+
 Lemma is_finite_in {NAN: Nans} (t : type) :
   forall (l : list (ftype t)) fs,
   sum_rel_Ft t l fs ->
   let e  := @default_abs t in
-  let d  := @default_rel t in 
+  let d  := @default_rel t in
   let ov := powerRZ 2 (femax t) in
   Binary.is_finite (fprec t) (femax t) fs = true ->
   forall a, In a l -> Binary.is_finite (fprec t) (femax t) a = true.
 Proof.
 induction l.
 simpl; intros; auto.
-intros. 
+intros.
 destruct H1; subst.
 inversion H.
 rewrite <- H2 in H0. clear H2.
@@ -415,12 +415,12 @@ Qed.
 
 Definition sumF {NAN: Nans} {t: type} := fold_right (@BPLUS NAN t) neg_zero.
 
-Lemma sum_rel_Ft_fold {NAN: Nans} : forall t l fs, 
+Lemma sum_rel_Ft_fold {NAN: Nans} : forall t l fs,
    sum_rel_Ft t l fs -> fs = sumF l.
-Proof. 
+Proof.
 induction l.
 intros; inversion H; simpl; auto.
-intros; inversion H. 
+intros; inversion H.
 fold (@sum_rel_Ft NAN t) in H3.
 specialize (IHl s H3).
 subst; simpl.
