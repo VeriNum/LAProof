@@ -48,7 +48,7 @@ Lemma mat_vec_mul_mixed_error:
     /\ (forall k, In k eta -> Rabs k <= g1 n n)
     /\ eq_size E A
     /\ length eta = m.
-Proof.
+Proof using Hfin Hlen.
 revert Hfin Hlen.
 elim: A => /= [ Hfin Hlen | a l IH Hfin' Hlen].
 (*case A is nil*)
@@ -214,7 +214,7 @@ Lemma mat_vec_mul_mixed_error':
     /\ (forall i j (Hi : (i < m.+1)%nat) (Hj : (j < n.+1)%nat),
       Rabs (E  (Hi ') (Hj ')) <= g n.+1 * Rabs (Ar  (Hi ') (Hj ')))
     /\ forall i (Hi: (i < m.+1)%nat), Rabs (eta (Hi ')  0) <= g1 n.+1 n.+1 .
-Proof.
+Proof using Hfin Hlen HlenA Hlenv.
 have Hlen' : forall x : seq.seq (ftype t), In x A -> Datatypes.length x = length v.
   move => x Hin. rewrite Hlen => //. lia.
 destruct (mat_vec_mul_mixed_error A v Hfin Hlen') as
@@ -316,7 +316,7 @@ Notation "| u |" := (normv u) (at level 40).
 
 Theorem forward_error :
  |Av' - (Ar *m vr)| <= (g m.+1 * normM Ar * |vr|) + g1 m.+1 m.+1.
-Proof.
+Proof using Hfin Hlen HlenA Hlenv Hlenv1.
 destruct (mat_vec_mul_mixed_error' A v) as (E & eta & HE & H1 & H2) => //.
 rewrite Hlenv1 => //.
 rewrite HE mulmxDl. fold m. clear HE.
