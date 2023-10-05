@@ -17,6 +17,5 @@ The LAProof repository contains a machine-checked correctness proof of a C funct
 implementing compressed sparse row matrix-
 vector multiplication as an example of connecting LAProof to concrete programs.
 
-The paper on LAProof will appear in the proceedings of the 30th IEEE International Symposium on 
-Computer Arithmetic (ARITH '23) and can be found 
-[here](https://github.com/ak-2485/ak-2485.github.io/blob/master/laproof.pdf).
+[The paper on LAProof will appear in the proceedings of the 30th IEEE International Symposium on 
+Computer Arithmetic (ARITH '23)](https://github.com/ak-2485/ak-2485.github.io/blob/master/laproof.pdf).
