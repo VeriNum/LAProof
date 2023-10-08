@@ -8,7 +8,7 @@ Definition matrix t := list (list (ftype t)).
 Definition vector t := list (ftype t).
 
 Definition dotprod {NAN: Nans} {t: type} (v1 v2: list (ftype t)) : ftype t :=
-  fold_left (fun s x12 => BFMA (fst x12) (snd x12) s) 
+  fold_left (fun s x12 => BFMA (fst x12) (snd x12) s)
                 (List.combine v1 v2)  (Zconst t 0).
 
 Definition norm2 {NAN: Nans} {t} (v: vector t) := dotprod v v.
@@ -42,7 +42,7 @@ Definition vector_sub {NAN: Nans}{t:type} (v1 v2 : vector t) :=
 Definition matrix_index {t} (m: matrix t) (i j: nat) :=
  nth j (nth i m nil) (Zconst t 0).
 
-Definition matrix_by_index {t} (rows cols: nat) 
+Definition matrix_by_index {t} (rows cols: nat)
           (f: nat -> nat -> ftype t) : matrix t :=
      map (fun i => map (f i) (seq 0 cols)) (seq 0 rows).
 
@@ -103,7 +103,7 @@ Proof.
  rewrite nth_map_seq; auto.
 Qed.
 
-Lemma matrix_extensionality_strong: 
+Lemma matrix_extensionality_strong:
   forall {t} (m1 m2: matrix t) cols,
   matrix_rows_nat m1 = matrix_rows_nat m2 ->
   matrix_cols_nat m1 cols -> matrix_cols_nat m2 cols ->
@@ -124,7 +124,7 @@ Proof.
  intros i j ? ?. apply (H2 (S i) j); lia.
 Qed.
 
-Lemma matrix_extensionality: 
+Lemma matrix_extensionality:
   forall {t} (m1 m2: matrix t) cols,
   matrix_rows_nat m1 = matrix_rows_nat m2 ->
   matrix_cols_nat m1 cols -> matrix_cols_nat m2 cols ->
@@ -148,9 +148,9 @@ Proof.
 Qed.
 
 Lemma matrix_index_prop:
- forall {t} (P: ftype t -> Prop) (m: matrix t) (cols i j : nat), 
+ forall {t} (P: ftype t -> Prop) (m: matrix t) (cols i j : nat),
     matrix_cols_nat m cols ->
-    Forall (Forall P) m -> 
+    Forall (Forall P) m ->
     i < matrix_rows_nat m -> j < cols ->
     P (matrix_index m i j).
 Proof.
@@ -173,7 +173,7 @@ Qed.
 Lemma all_nth_eq:
  forall {A} d (al bl: list A),
   length al = length bl ->
-  (forall i, i < length al -> nth i al d = nth i bl d) -> 
+  (forall i, i < length al -> nth i al d = nth i bl d) ->
   al=bl.
 Proof.
 induction al; destruct bl; simpl; intros; try discriminate; f_equal.
@@ -215,9 +215,9 @@ Proof.
  inv H1. auto. simpl. apply BFMA_mor; auto; apply subrelation_strict_feq; auto.
 Qed.
 
-Lemma norm2_congr: 
-  forall {NAN: Nans} {t} (x x': vector t), 
-           Forall2 feq x x' -> 
+Lemma norm2_congr:
+  forall {NAN: Nans} {t} (x x': vector t),
+           Forall2 feq x x' ->
            feq (norm2 x) (norm2 x').
 Proof.
 intros.
@@ -275,7 +275,7 @@ constructor; auto.
 apply BMINUS_congr; auto.
 Qed.
 
-Lemma norm2_loose_congr: 
+Lemma norm2_loose_congr:
  forall {NAN: Nans}{t} (x x': vector t),  Forall2 feq x x' -> feq (norm2 x) (norm2 x').
 Proof.
 intros.
@@ -359,7 +359,7 @@ rewrite nth_map_seq by auto.
 apply H0; auto.
 Qed.
 
-Lemma Zmatrix_cols_nat: 
+Lemma Zmatrix_cols_nat:
  forall {t} (m: matrix t) cols,
   matrix_cols_nat m cols  <-> matrix_cols m (Z.of_nat cols).
 Proof.
@@ -412,7 +412,7 @@ Add Parametric Morphism {NAN: Nans}{t}: (@dotprod _ t)
 Proof.
 intros.
 unfold dotprod.
-set (a := Zconst t 0) at 1. 
+set (a := Zconst t 0) at 1.
 set (a' := Zconst t 0).
 assert (feq a a') by reflexivity.
 clearbody a. clearbody a'.

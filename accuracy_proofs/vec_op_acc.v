@@ -36,24 +36,24 @@ Lemma scaleV_mixed_error :
   map FT2R (scaleVF a v) =  scaleVR (FT2R a) (vr +v e) +v eta
   /\ (forall i, (i < m)%nat -> exists d,
       List.nth i e 0 = (List.nth i vr 0%R) * d
-        /\ Rabs d <= g m) 
-  /\ (forall e0, In e0 eta -> Rabs e0 <= g1 m m) 
+        /\ Rabs d <= g m)
+  /\ (forall e0, In e0 eta -> Rabs e0 <= g1 m m)
   /\ length e   = length v
   /\ length eta = length v .
 Proof.
 move => v.
 elim: v => /= [a _|].
-{ rewrite /vec_sumR/vec_sum/map2/=. 
+{ rewrite /vec_sumR/vec_sum/map2/=.
   by exists [], []. }
-move => v0 v IH. intros. 
+move => v0 v IH. intros.
 have Hfin':  is_finite_vec (scaleVF a v) /\
 Binary.is_finite _ _ (BMULT a v0).
   by apply is_finite_vec_cons in Hfinv.
 case Hfin' =>  HA HB.
-destruct (IH a) as 
+destruct (IH a) as
   (e & eta & Heq & He & Heta) => //.
 clear IH. rewrite Heq. clear Heq.
-destruct (BMULT_accurate a v0) as 
+destruct (BMULT_accurate a v0) as
   (del & eps & HD & HE & HF & Heq).
 by apply is_finite_BMULT_no_overflow.
 rewrite Heq. clear Heq.
@@ -66,12 +66,12 @@ destruct i => /=.
 exists del; split; [nra|].
 apply /RleP. eapply Rle_trans.
 apply HE => /=. rewrite -Nat.add_1_r;
-auto with commonDB. 
+auto with commonDB.
 have Hi': (i < length v)%nat by lia.
 destruct (He i Hi') as (x & He' & Hx).
-rewrite He'. 
-exists x; split => //=. 
-eapply le_trans. apply Hx. 
+rewrite He'.
+exists x; split => //=.
+eapply le_trans. apply Hx.
 apply /RleP; auto with commonDB. }
 move => e0 [Hin| Hin].
 { rewrite -Hin. apply /RleP.
@@ -109,25 +109,25 @@ Lemma vec_sumF_mixed_error :
   /\ length e1   = length u
   /\ length e2   = length v.
 Proof.
-move => u. 
+move => u.
 (* main induction on right vector *)
-elim u. 
-{ move => v /=; intros. 
+elim u.
+{ move => v /=; intros.
 exists [], [] => /=; repeat split => //=.
 rewrite -Hlen. intros => //.
-rewrite -Hlen. intros => //. }  
+rewrite -Hlen. intros => //. }
 clear u; move => u0 u IH v.
 (* main induction *)
-case: v => //. 
-move => v0 v. intros. 
+case: v => //.
+move => v0 v. intros.
 rewrite /vec_sumF vec_sum_cons.
 have Hfin:  is_finite_vec (vec_sum BPLUS u v) /\
   (Binary.is_finite  _ _ (BPLUS u0 v0) = true).
-simpl in Hfinv. rewrite /vec_sumF vec_sum_cons in Hfinv.  
+simpl in Hfinv. rewrite /vec_sumF vec_sum_cons in Hfinv.
 apply is_finite_vec_cons in Hfinv.
 destruct Hfinv => //.
 destruct Hfin as (H1f & H2f).
-rewrite /vec_sumF in IH. 
+rewrite /vec_sumF in IH.
 destruct (IH v) as (e1 & e2 & Heq & H) => //; clear IH.
 simpl in Hlen; lia.
 simpl; rewrite Heq.
@@ -135,30 +135,30 @@ destruct (BPLUS_accurate' u0 v0) as (del & Hd & H1) => //.
 rewrite H1; clear H1.
 rewrite !CommonSSR.map_map_equiv/=.
 exists (((FT2R u0) * del) :: e1), (((FT2R v0) * del) :: e2);
-  repeat split. 
+  repeat split.
 { rewrite /ur/vr/=/vec_sumR !vec_sum_cons.
-f_equal. 
+f_equal.
 rewrite -!RmultE; nra. }
 { move => i Hi; destruct i => /=.
 exists del; split => //=.
-apply /RleP. by apply Hd. 
+apply /RleP. by apply Hd.
 destruct H as (H & H1).
-elim: (H i). 
+elim: (H i).
 clear H; move => d' Hd'.
 destruct Hd' as (Hd' & Hd'').
 exists d'; split => //=.
-unfold m in Hi. simpl in Hi. lia. } 
+unfold m in Hi. simpl in Hi. lia. }
 { move => i Hi; destruct i => /=.
 exists del; split => //=.
 apply /RleP.
 by apply Hd.
 destruct H as (_ & H1 & _).
-elim: (H1 i). 
+elim: (H1 i).
 clear H1; move => d' Hd'.
 destruct Hd' as (Hd' & Hd'').
 exists d'; split => //=.
-unfold m in Hi; simpl in Hi; lia. } 
-all : simpl; lia. 
+unfold m in Hi; simpl in Hi; lia. }
+all : simpl; lia.
 Qed.
 
 Lemma Svec_sumF_mixed_error :
@@ -169,9 +169,9 @@ Lemma Svec_sumF_mixed_error :
     let ur:= map FT2R u in
     let m := length v in
   exists (e1 e2 e3 e4 e5 e6: vector),
-  map FT2R (vec_sumF (scaleVF a u) (scaleVF b v)) = 
-        vec_sumR 
-            (scaleVR (FT2R a) (ur +v e1) +v e2 +v e3) 
+  map FT2R (vec_sumF (scaleVF a u) (scaleVF b v)) =
+        vec_sumR
+            (scaleVR (FT2R a) (ur +v e1) +v e2 +v e3)
             (scaleVR (FT2R b) (vr +v e4) +v e5 +v e6)
   /\ (forall i, (i < m)%nat -> exists d,
       List.nth i e1 0 = (List.nth i ur 0%R) * d
@@ -180,11 +180,11 @@ Lemma Svec_sumF_mixed_error :
       List.nth i e4 0 = (List.nth i vr 0%R) * d
         /\ Rabs d <= g m )
   /\ (forall i : nat, (i < m)%nat -> exists d,
-      List.nth i e3 0 =  (List.nth i (scaleVR (FT2R a) (ur +v e1) +v e2) 0%R) * d 
-        /\ Rabs d <= @default_rel t) 
+      List.nth i e3 0 =  (List.nth i (scaleVR (FT2R a) (ur +v e1) +v e2) 0%R) * d
+        /\ Rabs d <= @default_rel t)
   /\ (forall i : nat, (i < m)%nat -> exists d,
-      List.nth i e6 0 =  (List.nth i (scaleVR (FT2R b) (vr +v e4) +v e5) 0%R) * d 
-        /\ Rabs d <= @default_rel t)  
+      List.nth i e6 0 =  (List.nth i (scaleVR (FT2R b) (vr +v e4) +v e5) 0%R) * d
+        /\ Rabs d <= @default_rel t)
   (* absolute error terms *)
   /\ (forall k : R, In k e5 -> Rabs k <= g1 m m)
   /\ (forall k : R, In k e2 -> Rabs k <= g1 m m)
@@ -202,16 +202,16 @@ destruct (vec_sumF_mixed_error (scaleVF a u) (scaleVF b v)) as
   (Du & Dv & Heq & HD) => //.
 by rewrite !map_length.
 apply is_finite_vec_sum in Hfinv; destruct Hfinv.
-destruct (scaleV_mixed_error u a) as 
+destruct (scaleV_mixed_error u a) as
   (ae & aeta & Heqa & Hea & Haeta & HA1 & HA2) => //.
-destruct (scaleV_mixed_error v b) as 
+destruct (scaleV_mixed_error v b) as
   (be & beta & Heqb & Heb & Hbeta & HB1 & HB2) => //.
 rewrite Heq. rewrite Heqb Heqa.
 rewrite Heqa Heqb in HD. clear Heq Heqa Heqb.
 destruct HD as (HDu & HDv & HD1 & HD2).
 rewrite !CommonSSR.map_map_equiv.
 exists ae, aeta ,Du, be, beta, Dv; repeat split => //; try lia.
-{ intros; destruct (Hea i) . 
+{ intros; destruct (Hea i) .
 rewrite Hu; lia.
 exists x; rewrite Hu in H2; apply H2. }
 { intros; destruct (HDu i) .
@@ -222,16 +222,16 @@ rewrite !map_length. fold m; lia.
 rewrite !CommonSSR.map_map_equiv in H2.
 fold m in H2; exists x. apply H2. }
 rewrite -Hu.
-by apply Haeta. 
+by apply Haeta.
 rewrite !map_length in HD1; lia.
 rewrite !map_length in HD2; lia.
 all: by rewrite !map_length.
-Qed. 
+Qed.
 
 End VECSUMERROR.
 
 
-Section SCALEFMV. 
+Section SCALEFMV.
 (* mixed error bounds over lists *)
 Context {NAN: Nans} {t : type}.
 
@@ -252,19 +252,19 @@ Hypothesis Hlen: forall row, In row A -> length row = length v.
 
 Lemma Smat_vec_mul_mixed_error:
   exists (E : matrix) (e eta1 eta2 : vector),
-    map FT2R (scaleVF b (A *f v)) =  
-        scaleVR (FT2R b) ((Ar +m E) *r vr +v eta1 +v e) +v eta2 
-    /\ (forall i j, (i < m)%nat -> (j < n)%nat -> 
-      Rabs (E _(i,j)) <= g n * Rabs (Ar _(i,j))) 
-    /\ (forall k, In k eta2 -> Rabs k <= g1 m m) 
-    /\ eq_size E A 
+    map FT2R (scaleVF b (A *f v)) =
+        scaleVR (FT2R b) ((Ar +m E) *r vr +v eta1 +v e) +v eta2
+    /\ (forall i j, (i < m)%nat -> (j < n)%nat ->
+      Rabs (E _(i,j)) <= g n * Rabs (Ar _(i,j)))
+    /\ (forall k, In k eta2 -> Rabs k <= g1 m m)
+    /\ eq_size E A
     /\ length eta2 = m
     /\ (forall i : nat, (i < m)%nat ->
         exists d : GRing.Ring.sort R_ringType,
         (List.nth i e 0 = List.nth i (A *fr v) 0 * d /\
            (Rabs d) <= g m))
     /\ (forall k : R,
-       (In k eta1) -> is_true ((Rabs k) <= (g1 n n))) 
+       (In k eta1) -> is_true ((Rabs k) <= (g1 n n)))
     /\ length eta1= m.
 Proof.
 (* proof follows from previous bounds for scaling
@@ -274,16 +274,16 @@ destruct (@scaleV_mixed_error NAN t (A *f v) b)
 rewrite Heq. clear Heq.
 destruct (@mat_vec_mul_mixed_error NAN t A v)
   as (E & eta1 & Heq1 & H1).
-{ apply (is_finite_scaleV b) => //. } 
-{ intros; by apply Hlen. } 
+{ apply (is_finite_scaleV b) => //. }
+{ intros; by apply Hlen. }
 rewrite !CommonSSR.map_map_equiv.
-rewrite Heq1. 
+rewrite Heq1.
 rewrite !CommonSSR.map_map_equiv in H.
 rewrite Heq1 in H. clear Heq1.
 have Hlen1: (length (A *f v)) = m.
 by rewrite !map_length.
 exists E, e, eta1, eta; repeat split => //.
-destruct H1.  
+destruct H1.
 intros; apply H0 => //.
 destruct H as (_ & H & _); intros.
 rewrite Hlen1 in H. by apply H.
@@ -296,7 +296,7 @@ destruct H as ( _ & H ).
 destruct H;intros.
 by rewrite H0 !map_length.
 rewrite !CommonSSR.map_map_equiv in H.
-destruct H as (H & _); intros. 
+destruct H as (H & _); intros.
 destruct (H i). by rewrite Hlen1.
 exists x; destruct H2; split => //.
 by rewrite Hlen1 in H3.
@@ -306,9 +306,9 @@ destruct H1 as (_ & _ & H2).
 by apply H2.
 Qed.
 
-End SCALEFMV. 
+End SCALEFMV.
 
-Section GEMV. 
+Section GEMV.
 (* mixed error bounds over lists *)
 Context {NAN: Nans} {t : type}.
 
@@ -325,32 +325,32 @@ Notation Ar := (map_mat FT2R A).
 Notation xr := (map FT2R x).
 Notation yr := (map FT2R y).
 
-Hypothesis Hfin : is_finite_vec 
+Hypothesis Hfin : is_finite_vec
   (vec_sumF (scaleVF s1 (A *f x)) (scaleVF s2 y)).
 Hypothesis Hlen: forall row, In row A -> length row = length x.
 Hypothesis Hleny: length y = m.
 
 Lemma gemv_error:
   exists (e1 : matrix) (e2 e3 e4 e5 e6 e7 e8: vector),
-    map FT2R (vec_sumF (scaleVF s1 (A *f x)) (scaleVF s2 y)) =  
+    map FT2R (vec_sumF (scaleVF s1 (A *f x)) (scaleVF s2 y)) =
   ((scaleVR (FT2R s1) ((((Ar +m e1) *r xr) +v e2) +v e3) +v e4) +v e5) +v
   ((scaleVR (FT2R s2) (List.map FT2R y +v e6) +v e7) +v e8)
 
   /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-      Rabs (matrix_index e1 i j 0%Re) <= g n * Rabs (matrix_index Ar i j 0%Re)) 
-  /\ (forall k : R, In k e2 -> Rabs k <= g1 n n) 
+      Rabs (matrix_index e1 i j 0%Re) <= g n * Rabs (matrix_index Ar i j 0%Re))
+  /\ (forall k : R, In k e2 -> Rabs k <= g1 n n)
   /\ (forall i : nat, (i < m)%nat -> exists d,
-        List.nth i e3 0 = List.nth i (((Ar +m e1) *r xr) +v e2) 0%Re * d 
-        /\ Rabs d <= g m ) 
+        List.nth i e3 0 = List.nth i (((Ar +m e1) *r xr) +v e2) 0%Re * d
+        /\ Rabs d <= g m )
   /\ (forall i : nat, (i < m)%nat -> exists d,
-        List.nth i e6 0 = List.nth i (List.map FT2R y) 0%Re * d 
-        /\ Rabs d <= g m) 
+        List.nth i e6 0 = List.nth i (List.map FT2R y) 0%Re * d
+        /\ Rabs d <= g m)
   /\ (forall i : nat, (i < m)%nat -> exists d,
-        List.nth i e5 0 = List.nth i (scaleVR (FT2R s1) ((((Ar +m e1) *r xr) +v e2) +v e3) +v e4) 0%Re * d 
-        /\ Rabs d <= @default_rel t) 
+        List.nth i e5 0 = List.nth i (scaleVR (FT2R s1) ((((Ar +m e1) *r xr) +v e2) +v e3) +v e4) 0%Re * d
+        /\ Rabs d <= @default_rel t)
   /\ (forall i : nat, (i < m)%nat -> exists d ,
-        List.nth i e8 0 = List.nth i (scaleVR (FT2R s2) (List.map FT2R y +v e6) +v e7) 0%Re * d 
-        /\ Rabs d <= @default_rel t) 
+        List.nth i e8 0 = List.nth i (scaleVR (FT2R s2) (List.map FT2R y +v e6) +v e7) 0%Re * d
+        /\ Rabs d <= @default_rel t)
   /\ (forall k : R, In k e7 -> Rabs k <= g1 m m)
   /\ (forall k0 : R, In k0 e4 -> Rabs k0 <= g1 m m).
 
@@ -367,7 +367,7 @@ destruct (mat_vec_mul_mixed_error A x)
 by apply is_finite_scaleV in H.
 all: rewrite !map_length; by rewrite Hleny. }
 { by intros; apply Hlen. }
-rewrite Heq2. 
+rewrite Heq2.
 rewrite !CommonSSR.map_map_equiv in H1.
 rewrite Heq2 in H1. rewrite Hleny in H1, H2.
 destruct H2 as (He1 & He2 & _).

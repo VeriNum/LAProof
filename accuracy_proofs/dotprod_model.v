@@ -12,7 +12,7 @@ Section DotProdGeneric.
 
 
 Definition dotprod {A} (mult plus: A -> A -> A) (zero : A) (v1 v2: list A):A :=
-  fold_left (fun s x12 => plus (mult (fst x12) (snd x12)) s) 
+  fold_left (fun s x12 => plus (mult (fst x12) (snd x12)) s)
                 (combine v1 v2) zero.
 
 Lemma dotprod_nil_l :
@@ -26,11 +26,11 @@ Lemma dotprod_nil_r :
 Proof. intros; induction l; simpl; auto. Qed.
 
 Lemma dotprod_single :
-  forall A (l : list A) 
-  (mult plus : A -> A -> A) (zero a2: A) 
+  forall A (l : list A)
+  (mult plus : A -> A -> A) (zero a2: A)
   (Hpz : forall y, plus y zero = y)
-  (Hmz : forall y, mult zero y = zero), 
-let a1 := nth 0 l zero in 
+  (Hmz : forall y, mult zero y = zero),
+let a1 := nth 0 l zero in
 dotprod mult plus zero l [a2] = mult a1 a2.
 Proof. intros; simpl; destruct l.
 rewrite dotprod_nil_l. subst a1. simpl; auto.
@@ -42,10 +42,10 @@ End DotProdGeneric.
 Section DotProdFloat.
 Context {NAN : Nans} {t : type}.
 
-Definition dotprodF : list (ftype t) -> list (ftype t) -> ftype t := 
+Definition dotprodF : list (ftype t) -> list (ftype t) -> ftype t :=
   dotprod BMULT BPLUS (Zconst t 0).
 
-Inductive dot_prod_rel : 
+Inductive dot_prod_rel :
             list (ftype t * ftype t) -> ftype t -> Prop :=
 | dot_prod_rel_nil  : dot_prod_rel  nil (Zconst t 0)
 | dot_prod_rel_cons : forall l (xy : ftype t * ftype t) s,
@@ -53,10 +53,10 @@ Inductive dot_prod_rel :
     dot_prod_rel  (xy::l) (BPLUS (BMULT  (fst xy) (snd xy)) s).
 
 Lemma dotprodF_rel_fold_right :
-forall (v1 v2: list (ftype t)), 
+forall (v1 v2: list (ftype t)),
     dot_prod_rel (rev (List.combine v1 v2)) (dotprodF v1 v2).
 Proof.
-intros v1 v2. unfold dotprodF, dotprod; rewrite <- fold_left_rev_right. 
+intros v1 v2. unfold dotprodF, dotprod; rewrite <- fold_left_rev_right.
 induction (rev (List.combine v1 v2)).
 { simpl; auto. apply dot_prod_rel_nil. }
 simpl. apply dot_prod_rel_cons. auto.
@@ -69,10 +69,10 @@ Context {NAN : Nans} {t : type}.
 
 (* FMA dot-product *)
 Definition fma_dotprod (v1 v2: list (ftype t)) : ftype t :=
-  fold_left (fun s x12 => BFMA (fst x12) (snd x12) s) 
+  fold_left (fun s x12 => BFMA (fst x12) (snd x12) s)
                 (List.combine v1 v2) (Zconst t 0).
 
-Inductive fma_dot_prod_rel : 
+Inductive fma_dot_prod_rel :
             list (ftype t * ftype t) -> ftype t -> Prop :=
 | fma_dot_prod_rel_nil  : fma_dot_prod_rel nil (Zconst t 0)
 | fma_dot_prod_rel_cons : forall l (xy : ftype t * ftype t) s,
@@ -81,11 +81,11 @@ Inductive fma_dot_prod_rel :
 
 
 Lemma fma_dot_prod_rel_fold_right  :
-forall (v1 v2: list (ftype t)), 
+forall (v1 v2: list (ftype t)),
     fma_dot_prod_rel (rev (List.combine v1 v2)) (fma_dotprod v1 v2).
 Proof.
-intros v1 v2. 
- unfold fma_dotprod; rewrite <- fold_left_rev_right. 
+intros v1 v2.
+ unfold fma_dotprod; rewrite <- fold_left_rev_right.
 induction (rev (List.combine v1 v2)).
 { simpl; auto. apply fma_dot_prod_rel_nil. }
 simpl. apply fma_dot_prod_rel_cons. auto.
@@ -95,10 +95,10 @@ End DotProdFMA.
 
 Section RealDotProd.
 
-Definition dotprodR l1 l2 : R := 
+Definition dotprodR l1 l2 : R :=
   fold_left Rplus (map (uncurry Rmult) (List.combine l1 l2)) 0%R.
 
-Inductive R_dot_prod_rel : 
+Inductive R_dot_prod_rel :
             list (R * R) -> R -> Prop :=
 | R_dot_prod_rel_nil  : R_dot_prod_rel  nil 0%R
 | R_dot_prod_rel_cons : forall l xy s,
@@ -106,13 +106,13 @@ Inductive R_dot_prod_rel :
     R_dot_prod_rel  (xy::l)  (fst xy * snd xy + s).
 
 Lemma R_dot_prod_rel_eq :
-  forall l a b 
+  forall l a b
   (Ha: R_dot_prod_rel l a)
   (Hb: R_dot_prod_rel l b), a = b.
 Proof.
 induction l.
 { intros; inversion Ha; inversion Hb; auto. }
-intros; inversion Ha; inversion Hb; subst; f_equal. 
+intros; inversion Ha; inversion Hb; subst; f_equal.
 apply IHl; auto.
 Qed.
 
@@ -120,27 +120,27 @@ Definition Rabsp p : R * R := (Rabs (fst p), Rabs (snd p)).
 
 Definition FR2 {t: type} (x12: ftype t * ftype t) := (FT2R (fst x12), FT2R (snd x12)).
 
-Lemma FT2R_FR2 t : 
+Lemma FT2R_FR2 t :
   (forall a a0 : ftype t, (FT2R a, FT2R a0) = FR2 (a, a0)) .
 Proof. intros. unfold FR2; simpl; auto. Qed.
 
 Definition sum_fold: list R -> R := fold_right Rplus 0%R.
 
 Lemma dotprodR_nil_l u:
-dotprodR nil u = 0%R. 
+dotprodR nil u = 0%R.
 Proof. simpl; auto. Qed.
 
 Lemma dotprodR_nil_r u:
-dotprodR u nil = 0%R. 
-Proof. 
-unfold dotprodR, dotprod; rewrite combine_nil; simpl; auto. 
+dotprodR u nil = 0%R.
+Proof.
+unfold dotprodR, dotprod; rewrite combine_nil; simpl; auto.
 Qed.
 
 
 Lemma sum_rev l:
 sum_fold l = sum_fold (rev l).
 Proof.
-unfold sum_fold. 
+unfold sum_fold.
 rewrite fold_left_rev_right.
 replace (fun x y : R => y + x) with Rplus
  by (do 2 (apply FunctionalExtensionality.functional_extensionality; intro); lra).
@@ -155,20 +155,20 @@ Proof. (do 2 (apply functional_extensionality; intro); lra).
 Qed.
 
 Lemma dotprodR_rel :
-forall (v1 v2: list R) , 
+forall (v1 v2: list R) ,
     R_dot_prod_rel ((List.combine v1 v2)) (dotprodR v1 v2).
 Proof.
 intros; unfold dotprodR;
 induction (((combine v1 v2))).
 { simpl. apply R_dot_prod_rel_nil. }
-destruct a; simpl. 
+destruct a; simpl.
 unfold dotprodR. simpl.
 rewrite fold_left_Rplus_Rplus.
 apply R_dot_prod_rel_cons; auto.
 Qed.
 
-Lemma dotprodR_rev : forall (v1 v2: list R) , 
-  length v1 = length v2 -> 
+Lemma dotprodR_rev : forall (v1 v2: list R) ,
+  length v1 = length v2 ->
   dotprodR v1 (rev v2) = dotprodR (rev v1) v2.
 Proof.
 intros; unfold dotprodR.
@@ -182,7 +182,7 @@ induction (combine (rev v1) v2).
 simpl; auto.
 match goal with |- context [?A = ?B] =>
 set (y:= B)
-end. 
+end.
 simpl. subst y.
 rewrite fold_left_Rplus_Rplus.
 rewrite IHl.
@@ -193,7 +193,7 @@ rewrite rev_length; auto.
 Qed.
 
 Lemma R_dot_prod_rel_fold_right t :
-forall (v1 v2: list (ftype t)) , 
+forall (v1 v2: list (ftype t)) ,
    let prods := map (uncurry Rmult) (map FR2 (List.combine v1 v2)) in
     R_dot_prod_rel (rev (map FR2 (List.combine v1 v2))) (sum_fold prods).
 Proof.
@@ -204,23 +204,23 @@ destruct a; simpl. apply R_dot_prod_rel_cons; auto.
 Qed.
 
 Lemma R_dot_prod_rel_fold_right' t :
-forall (v1 v2: list (ftype t)) , 
+forall (v1 v2: list (ftype t)) ,
    let prods := map (uncurry Rmult) (map FR2 (List.combine v1 v2)) in
     R_dot_prod_rel (rev (map FR2 (List.combine v1 v2))) (dotprodR (map FT2R v1) (map FT2R v2)).
 Proof.
 intros. subst prods. unfold dotprodR. rewrite <- !map_rev.
-rewrite (combine_map _ _ _ FR2); auto. 
+rewrite (combine_map _ _ _ FR2); auto.
 rewrite <- (rev_involutive (combine v1 v2)) at 2.
 rewrite <- fold_left_rev_right.
 rewrite (rev_involutive (combine v1 v2)) .
-rewrite <- !map_rev. 
+rewrite <- !map_rev.
 induction (map FR2 (rev (combine v1 v2))).
 { simpl. apply R_dot_prod_rel_nil. }
 destruct a; simpl. rewrite Rplus_comm. apply R_dot_prod_rel_cons; auto.
 Qed.
 
 Lemma R_dot_prod_rel_fold_right_Rabs t :
-forall (v1 v2: list (ftype t)) , 
+forall (v1 v2: list (ftype t)) ,
    let prods := map (uncurry Rmult) (map Rabsp (map FR2 (List.combine v1 v2))) in
     R_dot_prod_rel (rev (map Rabsp (map FR2 (List.combine v1 v2)))) (sum_fold prods).
 Proof.
@@ -231,17 +231,17 @@ destruct a; simpl. apply R_dot_prod_rel_cons; auto.
 Qed.
 
 Lemma R_dot_prod_rel_fold_right_Rabs' t :
-forall (v1 v2: list (ftype t)) , 
+forall (v1 v2: list (ftype t)) ,
    let prods := map (uncurry Rmult) (map Rabsp (map FR2 (List.combine v1 v2))) in
    R_dot_prod_rel (rev (map Rabsp (map FR2 (List.combine v1 v2)))) (dotprodR (map Rabs (map FT2R v1)) (map Rabs (map FT2R v2))).
 Proof.
 intros. subst prods. unfold dotprodR. rewrite <- !map_rev.
-rewrite (combine_map _ _ _ Rabsp); auto. 
-rewrite (combine_map _ _ _ FR2); auto. 
+rewrite (combine_map _ _ _ Rabsp); auto.
+rewrite (combine_map _ _ _ FR2); auto.
 rewrite <- (rev_involutive (combine v1 v2)) at 2.
 rewrite <- fold_left_rev_right.
 rewrite (rev_involutive (combine v1 v2)) .
-rewrite <- !map_rev. 
+rewrite <- !map_rev.
 induction (map Rabsp (map FR2 (rev (combine v1 v2)))).
 { simpl. apply R_dot_prod_rel_nil. }
 destruct a; simpl. rewrite Rplus_comm. apply R_dot_prod_rel_cons; auto.
@@ -274,7 +274,7 @@ nra. }
 intros.
 inversion H; subst; clear H.
 unfold Rabsp. destruct a; simpl.
-replace (Rabs(Rabs r * Rabs r0 + s0)) with 
+replace (Rabs(Rabs r * Rabs r0 + s0)) with
   (Rabs r * Rabs r0 + s0); try nra.
 symmetry.
 rewrite Rabs_pos_eq; try nra.
@@ -299,7 +299,7 @@ inversion H0; subst; clear H0.
 unfold Rabsp; destruct a; simpl.
 eapply Rle_trans; [
 apply Rabs_triang |].
-replace (Rabs (Rabs r * Rabs r0 + s0)) with 
+replace (Rabs (Rabs r * Rabs r0 + s0)) with
   (Rabs r * Rabs r0 + s0).
 eapply Rplus_le_compat; try nra.
 rewrite Rabs_mult; nra.
@@ -315,16 +315,16 @@ Qed.
 
 Lemma dot_prod_combine_map_Rmult a u v r:
 length u = length v ->
-R_dot_prod_rel (combine u v) r -> 
-R_dot_prod_rel (combine (map (Rmult a) u) v) (a * r). 
+R_dot_prod_rel (combine u v) r ->
+R_dot_prod_rel (combine (map (Rmult a) u) v) (a * r).
 Proof. revert u r. induction v.
-{ intros. rewrite !combine_nil in *.  
+{ intros. rewrite !combine_nil in *.
   inversion H0; subst; rewrite Rmult_0_r; apply R_dot_prod_rel_nil. }
 destruct u.
   { intros; pose proof Nat.neq_0_succ (length v); try contradiction. }
   intros.   inversion H0. assert (Hlen: length u = length v) by (simpl in H; lia).
   specialize (IHv u s Hlen H4).
-  simpl. replace (a * (r * a0 + s)) with 
+  simpl. replace (a * (r * a0 + s)) with
     (a * r * a0 + a * s) by nra. apply R_dot_prod_rel_cons; auto.
 Qed.
 
@@ -335,9 +335,9 @@ Lemma dotprod_rel_R_exists {NAN: Nans}:
 Proof.
 intros ?. induction l.
 { simpl; exists 0. apply R_dot_prod_rel_nil. }
-intros. inversion Hfp; subst. 
+intros. inversion Hfp; subst.
 destruct (IHl s H2) as (rs & Hrs); clear IHl.
-exists (FT2R (fst a) * FT2R (snd a) + rs); simpl. 
+exists (FT2R (fst a) * FT2R (snd a) + rs); simpl.
 apply R_dot_prod_rel_cons; auto.
 Qed.
 
@@ -348,9 +348,9 @@ Lemma dotprod_rel_R_exists_fma {NAN: Nans}:
 Proof.
 intros ?. induction l.
 { simpl; exists 0. apply R_dot_prod_rel_nil. }
-intros. inversion Hfp; subst. 
+intros. inversion Hfp; subst.
 destruct (IHl s H2) as (rs & Hrs); clear IHl.
-exists (FT2R (fst a) * FT2R (snd a) + rs); simpl. 
+exists (FT2R (fst a) * FT2R (snd a) + rs); simpl.
 apply R_dot_prod_rel_cons; auto.
 Qed.
 
@@ -361,9 +361,9 @@ Lemma sum_rel_R_abs_exists_fma {NAN: Nans}:
 Proof.
 intros ?. induction l.
 { simpl; exists 0. apply R_dot_prod_rel_nil. }
-intros. inversion Hfp; subst. 
+intros. inversion Hfp; subst.
 destruct (IHl s H2) as (rs & Hrs); clear IHl.
-exists (Rabs (FT2R (fst a)) * Rabs (FT2R (snd a)) + rs); simpl. 
+exists (Rabs (FT2R (fst a)) * Rabs (FT2R (snd a)) + rs); simpl.
 apply R_dot_prod_rel_cons; auto.
 Qed.
 
@@ -376,7 +376,7 @@ Lemma dotprodR_rel_bound'  :
 Proof.
 induction l; intros.
 { inversion Hrp; subst; simpl; rewrite Rabs_R0; nra. }
-  inversion Hrp; subst. 
+  inversion Hrp; subst.
   eapply Rle_trans; [apply Rabs_triang|].
   eapply Rle_trans; [apply Rplus_le_compat | ].
   rewrite Rabs_mult; apply Rmult_le_compat; try apply Rabs_pos.
@@ -384,7 +384,7 @@ induction l; intros.
   apply Hin; simpl; auto.
   apply IHl; auto; [ apply Ha| intros; apply Hin; simpl; auto].
   rewrite sqrt_def; auto. apply Req_le;
-  replace (length (a::l)) with ( S(length l)) by auto. 
+  replace (length (a::l)) with ( S(length l)) by auto.
   rewrite S_INR; nra.
 Qed.
 
@@ -397,15 +397,15 @@ Lemma dotprodR_rel_bound''  :
 Proof.
 induction l; intros.
 { inversion Hrp; subst; simpl; nra. }
-  inversion Hrp; subst. 
+  inversion Hrp; subst.
   eapply Rle_trans; [ apply Rplus_le_compat | ].
-  apply Rmult_le_compat; 
+  apply Rmult_le_compat;
   [ destruct a; simpl; apply Rabs_pos | destruct a; simpl; apply Rabs_pos | | ].
   apply Hin; simpl; auto.
   apply Hin; simpl; auto.
   apply IHl; auto; [ apply Ha| intros; apply Hin; simpl; auto].
   rewrite sqrt_def; auto. apply Req_le;
-  replace (length (a::l)) with ( S(length l)) by auto. 
+  replace (length (a::l)) with ( S(length l)) by auto.
   rewrite S_INR; nra.
 Qed.
 
@@ -422,7 +422,7 @@ Hypothesis (Hlen : length v1 = length v2).
 Notation v1R := (map FT2R v1).
 
 Lemma dot_prod_rel_nnzR :
-forall 
+forall
 (fp : ftype t)
 (Hfp : dot_prod_rel (combine v1 v2) fp)
 (Hfin: Binary.is_finite (fprec t) (femax t) fp = true),
@@ -441,7 +441,7 @@ assert (Hin: forall x : R, In x (map FT2R l) -> x = 0).
 assert (Hlen1:  length l = length l0) by (simpl; auto).
 assert (HFIN: Binary.is_finite (fprec t) (femax t) s = true).
 { simpl in Hfin. destruct (BMULT a f); destruct s;
-  destruct s0; try discriminate; simpl in *; auto; 
+  destruct s0; try discriminate; simpl in *; auto;
   destruct s; try discriminate; auto.
 }
 pose proof nnz_is_zero_cons _ (FT2R a) (map FT2R l) _ _ H as H1.
@@ -451,7 +451,7 @@ destruct (@BPLUS_accurate' t NAN (BMULT a f) s Hfin)
 rewrite Hacc; clear Hacc.
 rewrite IHl.
 assert (HFIN2: Binary.is_finite (fprec t) (femax t) (BMULT a f) = true).
-{ simpl in Hfin. destruct (BMULT a f); destruct s; try discriminate; auto. } 
+{ simpl in Hfin. destruct (BMULT a f); destruct s; try discriminate; auto. }
 assert (Ha: FT2R a = 0).
 apply H0; simpl; auto.
 pose proof Bmult_0R _ _ HFIN2 Ha as H2; destruct H2; rewrite H2;
@@ -459,7 +459,7 @@ simpl; nra.
 Qed.
 
 Lemma fma_dot_prod_rel_nnzR :
-forall 
+forall
 (fp : ftype t)
 (Hfp : fma_dot_prod_rel (combine v1 v2) fp)
 (Hfin: Binary.is_finite (fprec t) (femax t) fp = true),
@@ -478,7 +478,7 @@ assert (Hin: forall x : R, In x (map FT2R l) -> x = 0).
 assert (Hlen1:  length l = length l0) by (simpl; auto).
 assert (HFIN: Binary.is_finite (fprec t) (femax t) s = true).
 { simpl in Hfin. destruct a; destruct f; destruct s;
-  destruct s0; destruct s1; destruct s; try discriminate; simpl in *; auto; 
+  destruct s0; destruct s1; destruct s; try discriminate; simpl in *; auto;
   try discriminate; auto. }
 pose proof nnz_is_zero_cons _ (FT2R a) (map FT2R l) _ _ H as H1.
 specialize (IHl l0 s Hin H1 H4 Hlen1 HFIN).
@@ -490,7 +490,7 @@ Qed.
 
 
 Lemma R_dot_prod_rel_nnzR :
-forall 
+forall
 (rp : R)
 (Hrp  : R_dot_prod_rel (map FR2 (combine v1 v2)) rp),
 nnzR v1R = 0%nat -> rp = 0.
@@ -515,8 +515,8 @@ Qed.
 
 
 Lemma R_dot_prod_rel_nnzR_abs :
-forall 
-(rp_abs : R) 
+forall
+(rp_abs : R)
 (Hra : R_dot_prod_rel (map Rabsp (map FR2 (combine v1 v2))) rp_abs),
 nnzR v1R = 0%nat -> rp_abs = 0.
 Proof.
@@ -532,7 +532,7 @@ assert (Hin: forall x : R, In x (map FT2R l) -> x = 0).
 { intros. apply H0; simpl; auto. }
 assert (Hlen1:  length l = length l0) by (simpl; auto).
 pose proof nnz_is_zero_cons _ (FT2R a) (map FT2R l) _ _ H as H2.
-specialize (IHl l0 s Hin H2 H4 Hlen1). 
+specialize (IHl l0 s Hin H2 H4 Hlen1).
 rewrite IHl.
 pose proof in_map Rabs (map FT2R (a::l)).
 specialize (H0  (FT2R a)).

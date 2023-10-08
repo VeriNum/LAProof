@@ -60,7 +60,7 @@ assert (COLS: cols = Zlength vval). {
 }
 destruct H5 as [H2' [H7 [H8 [H9 H10]]]].
 unfold matrix_rows in *.
-assert (H9': 0 <= Znth i row_ptr <= Znth (i+1) row_ptr 
+assert (H9': 0 <= Znth i row_ptr <= Znth (i+1) row_ptr
             /\ Znth (i+1) row_ptr <= Znth (Zlength mval) row_ptr <= Int.max_unsigned)
    by (clear - H9 H2' H2; list_solve).
 clear H9. destruct H9' as [H9 H9'].
@@ -69,7 +69,7 @@ forward_for_simple_bound (Znth (i + 1) row_ptr)
    LOCAL (
    temp _s (Vfloat (partial_row i h vals col_ind row_ptr vval));
    temp _i (Vint (Int.repr i));
-   temp _hi (Vint (Int.repr (Znth (i+1) row_ptr))); 
+   temp _hi (Vint (Int.repr (Znth (i+1) row_ptr)));
    temp _row_ptr rp; temp _col_ind ci; temp _val vp;
    temp _m m; temp _v v)
    SEP (FRZL FR1;
@@ -81,13 +81,13 @@ forward_for_simple_bound (Znth (i + 1) row_ptr)
    data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v))%assert.
 -
  forward.
- change float with (ftype Tdouble) in *. 
+ change float with (ftype Tdouble) in *.
  EExists. entailer!.
  f_equal. erewrite partial_row_start. reflexivity. eassumption.
 -
 rename i0 into h.
 forward.
-change float with (ftype Tdouble) in *. 
+change float with (ftype Tdouble) in *.
 forward.
 assert (0 <= Znth h col_ind < Zlength vval). {
     specialize (H10 _ H2).
@@ -103,7 +103,7 @@ forward_call (Znth h vals, Znth (Znth h col_ind) vval, partial_row i h vals col_
 forward.
 entailer!.
 f_equal.
-change (Binary.Bfma _ _ _ _ _ _ _ _ _) with 
+change (Binary.Bfma _ _ _ _ _ _ _ _ _) with
    (@BFMA _ Tdouble (Znth h vals) (Znth (Znth h col_ind) vval)
      (partial_row i h vals col_ind row_ptr vval)
   ).
@@ -127,12 +127,12 @@ start_function.
 forward_call.
 forward_for_simple_bound (Zlength mval)
   (EX i:Z, EX result: list (ftype Tdouble),
-   PROP(Forall2 feq result (sublist 0 i (matrix_vector_mult mval vval))) 
-   LOCAL (temp _rows (Vint (Int.repr (matrix_rows mval))); 
+   PROP(Forall2 feq result (sublist 0 i (matrix_vector_mult mval vval)))
+   LOCAL (temp _rows (Vint (Int.repr (matrix_rows mval)));
    temp _m m; temp _v v; temp _p p)
    SEP (crs_rep sh1 mval m;
    data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v;
-   data_at sh3 (tarray tdouble (matrix_rows mval)) 
+   data_at sh3 (tarray tdouble (matrix_rows mval))
       (map Vfloat result ++ Zrepeat Vundef (matrix_rows mval - i)) p))%assert.
 - unfold matrix_rows in H0; lia.
 - Exists (@nil (ftype Tdouble)). simpl app. entailer!.
@@ -141,11 +141,11 @@ forward_for_simple_bound (Zlength mval)
    Intros s.
    unfold matrix_rows in H0.
    forward.
-   progress change float with (ftype Tdouble) in *. 
+   progress change float with (ftype Tdouble) in *.
    Exists (result ++ [s]).
-   entailer!. 
+   entailer!.
    clear H11 H12 H10 H9 H8 H7 PNp PNv PNm.
-   assert (Zlength (matrix_vector_mult mval vval) = Zlength mval). 
+   assert (Zlength (matrix_vector_mult mval vval) = Zlength mval).
       unfold matrix_vector_mult. list_solve.
    rewrite (sublist_split 0 i (i+1)) by list_solve.
    apply Forall2_app.
