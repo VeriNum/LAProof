@@ -8,7 +8,7 @@ Require Import Reals.
 Open Scope R.
 
 
-Section TwoNorm. 
+Section TwoNorm.
 Context {NAN: Nans} {t : type}.
 
 Definition two_normF (x: list (ftype t)) : R := sqrt (FT2R (dotprodF x x)).
@@ -16,7 +16,7 @@ Definition two_normR (x: list R) : R := sqrt (dotprodR x x).
 
 Variable (x : list (ftype t)).
 Notation xR := (map FT2R x).
-Notation n:= (length x). 
+Notation n:= (length x).
 Hypothesis Hfin: Binary.is_finite (fprec t) (femax t) (dotprodF x x) = true.
 
 Notation g := (@g t).
@@ -30,14 +30,14 @@ Lemma bfVNRM2:
       nth m x' 0 = FT2R (nth m x neg_zero) * (1 + delta) /\ Rabs delta <= g n)  /\
     Rabs eta <= g1 n n.
 Proof.
-destruct (@dotprod_mixed_error _ _ x x eq_refl Hfin) 
+destruct (@dotprod_mixed_error _ _ x x eq_refl Hfin)
   as (x' & eta & Hlen & Hrel & H1 & H2).
 exists x', eta; repeat split; auto.
 unfold two_normF, two_normR.
 rewrite Hrel. f_equal; nra.
 Qed.
 
-End TwoNorm. 
+End TwoNorm.
 
 Section OneNorm.
 Context {NAN: Nans} {t : type}.
@@ -46,20 +46,20 @@ Definition one_normF (x: list (ftype t)) : R := FT2R (sumF x).
 Definition one_normR (x: list R) : R := fold_right Rplus 0 x.
 
 Variables (x : list (ftype t)).
-Hypothesis Hfin: Binary.is_finite (fprec t) (femax t) (sumF x) = true. 
+Hypothesis Hfin: Binary.is_finite (fprec t) (femax t) (sumF x) = true.
 
 Notation xR := (map FT2R x).
-Notation n:= (length x). 
+Notation n:= (length x).
 Notation g := (@g t).
 
 (* one norm backward error bound *)
 Lemma bfVNRM1:
-    exists (x': list R), 
+    exists (x': list R),
     one_normF x = one_normR x' /\
-    (forall m, (m < n)%nat -> exists delta, 
+    (forall m, (m < n)%nat -> exists delta,
         nth m x' 0 = FT2R (nth m x neg_zero) * (1 + delta) /\ Rabs delta <= g (n - 1)).
 Proof.
-destruct (bSUM _ _ x Hfin) as (x' & Hlen & Hrel & Hn). 
+destruct (bSUM _ _ x Hfin) as (x' & Hlen & Hrel & Hn).
   rewrite Hlen in Hn.
 exists x'; repeat split; auto.
 Qed.

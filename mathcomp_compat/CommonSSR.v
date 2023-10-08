@@ -30,7 +30,7 @@ Proof.
     by rewrite orbT orTb. by rewrite Hlt !orTb.
   - move => le_n21; case (orP le_n21) => [Heq | Hlt]. rewrite eq_sym Heq /=.
     by rewrite orbT orTb. by rewrite Hlt !orbT.
-Qed. 
+Qed.
 
 Lemma ltn_leq_trans: forall [n m p : nat], m < n -> n <= p -> m < p.
 Proof.
@@ -53,12 +53,12 @@ Qed.
 Lemma ltn_leq_total: forall n m,
   (n < m) || (m <= n).
 Proof.
-  move => m n.   
+  move => m n.
   pose proof (ltn_total m n). move : H => /orP[/orP[Hlt | Heq] | Hgt].
   + by rewrite Hlt.
   + by rewrite (leq_eqVlt n) eq_sym Heq orbT.
   + by rewrite (leq_eqVlt n) Hgt !orbT.
-Qed. 
+Qed.
 
 Lemma ltn_add2rl: forall n1 n2 m1 m2,
   n1 < n2 ->
@@ -92,11 +92,11 @@ Lemma ordinal_enum: forall {n: nat} (x: 'I_n) y,
 Proof.
   move => n x y. have nth_ord := (nth_ord_enum y x). unfold enum in nth_ord. move: nth_ord.
   rewrite (@nth_map _ y) //. by rewrite ordinal_enum_size.
-Qed. 
+Qed.
 
 Lemma size_ord_enum: forall n, size (ord_enum n) = n.
 Proof.
-  move => n. 
+  move => n.
   have : size (ord_enum n) = size ([seq val i | i <- ord_enum n]) by rewrite size_map.
   by rewrite val_ord_enum size_iota.
 Qed.
@@ -107,7 +107,7 @@ Proof.
   move : Hmap. rewrite Hv size_ord_enum nth_iota =>[//=|//]. rewrite add0n. move => H.
   (*some annoying stuff about equality of ordinals vs nats*)
   have : nat_of_ord ( nth x (ord_enum n) i) == nat_of_ord i. rewrite {2}H. by []. by [].
-  move => Hnatord. have : nth x (ord_enum n) i == i by []. 
+  move => Hnatord. have : nth x (ord_enum n) i == i by [].
   by move => /eqP Heq.
 Qed.
 
@@ -147,7 +147,7 @@ Lemma eq_leqn: forall m n,
   (m <= n)%N.
 Proof.
   move => m n ->. by rewrite leqnn.
-Qed. 
+Qed.
 
 Definition eq_ord m n (Hmn: m = n) (x: 'I_m) : 'I_n  := widen_ord (eq_leqn Hmn) x.
 
@@ -227,7 +227,7 @@ Proof.
   - move => [Ha Hbef]. have Hfind := (findP a s). case : Hfind.
     + move => Hhas. have H := (rwN (@hasP T a s)). rewrite Hhas in H.
       have:~ (exists2 x : T, x \in s & a x) by rewrite H. move : H => H{H} Hex.
-      have : nth t s r \in s by apply mem_nth. move => Hnthin. 
+      have : nth t s r \in s by apply mem_nth. move => Hnthin.
       have: (exists2 x : T, x \in s & a x) by exists (nth t s r). by [].
     + move => i Hisz Hanth Hprev.
       have Hlt := ltn_total i r. move : Hlt => /orP[H1 | Hgt].
@@ -242,10 +242,10 @@ Lemma find_none_iff: forall {T: eqType} (a: pred T) (s: seq T),
   find a s = size s <-> (forall x, x \in s -> ~~ (a x)).
 Proof.
   move => T a s. split.
-  - move => Hfind. have: ~~ has a s. case Hhas : (has a s). 
+  - move => Hfind. have: ~~ has a s. case Hhas : (has a s).
     move : Hhas. rewrite has_find Hfind ltnn. by []. by [].
     move => Hhas. by apply (elimT hasPn).
-  - move => Hnotin. apply hasNfind. apply (introT hasPn). move => x. apply Hnotin. 
+  - move => Hnotin. apply hasNfind. apply (introT hasPn). move => x. apply Hnotin.
 Qed.
 
 (** [find] but for values rather than indices*)
@@ -340,7 +340,7 @@ Proof.
   - rewrite in_cons. subst. have->: (x == y = false). move : Hxy. by case (x == y).
     by [].
   - rewrite !in_cons. by rewrite IH.
-Qed. 
+Qed.
 
 (** Lemmas about [pmap]*)
 Lemma nth_pmap: forall (aT rT: eqType) (f: aT -> option rT) (s: seq aT) (i: nat) (a: aT) (r: rT),
@@ -349,7 +349,7 @@ Lemma nth_pmap: forall (aT rT: eqType) (f: aT -> option rT) (s: seq aT) (i: nat)
   Some (nth r (pmap f s) i) = f (nth a s i).
 Proof.
   move => aT rT f s i a r. move: i. elim : s =>[//= | h t /= IH i /andP[Hh Hall]]. rewrite ltnS => Hi.
-  move : Hh. case Hh: (f h) => [h' /= | //=]. move => Htriv. 
+  move : Hh. case Hh: (f h) => [h' /= | //=]. move => Htriv.
   have: (0 <= i)%N by []. rewrite leq_eqVlt => /orP[/eqP Hi0 | Hi'].
   - subst. by rewrite /= Hh.
   - have->: (i = (i.-1).+1)%N by rewrite (ltn_predK Hi'). rewrite /=. rewrite IH //.
@@ -362,7 +362,7 @@ Lemma index_pmap: forall (aT rT: eqType) (f: aT -> option rT) (g: rT -> aT) (s: 
   all f s ->
   index (g x) s = index x (pmap f s).
 Proof.
-  move => aT rT f g s x Hcancel Hinj. elim : s => [//= | h t /= IH /andP[Hh Hall]]. 
+  move => aT rT f g s x Hcancel Hinj. elim : s => [//= | h t /= IH /andP[Hh Hall]].
   move: Hh. case Hfh : (f h) => [o /= | //]. move => _.
   case : (h == g x) /eqP => [Hhg | Hhg].
   - rewrite Hhg in Hfh. rewrite Hcancel in Hfh. case : Hfh => [->]. by rewrite eq_refl.
@@ -427,7 +427,7 @@ Proof.
     move => Hnod. inversion Hnod as [|x l Hnotin Hnodup] ; subst.
     have->: h \notin t. case Hin: (h\in t). have: h\in t by []. by rewrite in_mem_In =>{} Hin.
     by []. by rewrite IH.
-Qed. 
+Qed.
 
 Lemma size_length: forall {A : Type} (l: list A),
   size l = Datatypes.length l.
@@ -452,7 +452,7 @@ Qed.
 
 Lemma rev_rev: forall {A: Type} (s: seq A),
   rev s = List.rev s.
-Proof. 
+Proof.
   move => A s. elim : s => [// | h t /= IH].
   by rewrite rev_cons IH -cats1.
 Qed.
@@ -511,7 +511,7 @@ Lemma tuple_eq: forall {A: Type} (n: nat) (t1 t2: n.-tuple A),
   t1 = t2.
 Proof.
   move => A n [l1 Hl1] [l2 Hl2]. rewrite /= => Hl12. subst. f_equal. apply bool_irrelevance.
-Qed. 
+Qed.
 
 Lemma in_enum: forall {T: finType} (x: T),
   x \in (enum T).
@@ -626,7 +626,7 @@ Lemma dropWhileEnd_last: forall {A: eqType} (p: pred A) (l: seq A) (x: A),
 Proof.
   move => A pr l x Hlast. rewrite (dropWhileEnd_spec pr l x). split. exists nil. split. by rewrite cats0.
   by []. by rewrite Hlast.
-Qed. 
+Qed.
 
 Require Import mathcomp.algebra.poly.
 
@@ -656,10 +656,10 @@ Proof.
   move => s i. rewrite /rem_trail_zero.
   have: (dropWhileEnd (eq_op^~ 0) s) = (dropWhileEnd (eq_op^~ 0) s) by [].
   rewrite (dropWhileEnd_spec _ _ 1) => [[[l1 [Hl1 Hinl1]] Hlast]].
-  rewrite {1}Hl1 nth_cat. 
+  rewrite {1}Hl1 nth_cat.
   case Hi: (i < size (dropWhileEnd (eq_op^~ 0) s)).
   - by [].
-  - rewrite (@nth_default _ 0 (dropWhileEnd (eq_op^~ 0) s) i). 
+  - rewrite (@nth_default _ 0 (dropWhileEnd (eq_op^~ 0) s) i).
     case Hi': (i - size (dropWhileEnd (eq_op^~ 0) s) < size l1).
     + move: Hinl1. rewrite -all_in => /all_nthP Hall. apply /eqP. by apply Hall.
     + by rewrite nth_default // leqNgt Hi'.
@@ -677,6 +677,6 @@ Lemma rem_trail_zero_size: forall (l: seq F),
   size (rem_trail_zero l) <= size l.
 Proof.
   move => l. apply dropWhileEnd_size.
-Qed. 
+Qed.
 
 End RemZeroes.

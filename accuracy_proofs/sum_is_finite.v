@@ -32,8 +32,8 @@ Definition fun_bnd (t : type) (n : nat) :=
 fmax t / (1 + default_rel t) * 1 / (1 + INR n * (g t (n - 1) + 1)) .
 
 Lemma rdiv_lt (a b: R) :
-  0 < b -> 0 < a -> b < a -> / a < / b. 
-Proof. 
+  0 < b -> 0 < a -> b < a -> / a < / b.
+Proof.
 intros.
 replace (/b) with (1/b) by nra.
 apply Rdiv_lt_right; auto.
@@ -43,9 +43,9 @@ nra.
 Qed.
 
 Lemma rdiv_le (a b: R) :
-  0 < b -> 0 < a -> b <= a -> / a <= / b. 
-Proof. 
-intros. 
+  0 < b -> 0 < a -> b <= a -> / a <= / b.
+Proof.
+intros.
 replace (/b) with (1/b) by nra.
 apply Rcomplements.Rle_div_r; auto.
 rewrite Rmult_comm.
@@ -61,7 +61,7 @@ Qed.
 
 Lemma fun_bnd_le (t : type) (n : nat) :
 fun_bnd t (S n) <= fun_bnd t n.
-Proof. 
+Proof.
 intros; unfold fun_bnd. apply Rmult_le_compat_l.
 rewrite Rmult_1_r.
 apply Rcomplements.Rdiv_le_0_compat.
@@ -84,13 +84,13 @@ simpl; lia.
 Qed.
 
 
-Lemma finite_sum_from_bounded : 
+Lemma finite_sum_from_bounded :
   forall (t: type) (l: list (ftype t))
-  (fs : ftype t) 
+  (fs : ftype t)
   (Hfs: sum_rel_Ft t l fs),
-  (forall x, In x l -> 
-    Binary.is_finite _ _ x = true /\ Rabs (FT2R x) < fun_bnd t (length l)) -> 
-  Binary.is_finite _ _ fs = true. 
+  (forall x, In x l ->
+    Binary.is_finite _ _ x = true /\ Rabs (FT2R x) < fun_bnd t (length l)) ->
+  Binary.is_finite _ _ fs = true.
 Proof.
 intros ?.
 induction l.
@@ -99,15 +99,15 @@ induction l.
 assert (Hin: forall x : ftype t,
        In x l -> Binary.is_finite _ _ x = true /\
        Rabs (FT2R x) < fun_bnd t (length l)).
-  { intros. split; [apply H; simpl; auto | ]. 
+  { intros. split; [apply H; simpl; auto | ].
     eapply Rlt_le_trans; [apply H; simpl; auto | ].
-    apply fun_bnd_le. }  
+    apply fun_bnd_le. }
 assert (Hfina : Binary.is_finite (fprec t) (femax t) a = true) by
   (apply H; simpl; auto).
 unfold sum.
 fold (@sum_rel_Ft NAN t) in H3.
-specialize (IHl s H3 Hin). 
-apply is_finite_sum_no_overflow'; auto. 
+specialize (IHl s H3 Hin).
+apply is_finite_sum_no_overflow'; auto.
 unfold Bplus_no_overflow.
 assert (A: Generic_fmt.generic_format Zaux.radix2
        (FLT.FLT_exp (SpecFloat.emin (fprec t) (femax t)) (fprec t))
@@ -139,11 +139,11 @@ eapply Rle_trans; [apply Rabs_triang | apply Rplus_le_compat ].
 apply Rlt_le; apply H; simpl; auto.
 assert (Rabs (FT2R s) <= (g t (length l - 1) + 1) * rs_abs).
 { eapply Rle_trans; [apply H1| field_simplify; apply Rplus_le_compat_l].
-  eapply Rle_trans; [ eapply sum_rel_R_Rabs; [apply Hrs | apply Habs] |] . 
+  eapply Rle_trans; [ eapply sum_rel_R_Rabs; [apply Hrs | apply Habs] |] .
   eapply Req_le; eapply sum_rel_R_Rabs_eq; apply Habs. }
 eapply Rle_trans.
 apply H0.
-apply Rmult_le_compat_l. 
+apply Rmult_le_compat_l.
 apply Rplus_le_le_0_compat; try nra. apply g_pos.
 apply D. apply Habs.
 intros. apply Rlt_le. apply H; simpl; auto.
@@ -151,7 +151,7 @@ assert (HD: Rabs (1 + d) <= (1 + default_rel t )).
 { eapply Rle_trans; [apply Rabs_triang| rewrite Rabs_R1; apply Rplus_le_compat_l].
 eapply Rle_trans; [apply Hd |].
 apply Rdiv_le_left.
-apply Fourier_util.Rlt_zero_pos_plus1. 
+apply Fourier_util.Rlt_zero_pos_plus1.
 apply default_rel_gt_0.
 eapply Rle_trans with (default_rel t * 1); try nra. }
 apply HD.
@@ -173,13 +173,13 @@ assert (Hy : 0 < y).
   apply g_pos. }
 assert (Hy' : y <> 0). { apply Stdlib.Rlt_neq_sym; auto. }
 assert (H0: (1 + default_rel t) * z = fmax t / y).
-{ unfold z; field_simplify; auto. 
-split; auto. 
+{ unfold z; field_simplify; auto.
+split; auto.
 apply tech_Rplus; try nra.
 apply default_rel_gt_0. }
 rewrite H0.
 rewrite rdiv_mult_eq; auto.
-replace (bpow Zaux.radix2 (femax t)) with 
+replace (bpow Zaux.radix2 (femax t)) with
   (bpow Zaux.radix2 (femax t) * 1) by nra.
 rewrite Rmult_assoc.
 apply Rmult_lt_compat_l. apply bpow_gt_0.
@@ -191,10 +191,10 @@ unfold y.
 apply Rplus_le_lt_compat; try nra.
 rewrite Rmult_comm.
 eapply Rle_lt_trans with  (INR (length l) * x).
-apply Rmult_le_compat_l; [apply pos_INR|]. 
+apply Rmult_le_compat_l; [apply pos_INR|].
 unfold x.
 apply Rplus_le_compat_r.
-unfold g. 
+unfold g.
 apply Rplus_le_compat_r.
 apply Rle_pow.
 apply default_rel_plus_1_ge_1.
