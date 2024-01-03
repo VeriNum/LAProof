@@ -333,7 +333,7 @@ apply ler_pmul => //.
 apply normM_pos.
 apply normv_pos.
 rewrite /normM mulrC big_max_mul.
-apply le_bigmax2 => i0 _. 
+apply: le_bigmax2 => i0 _.
 rewrite /sum_abs.
 rewrite big_mul =>  [ | i b | ]; try ring.
 apply ler_sum => i _.
@@ -349,4 +349,4 @@ rewrite Hlenv1 in H2.
 apply H2.
 Qed.
 
-End ForwardError. 
+End ForwardError.
