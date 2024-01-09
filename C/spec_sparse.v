@@ -1,7 +1,6 @@
 Require Import VST.floyd.proofauto.
 From LAProof.C Require Import sparse sparse_model.
-Require Import vcfloat.VCFloat.
-Require Import vcfloat.FPCompCert.
+Require Import vcfloat.FPStdCompCert.
 Require Import VSTlib.spec_math.
 Require Import LAProof.floatlib.
 
@@ -105,11 +104,23 @@ Definition crs_matrix_vector_multiply_spec {NAN : Nans} :=
           data_at sh3 (tarray tdouble (matrix_rows mval)) 
              (map Vfloat result) p).
 
-Definition SparseASI {NAN : Nans} : funspecs := [ 
+
+Definition SparseASI : funspecs := [ 
    crs_matrix_rows_spec;
    crs_row_vector_multiply_spec;
    crs_matrix_vector_multiply_byrows_spec;
    crs_matrix_vector_multiply_spec ].
 
 Definition SubsetMathASI := [fma_spec].
-Definition Gprog {NAN : Nans}: funspecs := SparseASI ++ SubsetMathASI.
+Definition Gprog : funspecs := SparseASI ++ SubsetMathASI.
+
+Lemma BFMA_eq:
+   forall H H0 (x y z : Binary.binary_float (fprec Tdouble) (femax Tdouble)),
+  Binary.Bfma (fprec Tdouble) (femax Tdouble) H H0
+    (fma_nan Tdouble) BinarySingleNaN.mode_NE x y z = 
+  BFMA x y z.
+Proof.
+intros.
+ unfold BFMA.
+ f_equal; try apply proof_irr.
+Qed.

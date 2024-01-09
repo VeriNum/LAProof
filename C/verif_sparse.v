@@ -1,7 +1,7 @@
 Require Import VST.floyd.proofauto.
 From LAProof.C Require Import sparse sparse_model spec_sparse.
-Require Import vcfloat.VCFloat.
-Require Import vcfloat.FPCompCert.
+Require Import vcfloat.FPStdLib.
+Require Import vcfloat.FPStdCompCert.
 Require Import VSTlib.spec_math.
 Require Import LAProof.floatlib.
 
@@ -17,7 +17,7 @@ match c with context [Sloop (Ssequence _ ?body)] =>
 end.
 Defined.
 
-Lemma crs_multiply_loop_body {NAN : Nans} : 
+Lemma crs_multiply_loop_body : 
  forall (Espec : OracleKind)  (sh1 sh2 sh3 : share)
    (m : val) (mval : matrix Tdouble)
    (v : val) (vval : vector Tdouble)
@@ -170,12 +170,10 @@ forward_if.
   Exists (h+1).
   entailer!.
   f_equal.
-  replace (Binary.Bfma _ _ _ _ _ _ _ _ _) with 
-   (@BFMA _ Tdouble (Znth h vals) (Znth (Znth h col_ind) vval)
-     (partial_row i h vals col_ind row_ptr vval)
-  ).
+  change (FPCore.fprec _) with (fprec Tdouble).
+  change 1024 with (femax Tdouble).
+  rewrite BFMA_eq.
   eapply partial_row_next; try eassumption; lia.
-  cbv [BFMA]. admit. 
 +
  forward. 
  Exists (partial_row i h vals col_ind row_ptr vval).
@@ -197,9 +195,9 @@ Intros r.
 forward.
 Exists r.
 entailer!.
-Admitted.
+Qed.
 
-Lemma body_crs_matrix_vector_multiply {NAN : Nans} : 
+Lemma body_crs_matrix_vector_multiply : 
   semax_body Vprog Gprog f_crs_matrix_vector_multiply crs_matrix_vector_multiply_spec.
 Proof.
 start_function.
