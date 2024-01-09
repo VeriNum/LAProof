@@ -1,0 +1,61 @@
+\section{Introduction}\label{sec:introduction}
+Numerical linear algebra is widely used across computational
+disciplines and is serving an increasingly important role in
+emerging applications for embedded systems. The Basic Linear
+Algebra Subprograms (BLAS)~\cite{blas02,blast} provide a
+modular, reliable standard defining a set of the most common
+linear algebra operations such as the inner product and the
+matrix-vector product. The software layer implementing the
+operations defined by BLAS is often highly optimized and
+architecture-specific, serving as an interface between hardware
+and application software. While implementations of BLAS may
+differ in practice,  an implementation
+should guarantee numerical accuracy
+with respect to widely accepted rounding error bounds. In this
+paper, we report on our development of the
+Linear Algebra Proof Library (LAProof), a library of formal
+proofs of rounding error analyses for basic linear algebra
+operations. LAProof serves as a
+modular, portable \emph{proof layer} between the verification of application software and the verification of programs
+implementing operations defined by BLAS. The LAProof library
+makes the following contributions:
+
+\begin{itemize}
+\item \emph{Backward and mixed backward-forward error bounds.}
+Previous formal rounding error analyses have exclusively focused on forward error bounds (see related work in Section
+\ref{sec:relatedwork}).  We provide backward and mixed backward-forward error
+bounds. This choice is advantageous from the perspectives
+of both proof engineering and numerical analysis, as it preserves the separation of rounding errors from the structural conditions of
+the mathematical problem being solved by the application
+software. Furthermore, forward error bounds can be derived
+directly from backward and mixed backward-forward error bounds.
+\item \emph{No linearization of error terms.} The rounding error associated with a sequence of operations accumulates errors as
+products of terms of the form $(1+\delta_i)$, where the
+magnitude of each $\delta_i$ is uniformly upper-bounded by the
+unit roundoff, $u$. Typically, numerical analysts simply
+linearize the product of these terms, approximating the error in $n$ operations by $nu + \mathcal{O}(u^2)$. In LAProof we avoid
+such approximations, giving clients of the library access to
+error analyses that fully characterize the accumulation of error in any sequence of operations.
+\item \emph{Minimal assumptions and soundness.} The LAProof
+library is fully developed inside of the Coq proof assistant,
+and assumes only the Flocq~\cite{flocq} specification of the
+IEEE 754 standard~\cite{IEEEstd} for floating-point arithmetic.
+LAProof's rounding error analysis is therefore
+sound with respect to the IEEE standard. Furthermore, the
+error bounds provided by LAProof do not assume
+the absence of underflow; and where the proofs assume the
+absence
+of overflow, we provide a concrete example of how this
+assumption can be discharged for operations where numerical
+bounds on the terms in a linear algebra expression are known
+(see Section \ref{sec:sparse}).
+\item \emph{Connection to sparse matrix implementation in C.}
+To demonstrate that our accuracy theorems can be seamlessly 
+composed with correctness proofs of programs that
+use nontrivial data structures, we use LAProof in the
+verification of a C program implementing sparse matrix-
+vector multiply using the compressed sparse row (CSR)
+format.
+\end{itemize}
+
+The remaining sections of the paper clarify the contributions of the LAProof library. \emph{Section \ref{sec:lib}} introduces the basic linear algebra operations provided by LAProof and describes their formal error bounds. \emph{Section \ref{sec:models}} explains the implementations of the core LAProof operations in the Coq proof assistant, emphasizing their soundness with respect to the IEEE standard. \emph{Section \ref{sec:sparse}} demonstrates how the LAProof library can be used to guarantee the accuracy of concrete C programs using a machine-checked correctness proof of a C function implementing CSR matrix-vector multiplication. \emph{Section \ref{sec:relatedwork}} situates the LAProof library with respect to related work, and \emph{Section \ref{sec:conclusion}} discusses the current limitations of LAProof and future work.

@@ -2,13 +2,14 @@
   two lists, as well as theorems regarding their equivalence. *)
 
 Require Import vcfloat.VCFloat.
+From vcfloat Require Import IEEE754_extra.
 Require Import List.
 Import List ListNotations.
-
+Require Import mathcomp.ssreflect.ssreflect.
+From LAProof.accuracy_proofs Require Import common  
+                                            float_acc_lems
+                                            float_tactics.
 Require Import Sorting Permutation.
-
-From LAProof.accuracy_proofs Require Import common.
-
 Require Import Reals.
 Open Scope R.
 
@@ -263,14 +264,14 @@ destruct H as (l' & l'' & H); subst.
 apply Permutation_sym in Hper.
 pose proof (@Permutation_cons_app_inv R x l' l'' a Hper).
 specialize (IHx (l' ++ l'') H ).
-simpl. rewrite IHx, sumR_app_cons; auto.
+simpl. rewrite IHx sumR_app_cons; auto.
 Qed.
 
-From vcfloat Require Import IEEE754_extra.
 
-Section NAN.
+Section WithNans.
+Context {NAN: Nans}.
 
-Lemma plus_zero {NAN: Nans}  a:
+Lemma plus_zero  a:
 Binary.is_finite _ _ a = true -> 
 (a + -0)%F32 = a.
 Proof.
@@ -341,93 +342,95 @@ unfold sum; simpl. rewrite Rmult_plus_distr_l; apply sum_rel_cons.
 fold sum_rel_R. simpl in IHl; auto.
 Qed.
 
+End WithNans.
 
-Definition sum_rel_Ft {NAN: Nans} (t: type) := @sum_rel (ftype t) neg_zero (BPLUS ).
+Section WithSTD.
+Context {NAN: Nans} {t : type} {STD: is_standard t}.
 
-Lemma sum_rel_Ft_single {NAN: Nans} t fs a:
-Binary.is_finite _ _ fs = true ->
-sum_rel_Ft t [a] fs -> fs = a.
+Notation neg_zero := (ftype_of_float (common.neg_zero)).
+
+Definition sum_rel_Ft := @sum_rel (ftype t) neg_zero (BPLUS ).
+
+Lemma sum_rel_Ft_single fs a:
+is_finite fs = true ->
+sum_rel_Ft [a] fs -> fs = a.
 Proof.
-intros.
-inversion H0.
-inversion H4; subst.
-unfold sum, BPLUS; destruct a; try discriminate; 
-  simpl; auto.
-destruct s; simpl; auto.
+move => FIN Hs.
+move: FIN.
+inversion Hs; subst.
+inversion H2; subst.
+rewrite /sum/BPLUS/BINOP
+  /neg_zero is_finite_Binary
+  !float_of_ftype_of_float.
+rewrite -{3}(ftype_of_float_of_ftype STD STD a).
+move => FIN.
+destruct (float_of_ftype a); 
+  try discriminate FIN => //;
+destruct s => //.
 Qed.
 
-Lemma sum_rel_R_exists {NAN: Nans}:
-  forall (t : type) (l : list (ftype t)) (fs : ftype t)
-  (Hfs : sum_rel_Ft t l fs),
+Lemma sum_rel_R_exists :
+  forall (l : list (ftype t)) (fs : ftype t)
+  (Hfs : sum_rel_Ft l fs),
   exists rs, sum_rel_R (map FT2R l) rs.
 Proof.
 intros ?. induction l.
 { simpl; exists 0. apply sum_rel_nil. }
 intros. inversion Hfs; subst. 
-fold (@sum_rel_Ft NAN t) in H2.
+fold sum_rel_Ft in H2.
 destruct (IHl s H2) as (rs & Hrs); clear IHl.
 exists (FT2R a + rs); simpl. 
 apply sum_rel_cons; auto.
 Qed.
 
-Lemma sum_rel_R_abs_exists {NAN: Nans}:
-  forall (t : type) (l : list (ftype t)) (fs : ftype t)
-  (Hfs : sum_rel_Ft t l fs),
+Lemma sum_rel_R_abs_exists:
+  forall (l : list (ftype t)) (fs : ftype t)
+  (Hfs : sum_rel_Ft l fs),
   exists rs, sum_rel_R (map Rabs (map FT2R l)) rs.
 Proof.
 intros ?. induction l.
 { simpl; exists 0. apply sum_rel_nil. }
 intros. inversion Hfs; subst. 
-fold (@sum_rel_Ft NAN t) in H2.
+fold sum_rel_Ft in H2.
 destruct (IHl s H2) as (rs & Hrs); clear IHl.
 exists (Rabs (FT2R a) + rs); simpl. 
 apply sum_rel_cons; auto.
 Qed.
  
-Lemma is_finite_in {NAN: Nans} (t : type) :
+Lemma is_finite_in :
   forall (l : list (ftype t)) fs,
-  sum_rel_Ft t l fs ->
+  sum_rel_Ft l fs ->
   let e  := @default_abs t in
   let d  := @default_rel t in 
   let ov := powerRZ 2 (femax t) in
-  Binary.is_finite (fprec t) (femax t) fs = true ->
-  forall a, In a l -> Binary.is_finite (fprec t) (femax t) a = true.
+  is_finite fs = true ->
+  forall a, In a l -> is_finite a = true.
 Proof.
-induction l.
-simpl; intros; auto.
-intros. 
-destruct H1; subst.
-inversion H.
-rewrite <- H2 in H0. clear H2.
-unfold sum in H0.
-destruct a0, s; auto.
-destruct s, s0; simpl in H0; try discriminate.
-inversion H.
-fold (@sum_rel_Ft NAN t) in H5.
-assert (Binary.is_finite (fprec t) (femax t) s = true).
-unfold sum in H3.
-rewrite <- H3 in H0. clear H3.
-destruct a, s; auto.
-destruct s, s0; simpl in H0; try discriminate.
-specialize (IHl s H5 H6).
-apply IHl; auto.
+induction l => //=.
+move => fs H0 H1 s [Hs|Hs]; subst.
+inversion H0; subst.
+move : H1; rewrite /sum. 
+by subexpr_finite.
+inversion H0; subst.
+fold sum_rel_Ft in H4.
+apply (IHl s0) => //.
+move : H1; rewrite /sum. 
+by subexpr_finite.
 Qed.
 
-Definition sumF {NAN: Nans} {t: type} := fold_right (@BPLUS NAN t) neg_zero.
+Definition sumF := fold_right BPLUS neg_zero.
 
-Lemma sum_rel_Ft_fold {NAN: Nans} : forall t l fs, 
-   sum_rel_Ft t l fs -> fs = sumF l.
+Lemma sum_rel_Ft_fold : forall l fs, 
+   sum_rel_Ft l fs -> fs = sumF l.
 Proof. 
 induction l.
 intros; inversion H; simpl; auto.
 intros; inversion H. 
-fold (@sum_rel_Ft NAN t) in H3.
+fold sum_rel_Ft  in H3.
 specialize (IHl s H3).
 subst; simpl.
 unfold sum; auto.
 Qed.
 
 
-
-
-End NAN.
+End WithSTD.

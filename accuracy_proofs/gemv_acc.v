@@ -1,10 +1,9 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
-From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
-From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas.
-From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp.
-
+From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model
+                                                dot_acc float_acc_lems list_lemmas
+                                                              gem_defs mv_mathcomp.
 From mathcomp.analysis Require Import Rstruct.
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
 From LAProof.accuracy_proofs Require Import mc_extra2.
@@ -24,7 +23,7 @@ From mathcomp.algebra_tactics Require Import ring.
 
 Section MixedErrorList. 
 (* mixed error bounds over lists *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD : is_standard t}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -36,6 +35,7 @@ Notation n := (length v).
 Notation m := (length A).
 Notation Ar := (map_mat FT2R A).
 Notation vr := (map FT2R v).
+Notation neg_zero := (ftype_of_float neg_zero).
 
 Hypothesis Hfin : is_finite_vec (A *f v).
 Hypothesis Hlen: forall row, In row A -> length row = length v.
@@ -61,7 +61,7 @@ have Hin2  : (forall row : list (ftype t), In row l -> length row = length v) by
 destruct (IH Hfin2 Hin2) as (E & eta & IH1 & IH2 & IH3 & IH4 & IH5); 
   clear IH; rewrite IH1; clear IH1.
 have Hlen': length a = n by apply Hlen; left => //. 
-have Hfin1 : Binary.is_finite (fprec t) (femax t) (dotprodF a v) = true by 
+have Hfin1 : is_finite (dotprodF a v) = true by 
   revert Hfin';rewrite /is_finite_vec !Forall_forall => Hfin'; apply Hfin'; left => /= //.
 destruct (dotprod_mixed_error a v Hlen' Hfin1) as (u & ueta & X & Y & Z1 & Z2).
 set (A':= (map FT2R a :: map_mat FT2R l) : matrix).
@@ -91,8 +91,9 @@ subst A'. rewrite /matrix_index => /=.
 rewrite nth_vec_sum => /= //; [|nra].
 have Hj' : (j < n)%coq_nat by lia.
 destruct (Z1 j Hj') as (x & HB & HC); rewrite HB.
-have H1 : (FT2R (List.nth j a neg_zero) = List.nth j (List.map FT2R a) 0%R) by
-pose proof @map_nth (ftype t) R (FT2R) a neg_zero j. 
+have H1 : (FT2R (List.nth j a neg_zero) = List.nth j (List.map FT2R a) 0%R).
+rewrite -FT2R_neg_zero.
+by rewrite (@map_nth (ftype t) R (FT2R) a neg_zero j). 
 rewrite H1; apply /RleP; field_simplify_Rabs.
 rewrite Rabs_mult Rmult_comm.
 by apply Rmult_le_compat_r => //; apply Rabs_pos => /= . }
@@ -139,14 +140,15 @@ revert Hd1 => /= Hd1; rewrite Hd1.
 fold (vec_sum Rplus u (List.map Ropp (List.map FT2R a))).
 fold (vec_sumR u (List.map Ropp (List.map FT2R a))).
 rewrite /vec_sumR -(vec_sumR_opp) => //.
-rewrite -(vec_sumR_nth); revert Hd1 => /= Hd1. rewrite Hd1.
-suff: List.nth j (List.map FT2R a) 0 =
- (List.nth j (List.map FT2R a) (@FT2R t neg_zero)).
+rewrite -(vec_sumR_nth); revert Hd1 => /= Hd1. 
+    rewrite Hd1.
+have: (List.nth j (List.map FT2R a) 0%Re =
+  List.nth j (List.map FT2R a) (FT2R neg_zero)).
+{ f_equal. by rewrite FT2R_neg_zero. } 
 move => Hs; rewrite Hs map_nth; apply /RleP; field_simplify_Rabs. 
 rewrite Rabs_mult Rmult_comm; apply Rmult_le_compat; 
   [ apply Rabs_pos | apply Rabs_pos | apply Hd2 | apply Req_le; auto].
-f_equal.  
-1, 2 : rewrite map_length; simpl in Ha; lia. }
+all: rewrite map_length; simpl in Ha; lia. }
 1, 2 : by unfold matrix_index in IH2; apply IH2.
 rewrite X map_length. lia. } } 
 move => k /=. move => [Hk | Hk]. 
@@ -185,7 +187,7 @@ Open Scope ring_scope.
 Delimit Scope ring_scope with Ri.
 Delimit Scope R_scope with Re.
 
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -289,7 +291,7 @@ End MixedErrorMath.
 
 Section ForwardError.
 
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).

@@ -8,8 +8,14 @@ Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
 
-From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
-From LAProof.accuracy_proofs Require Import float_acc_lems list_lemmas.
+From LAProof.accuracy_proofs Require Import common 
+                                            op_defs 
+                                            dotprod_model 
+                                            sum_model
+                                            float_acc_lems 
+                                            list_lemmas
+                                            float_tactics.
+
 
 (* General list matrix and vector definitions *)
 Section MVGenDefs. 
@@ -30,11 +36,11 @@ Fixpoint zero_matrix {A: Type} (m n: nat) (zero : A) : matrix :=
   | _, _ => []
   end. 
 
-Definition is_finite_vec {t : type} (v: vector) : Prop := 
-  Forall (fun x => Binary.is_finite (fprec t) (femax t) x = true) v.
+Definition is_finite_vec {t : type} {STD: is_standard t} (v: vector) : Prop := 
+  Forall (fun (x : ftype t) => is_finite x = true) v.
 
-Definition is_finite_mat {t : type} (A: matrix) : Prop := 
-  Forall (fun x => @is_finite_vec t x) A.
+Definition is_finite_mat {t : type} {STD : is_standard t} (A: matrix) : Prop := 
+  Forall (fun x => is_finite_vec x) A.
 
 Definition is_zero_vector {A: Type} v (zero : A) : Prop := forall x, In x v -> x = zero.
 
@@ -78,7 +84,8 @@ Definition vec_sum {A: Type} (sum : A -> A -> A) :
 Definition vec_sumR :=  vec_sum Rplus.
 
 (* sum vectors of floats *)
-Definition vec_sumF {NAN : Nans} {t : type} :=  vec_sum (@BPLUS NAN t).
+Definition vec_sumF 
+  {NAN : Nans} {t : type} {STD : is_standard t} :=  vec_sum BPLUS.
 
 (* generic matrix sum *)
 Definition mat_sum {T: Type} (sum : T -> T -> T):= 
@@ -88,7 +95,7 @@ Definition mat_sum {T: Type} (sum : T -> T -> T):=
 Definition mat_sumR :=  mat_sum Rplus .
 
 (* sum matrices of floats *)
-Definition mat_sumF {NAN : Nans} {t: type} := mat_sum (@BPLUS NAN t).
+Definition mat_sumF {NAN : Nans} {t: type} {STD: is_standard t} := mat_sum BPLUS.
 
 (* generic matrix vector multiplication *)
 Definition MV {A: Type} (DOT : @vector A -> @vector A -> A) 
@@ -96,8 +103,8 @@ Definition MV {A: Type} (DOT : @vector A -> @vector A -> A)
       map (fun row => DOT row v) m.
 
 (* floating-point matrix vector multiplication *)
-Definition mvF {NAN : Nans}  {t: type} : matrix -> vector -> vector  :=
-      MV (@dotprodF NAN t).
+Definition mvF {NAN : Nans} {t: type} {STD: is_standard t}: matrix -> vector -> vector  :=
+      MV dotprodF.
 
 (* real valued matrix vector multiplication *)
 Definition mvR  : matrix -> vector -> vector  := MV dotprodR.
@@ -142,7 +149,7 @@ Example checkMMT : let A:= trans 0%R 2 [[1;1];[1;1]] in
 simpl. unfold dotprodR. simpl. repeat f_equal ;field_simplify; nra. Qed.
 
 (* floating-point matrix matrix multiplication. *)
-Definition MMTF {NAN : Nans}  {t: type} : matrix -> matrix -> matrix  := 
+Definition MMTF {NAN : Nans}  {t: type} {STD : is_standard t}: matrix -> matrix -> matrix  := 
   MMT (Zconst t 0) dotprodF.
 
 (* real valued matrix matrix multiplication *)
@@ -168,8 +175,8 @@ Fixpoint MM' {A: Type} (d : A) (dotprod : @vector A -> @vector A -> A)
   end.
 
 (* floating-point matrix matrix multiplication. *)
-Definition MMF' {NAN : Nans}  {t: type} : matrix -> matrix -> matrix  := 
-  MM' (Zconst t 0) dotprodF.
+Definition MMF' {NAN : Nans}  {t: type} {STD : is_standard t} : 
+    matrix -> matrix -> matrix  :=   MM' (Zconst t 0) dotprodF.
 
 (* real valued matrix matrix multiplication *)
 Definition MMR' : matrix -> matrix -> matrix  := 
@@ -180,7 +187,7 @@ Definition scaleV {T} (mul: T -> T -> T) (a : T) (v : vector) : vector :=
   map (mul a) v.
 
 Definition scaleVR := @scaleV R Rmult.
-Definition scaleVF {NAN : Nans} {t : type} := @scaleV (ftype t) (@BMULT NAN t).
+Definition scaleVF {NAN : Nans} {t : type} {STD : is_standard t} := @scaleV (ftype t) BMULT.
 
 (* multiply row a of size m by matrix B of size (m x p)*)
 Fixpoint rowM {T} (d: T) (sum : @vector T -> @vector T -> @vector T) 
@@ -199,8 +206,8 @@ Fixpoint MM {T} (d: T) (sum : @vector T -> @vector T -> @vector T)
 end.
 
 (* floating-point matrix matrix multiplication. *)
-Definition MMF {NAN : Nans}  {t: type} : matrix -> matrix -> matrix  := 
-  MM (Zconst t 0) (@vec_sumF NAN t) (@BMULT NAN t).
+Definition MMF {NAN : Nans} {t: type} {STD : is_standard t} 
+    : matrix -> matrix -> matrix  :=  MM (Zconst t 0) vec_sumF BMULT.
 
 (* real valued matrix matrix multiplication *)
 Definition MMR : matrix -> matrix -> matrix  := 
@@ -219,12 +226,12 @@ Example checkMMC: let A:= trans 0%R 2 [[1;1];[1;1]] in
 simpl. unfold dotprodR. simpl. repeat f_equal ;field_simplify; nra. Qed. 
 
 Definition MMCR := MMC dotprodR.
-Definition MMCF {NAN : Nans} {t: type}  := MMC (@dotprodF NAN t).
+Definition MMCF {NAN : Nans} {t : type} {STD : is_standard t} := MMC dotprodF.
 
 Definition scaleM {T} (mul : T -> T -> T) a M :=  map_mat (mul a) M.
 
 Definition scaleMR := scaleM Rmult.
-Definition scaleMF {NAN : Nans} {t: type} := scaleM (@BMULT NAN t).
+Definition scaleMF {NAN : Nans} {t: type} {STD : is_standard t} := scaleM BMULT.
 
 
 Definition GEMM {T} (dot : vector -> vector -> T) 
@@ -233,7 +240,7 @@ Definition GEMM {T} (dot : vector -> vector -> T)
 
 Definition GEMMR := GEMM dotprodR Rplus Rmult.
 Definition GEMMF {NAN : Nans} {t: type} := 
-                      GEMM dotprodF (@BPLUS NAN t) (@BMULT NAN t).
+                      GEMM dotprodF BPLUS BMULT.
   
 End MVOpDefs.
 
@@ -293,15 +300,16 @@ specialize (IHm n Hn). simpl. destruct n. lia.
 simpl. lia.
 Qed. 
 
-Lemma mvF_len {NAN : Nans} t m v:
-  length (@mvF NAN t m v)  = length m.
+Lemma mvF_len {NAN : Nans} m v:
+  length (mvF m v)  = length m.
 Proof. induction m; simpl; auto. Qed.
 
-Lemma dotprodF_nil {NAN : Nans} {t: type} row :
-dotprodF row [] = (Zconst t 0). 
+Lemma dotprodF_nil {NAN : Nans} {t: type} {STD : is_standard t} row :
+  dotprodF row [] = (Zconst t 0). 
 Proof. destruct row; simpl; auto. Qed. 
 
-Lemma mvF_nil {NAN : Nans} {t: type} : forall m, @mvF NAN t m [] = zero_vector (length m) (Zconst t 0).
+Lemma mvF_nil {NAN : Nans} {t: type} {STD : is_standard t} 
+  : forall m, mvF m [] = @zero_vector (ftype t) (length m) (Zconst t 0).
 Proof. 
 intros; unfold mvF, MV.
 set (f:= (fun row : vector => dotprodF row [])).
@@ -363,7 +371,7 @@ rewrite vec_sum_cons, IHv.
 rewrite Hsum; auto.
 Qed.
 
-Lemma vec_sum_zeroF {NAN : Nans} {t : type}:
+Lemma vec_sum_zeroF {NAN : Nans} {t : type} {STD : is_standard t}:
   forall (v : vector),
   map FT2R (vec_sumF v (zero_vector (length v) (Zconst t 0)))  
           = map FT2R v.
@@ -376,8 +384,16 @@ set (z := (zero_vector (length (a::v)) (Zconst t 0))).
 rewrite vec_sum_cons.
 simpl. unfold vec_sumF in IHv.
  rewrite IHv. f_equal.
-destruct a; simpl; auto.
+Search Binary.B2R FT2R. 
+rewrite <-!B2R_float_of_ftype;
+  unfold BPLUS, BINOP.
+rewrite float_of_ftype_of_float.
+replace (float_of_ftype (Zconst t 0))
+  with  (Binary.B754_zero (fprec t) (femax t) false).
+destruct (float_of_ftype a); simpl; auto;
 destruct s; simpl; auto.
+cbv [float_of_ftype]. 
+destruct t; destruct nonstd; easy.
 Qed.
 
 Lemma vec_sum_zeroR :
@@ -564,8 +580,9 @@ Lemma nth_cons_mvR b B u : forall i,
   nth (S i) ( (b::B) *r u) = nth i (B *r u).
 Proof. intros; simpl; auto. Qed.
 
-Lemma length_mvR_mvF {NANS : Nans} {t : type} : forall (m : @matrix (ftype t)) v, 
-length ((map_mat FT2R m) *r (map FT2R v)) = length (m *fr v).
+Lemma length_mvR_mvF {NANS : Nans} {t : type} : 
+  forall (m : matrix) (v : vector), 
+  length ((map_mat FT2R m) *r (map FT2R v)) = length (m *fr v).
 Proof.
   intros. 
   unfold mvR, mvF, MV, map_mat.
@@ -1076,9 +1093,9 @@ by left; right; left.
 by left; right; right.
 Qed.
 
-Lemma is_finite_mat_cons {NAN : Nans} {t : type} a A:
-is_finite_mat (a :: A) -> 
-  (@is_finite_mat t A /\ is_finite_vec a).
+Lemma is_finite_mat_cons {NAN : Nans} {t : type} {STD : is_standard t}  a A:
+@is_finite_mat t STD (a :: A) -> 
+  (@is_finite_mat t STD A /\ is_finite_vec a).
 Proof.
 rewrite /is_finite_mat !Forall_forall /=.
 move => H1. split.
@@ -1086,8 +1103,8 @@ move => H1. split.
 apply H1. by left.
 Qed.
 
-Lemma is_finite_mat_cons2 {NAN : Nans} {t : type} a A:
-@is_finite_mat t A -> is_finite_vec a -> is_finite_mat (a :: A). 
+Lemma is_finite_mat_cons2 {NAN : Nans} {t : type} {STD : is_standard t} a A:
+@is_finite_mat t STD A -> is_finite_vec a -> @is_finite_mat t STD (a :: A). 
 Proof.
 rewrite /is_finite_mat !Forall_forall /=.
 move => Hx Ha [ H| x0 x [H|H]] //=.
@@ -1095,26 +1112,26 @@ by rewrite -H.
 by apply Hx.
 Qed.
 
-Lemma in_zero_vec {NAN : Nans} {t : type} m x:
+Lemma in_zero_vec {NAN : Nans} {t : type} {STD : is_standard t} m x:
 In x (zero_vector m (Zconst t 0)) -> x = (Zconst t 0).
 Proof.
 elim: m => //=;
 move => [_ [|]| [_ [|]| _ _ [|] ] ] //=. 
 Qed.
 
-Lemma is_finite_vec_cons {NAN : Nans} {t : type} v0 v : 
-  @is_finite_vec t (v0 :: v) -> 
-  is_finite_vec v /\ Binary.is_finite _ _ v0.
+Lemma is_finite_vec_cons {NAN : Nans} {t : type} {STD : is_standard t} v0 v : 
+  @is_finite_vec t STD (v0 :: v) -> 
+  is_finite_vec v /\ is_finite v0.
 Proof.
 rewrite /is_finite_vec 
   !Forall_forall/=; intros; split; intros;
 apply H. by right. by left.
 Qed.
 
-Lemma is_finite_vec_sum {NAN : Nans} {t : type} u v : 
+Lemma is_finite_vec_sum {NAN : Nans} {t : type} {STD : is_standard t} u v : 
 length u = length v ->
-@is_finite_vec t (vec_sumF u v) -> 
-  @is_finite_vec t u /\ @is_finite_vec t v.
+@is_finite_vec t STD (vec_sumF u v) -> 
+  @is_finite_vec t STD u /\ @is_finite_vec t STD v.
 Proof.
 move: v. elim: u => //=.
 { move => v H. symmetry in H.
@@ -1125,56 +1142,52 @@ rewrite /vec_sumF/vec_sum/map2/=.
 move => v0 v H H1.
 apply is_finite_vec_cons in H1.
 elim: H1.
-fold (map2 (@BPLUS NAN t) u v).
-fold (vec_sum (@BPLUS NAN t)).
+fold (map2 BPLUS u v).
+fold (vec_sum BPLUS).
 fold (@vec_sumF NAN t).
 move => H1 H2. 
 rewrite /is_finite_vec 
   !Forall_forall/=; intros; split.
-{ move => x [|] Hx.
-  have : (Binary.is_finite _ _ (BPLUS u0 v0)) = true.
-  apply H2; left => //. rewrite -Hx. 
-  destruct u0; destruct v0; 
-  destruct s; destruct s0 => //=.
-  have : is_finite_vec u. apply (IH v) => //. lia.
-  rewrite /is_finite_vec !Forall_forall/=; intros.
-  apply H0 => //. } 
-{ move => x [|] Hx.
-  have : (Binary.is_finite _ _ (BPLUS u0 v0)) = true.
-  apply H2; left => //. rewrite -Hx. 
-  destruct u0; destruct v0; 
-  destruct s; destruct s0 => //=.
-  have : is_finite_vec v. apply (IH v) => //. lia.
-  rewrite /is_finite_vec !Forall_forall/=; intros.
-  apply H0 => //. } 
+{ move => x [|] Hx; subst.
+  have FIN : (is_finite (BPLUS x v0) = true) => //.
+  by move : FIN; subexpr_finite.
+  have : is_finite_vec u by apply (IH v) => //; lia.
+  rewrite /is_finite_vec !Forall_forall; move => H3.
+  by apply H3. } 
+move => x [|] Hx; subst.
+have FIN : (is_finite (BPLUS u0 x) = true) => //.
+by move : FIN; subexpr_finite.
+have : is_finite_vec v by apply (IH v) => //; lia.
+rewrite /is_finite_vec !Forall_forall; move => H3.
+by apply H3.   
 Qed.
 
-Lemma is_finite_scaleV {NAN : Nans} {t : type} a0 a : 
+Lemma is_finite_scaleV {NAN : Nans} {t : type} {STD : is_standard t} a0 a : 
 is_finite_vec (scaleV BMULT a0 a) ->
-  @is_finite_vec t a .
+  @is_finite_vec t STD a .
 Proof.
 rewrite /is_finite_vec !Forall_forall /scaleV //.
-intros. pose proof in_map (@BMULT NAN t a0) a x H0.
+intros. pose proof in_map (BMULT a0) a x H0.
 specialize (H (BMULT a0 x) H1).
-destruct x; destruct a0 => //. 
+  by move : H; subexpr_finite.
 Qed.
 
-Lemma is_finite_scaleV' {NAN : Nans} {t : type} a0 a : 
+Lemma is_finite_scaleV' {NAN : Nans} {t : type} {STD : is_standard t} a0 a : 
 a <> [] -> 
-@is_finite_vec t (scaleV BMULT a0 a) ->
-  Binary.is_finite _ _ a0.
+@is_finite_vec t STD (scaleV BMULT a0 a) ->
+  is_finite a0.
 Proof.
 move: a0. case: a => //. 
 move => a0 a a1 H. 
 rewrite /is_finite_vec !Forall_forall //=.
 intros.
-have : @Binary.is_finite _ _ (BMULT a1 a0) = true.
+have : is_finite (BMULT a1 a0) = true.
 apply (H0 (BMULT a1 a0)). by left.
-intros. destruct a0; destruct a1 => //.
+by subexpr_finite.
 Qed.
 
 
-Lemma is_finite_rowM {NAN : Nans} {t : type} a B m
+Lemma is_finite_rowM {NAN : Nans} {t : type} {STD : is_standard t} a B m
    (Hm: (0 < m)%nat) (Hb :forall b, In b B -> length b = m) 
   (Hlen: length a = length B) : 
   is_finite_vec (rowM (Zconst t 0) vec_sumF BMULT
@@ -1201,7 +1214,7 @@ have Hlen: ((Datatypes.length a) = (Datatypes.length B)).
 suff : is_finite_vec a.
 rewrite /is_finite_vec Forall_forall //=.
  move => Ha. by apply Ha.
-apply (IH B) => //.
+intros; apply (IH B) => //.
 move => b0 Hb0. apply H1 => /=. by right. 
 rewrite map_length rowM_length.
 apply H1 => /=. by left.
@@ -1209,13 +1222,13 @@ move => b0 Hb0. apply H1 => /=. by right.
 Qed.
 
 
-
-Lemma in_MMF_finite' {NAN : Nans} {t : type} A B m
+Lemma in_MMF_finite' {NAN : Nans} {t : type} {STD : is_standard t} 
+(A B : seq.seq (seq.seq (ftype t))) (m : nat)
 (HB : B <> [])
 (Hm : (0 < m)%nat)
 (Hb :forall b, In b B -> length b = m)
 (Hlen : forall x, In x A -> length x = length B):
-is_finite_mat (MMF A B) -> @is_finite_mat t A.
+@is_finite_mat t STD (MMF A B) -> @is_finite_mat t STD A.
 Proof.
 move: B HB Hb Hlen.
 elim: A => //.  
@@ -1225,30 +1238,24 @@ rewrite /MMF/= in H.
 apply is_finite_mat_cons in H.
 elim: H; move=> H1 H2.
 have Hb' : length b = m by apply Hb; left.
+rewrite Hb' in H2.
 apply is_finite_rowM in H2 => //.
 apply is_finite_mat_cons2 => //.
 apply (IH (b ::B)) => //.
 move => x Hx. apply Hlen. by right.
 apply is_finite_rowM in H2 => //.
-by rewrite Hb'. 
-by rewrite Hb'.
-move => b0 /=. move => Hb0. 
-by rewrite Hb'; apply Hb.
-by apply Hlen; left.
-move => b0 /=. move => Hb0. 
-by rewrite Hb'; apply Hb.
-by apply Hlen; left.
+all: simpl; auto.
 Qed.
 
 
-Lemma in_MMF_finite {NAN : Nans} {t : type} A B m
+Lemma in_MMF_finite {NAN : Nans} {t : type} {STD : is_standard t} A B m
 (HB : B <> [])
 (Hm : (0 < m)%nat)
 (Hb :forall b, In b B -> length b = m)
 (Hlen : forall x, In x A -> length x = length B):
 (forall x : vector, In x (MMF A B) ->  
   is_finite_vec x) -> 
-  forall a0, In a0 A -> @is_finite_vec t a0.
+  forall a0, In a0 A -> @is_finite_vec t STD a0.
 Proof.
 move: A Hlen HB Hb.
 case: B => //.  
@@ -1276,15 +1283,15 @@ move => x Hx.
 by apply H0; right.
 Qed.
 
-Lemma is_finite_vec_cons2 {NAN : Nans} {t} a0 (a : list (ftype t)) : 
- Binary.is_finite _ _ a0 = true -> 
+Lemma is_finite_vec_cons2 {NAN : Nans} {t} {STD : is_standard t} a0 (a : list (ftype t)) : 
+  is_finite a0 = true -> 
   is_finite_vec a -> is_finite_vec (a0 :: a).
 Proof.
 rewrite /is_finite_vec !Forall_forall; intros. 
 destruct H1; subst => //.
 by apply H0. Qed.
 
-Lemma is_finite_vec_mapBPLUS {NAN : Nans} {t}  (a : list (ftype t)) b : 
+Lemma is_finite_vec_mapBPLUS {NAN : Nans} {t} {STD : is_standard t}  (a : list (ftype t)) b : 
 length a = length b -> 
 is_finite_vec (map (uncurry BPLUS) (combine a b)) -> 
 is_finite_vec a /\ is_finite_vec b.
@@ -1293,34 +1300,35 @@ move : a. elim: b => //.
 { intros.
 rewrite length_zero_iff_nil in H; subst => //. } 
 move =>  b0 b IH a. case : a => //. intros. simpl in H.
-simpl in H0. apply is_finite_vec_cons in H0.
+simpl in H0. apply is_finite_vec_cons in H0. 
 destruct H0.
-intros; split; apply is_finite_vec_cons2.
-destruct a; destruct b0; destruct s; destruct s0; simpl; auto. 
+have H2: is_finite (BPLUS a b0) = true => //.
+move: H2. subexpr_finite.
+intros; split; apply is_finite_vec_cons2 => //.
 apply IH => //; lia.
-destruct a; destruct b0; destruct s; destruct s0; simpl; auto. 
 apply (IH l) => //; lia.
 Qed.
 
 
-Lemma is_finite_scaleM {NAN : Nans} {t : type} x A : 
-is_finite_mat (scaleM BMULT x A) ->
-  @is_finite_mat t A .
+Lemma is_finite_scaleM {NAN : Nans} {t : type} {STD : is_standard t} x A : 
+  @is_finite_mat t STD (scaleM BMULT x A) ->
+  @is_finite_mat t STD A .
 Proof.
 rewrite /is_finite_mat !Forall_forall /scaleM //.
 intros. pose proof in_map ( map (BMULT x) ) A x0 H0. 
 specialize (H (map (BMULT x) x0) H1).
 destruct A; destruct x0 => //.
 simpl in H; apply is_finite_vec_cons in H; destruct H.
-apply is_finite_vec_cons2.
-destruct x; destruct b; destruct  s; destruct s0 => //.
+have H3: is_finite (BMULT x f) = true => //. move : H3.
+subexpr_finite.
+apply is_finite_vec_cons2 => //.
 by apply (is_finite_scaleV x).
 Qed.
 
-Lemma is_finite_mat_sum {NAN : Nans} {t} 
+Lemma is_finite_mat_sum {NAN : Nans} {t} {STD : is_standard t}
 (A B : @gem_defs.matrix (ftype t)) : 
 eq_size A B -> 
-is_finite_mat (mat_sumF A B) -> is_finite_mat A /\ is_finite_mat B.
+@is_finite_mat t STD (mat_sumF A B) -> is_finite_mat A /\ is_finite_mat B.
 Proof.
 move : A. elim: B.
 { move => A. 

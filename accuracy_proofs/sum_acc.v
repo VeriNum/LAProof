@@ -5,7 +5,12 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
-From LAProof.accuracy_proofs Require Import common sum_model float_acc_lems op_defs list_lemmas.
+Require Import mathcomp.ssreflect.ssreflect.
+From LAProof.accuracy_proofs Require Import common 
+                                            sum_model
+                                            float_acc_lems 
+                                            list_lemmas
+                                            float_tactics.
 
 Require Import Reals.
 Open Scope R.
@@ -13,13 +18,15 @@ Open Scope R.
 Require Import Sorting Permutation.
 
 Section BackwardError. 
-Variable (NAN: Nans) (t: type).
+Context {NAN: Nans} {t: type} {STD: is_standard t}.
 Notation g := (@g t).
 Notation D := (@default_rel t).
 
 Variable (x : list (ftype t)).
 Notation xR := (map FT2R x).
-Hypothesis (Hfin: Binary.is_finite (fprec t) (femax t) (sumF x) = true).
+Hypothesis (Hfin: is_finite (sumF x) = true).
+
+Notation neg_zero := (ftype_of_float common.neg_zero).
 
 Theorem bSUM :
     exists (x': list R), 
@@ -28,10 +35,12 @@ Theorem bSUM :
     (forall n, (n < length x')%nat -> exists delta, 
         nth n x' 0 = FT2R (nth n x neg_zero) * (1 + delta) /\ Rabs delta <= g (length x' - 1)).
 Proof.
+have H0 : FT2R neg_zero = 0 by apply FT2R_neg_zero.
 induction x.
-{ intros; exists []; repeat split; auto. intros. 
+{ intros; exists []; repeat split; auto => //=.
   intros. simpl in H; assert (n = 0)%nat by lia; subst.
-  exists 0; split; [simpl; nra| unfold g; rewrite Rabs_R0; simpl; nra].
+  exists 0; split; [simpl; try nra | 
+                      unfold g; rewrite Rabs_R0; simpl; nra].
 }
 (* case a::l *)
 intros.
@@ -44,10 +53,10 @@ destruct Hl.
 { subst; simpl in *;
   destruct (BPLUS_finite_e _ _ Hfin).
   exists [FT2R a]; split; [ simpl; auto | split ; 
-  [unfold sum; rewrite BPLUS_neg_zero|] ].
-  unfold sumR; simpl; nra. auto.  
-  intros. exists 0; simpl in H1; split; 
-  [assert ((n = 1)%nat \/ (n = 0)%nat) by lia; destruct H2; subst; simpl; nra|].
+  [unfold sum; rewrite Bplus_0R|] ] => //.
+  unfold sumR; simpl; nra.  
+  intros. exists 0; simpl in H1, H2; split. 
+  have H3: ((n = 1)%nat \/ (n = 0)%nat) by lia. destruct H3; subst; simpl; nra. 
   rewrite Rabs_R0; simpl; unfold g; nra.
 }
 (* case non-empty l *)
@@ -62,12 +71,12 @@ pose proof (BPLUS_accurate' a (sumF l) Hfin) as Hplus.
 destruct Hplus as (d' & Hd'& Hplus).
 exists (FT2R a * (1+d') :: map (Rmult (1+d')) l'); repeat split.
 { simpl; auto. rewrite map_length; auto. }
-{ simpl; rewrite Hplus, Rmult_plus_distr_r, Hsum, <- sumR_mult; auto. } 
-intros. destruct n. 
+{ simpl; rewrite Hplus Rmult_plus_distr_r Hsum -sumR_mult; auto. } 
+intros n H1. destruct n. 
 { simpl. exists d'; split; auto.
   eapply Rle_trans; [apply Hd'| ]. apply d_le_g_1. rewrite map_length; auto.
   rewrite Hlen'. lia. }
-simpl in H0; rewrite map_length in H0; rewrite Hlen' in H0.
+simpl in H1. rewrite map_length in H1; rewrite Hlen' in H1.
 assert (Hlen2: (n < length l')%nat) by lia.
 specialize (Hdel n Hlen2).
 destruct Hdel as (d & Hd1 & Hd2).
@@ -91,8 +100,8 @@ Qed.
 End BackwardError. 
 
 Section ForwardError.
+Context {NAN: Nans} {t: type} {STD: is_standard t}.
 
-Variable (NAN: Nans) (t: type).
 Notation g := (@g t).
 Notation g1 := (@g1 t).
 Notation D := (@default_rel t).
@@ -101,14 +110,14 @@ Variable (x : list (ftype t)).
 Notation xR := (map FT2R x). 
 Notation n := (length x).
 
-Hypothesis (Hfin: Binary.is_finite (fprec t) (femax t) (sumF x) = true).
+Hypothesis (Hfin: is_finite (sumF x) = true).
 
 Theorem fSUM :
     Rabs ((sumR xR) - FT2R (sumF x)) <=  g n * (sumR (map Rabs xR)).
 Proof.
 induction x.
-{ intros; unfold g; subst; simpl;
-  rewrite Rminus_0_r, Rabs_R0; nra.  } 
+{ intros; unfold g; subst; simpl.
+  rewrite FT2R_neg_zero Rminus_0_r Rabs_R0; nra.  } 
 (* case a::l *)
 intros.
 assert (Hl: l = [] \/ l <> []).
@@ -119,9 +128,10 @@ destruct Hl.
 (* case empty l *)
 { subst. unfold g; simpl; subst.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
-rewrite BPLUS_neg_zero; auto.
+rewrite Bplus_0R; auto.
 field_simplify_Rabs; field_simplify; rewrite Rabs_R0. 
-apply Rmult_le_pos; auto with commonDB; apply Rabs_pos. }
+apply Rmult_le_pos; auto with commonDB; apply Rabs_pos.
+apply FT2R_neg_zero. }
 (* case non-empty l *)
 simpl in *.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
@@ -169,8 +179,8 @@ Qed.
 End ForwardError.
 
 Section SumPermute.
+Context {NAN: Nans} {t: type} {STD: is_standard t}.
 
-Variable (NAN: Nans) (t: type).
 Notation g := (@g t).
 Notation g1 := (@g1 t).
 Notation D := (@default_rel t).
@@ -180,16 +190,17 @@ Notation xR := (map FT2R x).
 Notation xR0 := (map FT2R x0). 
 Notation n := (length x).
 
-Hypothesis (Hfin: Binary.is_finite (fprec t) (femax t) (sumF x) = true).
-Hypothesis (Hfin0: Binary.is_finite (fprec t) (femax t) (sumF x0) = true).
+Hypothesis (Hfin: is_finite (sumF x) = true).
+Hypothesis (Hfin0: is_finite (sumF x0) = true).
 Hypothesis (Hper: Permutation x x0).
 
 Lemma sum_forward_error_permute' :
     Rabs ((sumR xR0) - FT2R (sumF x0)) <=  g n * (sumR (map Rabs xR0)).
 Proof.
 eapply Rle_trans.
-apply (fSUM _ _ x0 Hfin0).
-apply Req_le; f_equal. rewrite (Permutation_length Hper); auto.
+apply (fSUM x0 Hfin0).
+apply Req_le; f_equal. 
+rewrite (Permutation_length Hper); auto.
 Qed.
 
 Theorem sum_forward_error_permute :

@@ -1,9 +1,9 @@
 Require Import VST.floyd.proofauto.
-Require Import LAProof.floatlib.
 From LAProof.C Require Import sparse sparse_model.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPCompCert.
 Require Import VSTlib.spec_math.
+Require Import LAProof.floatlib.
 
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
@@ -35,7 +35,7 @@ Definition crs_matrix_rows_spec :=
     RETURN (Vint (Int.repr (matrix_rows mval)))
     SEP (crs_rep sh mval m).
 
-Definition crs_row_vector_multiply_spec :=
+Definition crs_row_vector_multiply_spec {NAN : Nans} :=
  DECLARE _crs_row_vector_multiply
  WITH sh1: share, sh2: share, sh3: share,
       m: val, mval: matrix Tdouble, v: val, vval: vector Tdouble, i: Z
@@ -57,7 +57,7 @@ Definition crs_row_vector_multiply_spec :=
     SEP (crs_rep sh1 mval m;
           data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v).
 
-Definition crs_matrix_vector_multiply_byrows_spec :=
+Definition crs_matrix_vector_multiply_byrows_spec {NAN : Nans} :=
  DECLARE _crs_matrix_vector_multiply_byrows
  WITH sh1: share, sh2: share, sh3: share,
       m: val, mval: matrix Tdouble, v: val, vval: vector Tdouble, p: val
@@ -81,7 +81,7 @@ Definition crs_matrix_vector_multiply_byrows_spec :=
           data_at sh3 (tarray tdouble (matrix_rows mval)) 
              (map Vfloat result) p).
 
-Definition crs_matrix_vector_multiply_spec :=
+Definition crs_matrix_vector_multiply_spec {NAN : Nans} :=
  DECLARE _crs_matrix_vector_multiply
  WITH sh1: share, sh2: share, sh3: share,
       m: val, mval: matrix Tdouble, v: val, vval: vector Tdouble, p: val
@@ -105,11 +105,11 @@ Definition crs_matrix_vector_multiply_spec :=
           data_at sh3 (tarray tdouble (matrix_rows mval)) 
              (map Vfloat result) p).
 
-Definition SparseASI : funspecs := [ 
+Definition SparseASI {NAN : Nans} : funspecs := [ 
    crs_matrix_rows_spec;
    crs_row_vector_multiply_spec;
    crs_matrix_vector_multiply_byrows_spec;
    crs_matrix_vector_multiply_spec ].
 
 Definition SubsetMathASI := [fma_spec].
-Definition Gprog: funspecs := SparseASI ++ SubsetMathASI.
+Definition Gprog {NAN : Nans}: funspecs := SparseASI ++ SubsetMathASI.

@@ -1,0 +1,38 @@
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{ltblue}{rgb}{0,0.4,0.4}
+\definecolor{dkblue}{rgb}{0,0.5,0.5}
+\definecolor{dkviolet}{rgb}{0.3,0,0.5}
+ \definecolor{LightGray}{gray}{0.9}
+
+\lstdefinelanguage{Coq}{
+   mathescape=true,
+   morekeywords=[16]{Fixpoint,%
+      Definition,Lemma,Theorem,Axiom, Variable, Variables, Let, Hypothesis, Notation},% 
+    % Gallina
+    morekeywords=[2]{forall, exists, exists2, fun, fix, cofix, struct,
+        match, with, end, as, in, return, let, if, then, else, for, of},
+    morekeywords=[3]{Type, Prop, Set, true, false, option},
+    sensitive, %
+    keepspaces=true,
+    showstringspaces=false,
+    breaklines=true,breakatwhitespace=true,
+    basicstyle=\ttfamily\small,
+    keywordstyle=[16]{\ttfamily\color{dkviolet}},
+    % Style for gallina keyword
+    keywordstyle=[16]{\ttfamily\color{dkviolet}},
+    keywordstyle=[2]{\ttfamily\color{dkgreen}},
+    keywordstyle=[3]{\ttfamily\color{ltblue}},
+   literate={=>}{{$\Rightarrow$\ }}1 {>->}{{$\rightarrowtail$}}2{->}{{$\to$\ }}1
+   {<->}{$\leftrightarrow$}1
+   {forall}{$\forall\,$}1
+   {forallb}{forallb}7
+   {exists}{$\exists\,$}1
+   {existsb}{existsb}7
+   {existsv}{existsv}7
+   {\/\\}{{$\wedge$\ }}1
+   {|-}{{$\vdash$\ }}1
+   {-*}{{$\wand$\ }}1
+   {\\\/}{{$\vee$\ }}1
+   {~}{{$\sim$}}1
+  }[keywords,comments,strings]%

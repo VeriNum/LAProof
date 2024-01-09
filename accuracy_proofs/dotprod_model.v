@@ -1,7 +1,11 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
-From LAProof.accuracy_proofs Require Import common op_defs list_lemmas float_acc_lems.
+From LAProof.accuracy_proofs Require Import common op_defs 
+                                            list_lemmas 
+                                            float_acc_lems
+                                            float_tactics.
 Require Import FunctionalExtensionality.
+Require Import mathcomp.ssreflect.ssreflect.
 
 Require Import Reals.
 Open Scope R.
@@ -40,7 +44,7 @@ Qed.
 End DotProdGeneric.
 
 Section DotProdFloat.
-Context {NAN : Nans} {t : type}.
+Context {NAN : Nans} {t : type} {STD: is_standard t}.
 
 Definition dotprodF : list (ftype t) -> list (ftype t) -> ftype t := 
   dotprod BMULT BPLUS (Zconst t 0).
@@ -65,7 +69,7 @@ Qed.
 End DotProdFloat.
 
 Section DotProdFMA.
-Context {NAN : Nans} {t : type}.
+Context {NAN : Nans} {t : type} {STD: is_standard t}.
 
 (* FMA dot-product *)
 Definition fma_dotprod (v1 v2: list (ftype t)) : ftype t :=
@@ -186,9 +190,10 @@ end.
 simpl. subst y.
 rewrite fold_left_Rplus_Rplus.
 rewrite IHl.
-rewrite !map_rev, !rev_involutive.
+rewrite !map_rev !rev_involutive.
 simpl; auto.
-rewrite <- combine_rev, rev_involutive; auto.
+rewrite -combine_rev. 
+  rewrite rev_involutive; auto.
 rewrite rev_length; auto.
 Qed.
 
@@ -318,7 +323,7 @@ length u = length v ->
 R_dot_prod_rel (combine u v) r -> 
 R_dot_prod_rel (combine (map (Rmult a) u) v) (a * r). 
 Proof. revert u r. induction v.
-{ intros. rewrite !combine_nil in *.  
+{ intros u r. rewrite !combine_nil. intros.  
   inversion H0; subst; rewrite Rmult_0_r; apply R_dot_prod_rel_nil. }
 destruct u.
   { intros; pose proof Nat.neq_0_succ (length v); try contradiction. }
@@ -328,8 +333,8 @@ destruct u.
     (a * r * a0 + a * s) by nra. apply R_dot_prod_rel_cons; auto.
 Qed.
 
-Lemma dotprod_rel_R_exists {NAN: Nans}:
-  forall (t : type) (l : list (ftype t * ftype t)) (fp : ftype t)
+Lemma dotprod_rel_R_exists {NAN : Nans} {t : type} {STD: is_standard t} :
+  forall (l : list (ftype t * ftype t)) (fp : ftype t)
   (Hfp : dot_prod_rel l fp),
   exists rp, R_dot_prod_rel (map FR2 l) rp.
 Proof.
@@ -341,8 +346,8 @@ exists (FT2R (fst a) * FT2R (snd a) + rs); simpl.
 apply R_dot_prod_rel_cons; auto.
 Qed.
 
-Lemma dotprod_rel_R_exists_fma {NAN: Nans}:
-  forall (t : type) (l : list (ftype t * ftype t)) (fp : ftype t)
+Lemma dotprod_rel_R_exists_fma {NAN : Nans} {t : type} {STD: is_standard t}:
+  forall (l : list (ftype t * ftype t)) (fp : ftype t)
   (Hfp : fma_dot_prod_rel l fp),
   exists rp, R_dot_prod_rel (map FR2 l) rp.
 Proof.
@@ -354,8 +359,8 @@ exists (FT2R (fst a) * FT2R (snd a) + rs); simpl.
 apply R_dot_prod_rel_cons; auto.
 Qed.
 
-Lemma sum_rel_R_abs_exists_fma {NAN: Nans}:
-  forall (t : type) (l : list (ftype t * ftype t)) (fp : ftype t)
+Lemma sum_rel_R_abs_exists_fma {NAN : Nans} {t : type} {STD: is_standard t}:
+  forall (l : list (ftype t * ftype t)) (fp : ftype t)
   (Hfp : fma_dot_prod_rel l fp),
   exists rp, R_dot_prod_rel (map Rabsp (map FR2 l)) rp.
 Proof.
@@ -414,7 +419,7 @@ End RealDotProd.
 
 
 Section NonZeroDP.
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t}.
 
 Variables (v1 v2 : list (ftype t)).
 Hypothesis (Hlen : length v1 = length v2).
@@ -425,67 +430,71 @@ Lemma dot_prod_rel_nnzR :
 forall 
 (fp : ftype t)
 (Hfp : dot_prod_rel (combine v1 v2) fp)
-(Hfin: Binary.is_finite (fprec t) (femax t) fp = true),
+(Hfin: is_finite fp = true),
 nnzR v1R = 0%nat -> FT2R fp = 0.
 Proof.
 intros.
 pose proof nnz_lemma _ _ v1R _ H.
 revert H0 H Hfp Hlen Hfin. revert v2 fp.
 induction v1; intros.
-simpl in *; inversion Hfp; auto.
+{  simpl in *; inversion Hfp; auto.
 destruct v2; try discriminate; auto.
-inversion Hfp; subst.
-unfold fst, snd.
+rewrite -B2R_float_of_ftype /Zconst float_of_ftype_of_float => //=. }  
+inversion Hfp; subst. 
+rewrite -B2R_float_of_ftype /Zconst float_of_ftype_of_float => //=.
+destruct xy => //=. 
 assert (Hin: forall x : R, In x (map FT2R l) -> x = 0).
 { intros. apply H0; simpl; auto. }
-assert (Hlen1:  length l = length l0) by (simpl; auto).
-assert (HFIN: Binary.is_finite (fprec t) (femax t) s = true).
-{ simpl in Hfin. destruct (BMULT a f); destruct s;
-  destruct s0; try discriminate; simpl in *; auto; 
-  destruct s; try discriminate; auto.
-}
-pose proof nnz_is_zero_cons _ (FT2R a) (map FT2R l) _ _ H as H1.
-specialize (IHl l0 s Hin H1 H4 Hlen1 HFIN).
-destruct (@BPLUS_accurate' t NAN (BMULT a f) s Hfin)
-  as (d & _ & Hacc).
-rewrite Hacc; clear Hacc.
-rewrite IHl.
-assert (HFIN2: Binary.is_finite (fprec t) (femax t) (BMULT a f) = true).
-{ simpl in Hfin. destruct (BMULT a f); destruct s; try discriminate; auto. } 
-assert (Ha: FT2R a = 0).
+have Hlen1:  length l = length l0.
+  destruct v2; try discriminate H1.
+  have hl: length l = length l1 by (simpl; auto).
+  inversion H1; subst. rewrite combine_length hl Nat.min_id => //.
+move: Hfin => //=; subexpr_finite. 
+let A:= fresh in pose proof nnz_is_zero_cons _ (FT2R a) (map FT2R l) _ _ H as A.
+destruct v2 => //. inversion H1; subst. 
+have Hs: FT2R s = 0.
+{  apply (IHl l1) => //. simpl; auto. }
+BPLUS_correct t (BMULT a f1) s.
+rewrite Hs Rplus_0_r.
+have Ha:  FT2R a = 0.
 apply H0; simpl; auto.
-pose proof Bmult_0R _ _ HFIN2 Ha as H2; destruct H2; rewrite H2;
-simpl; nra.
+BMULT_correct t a f1; 
+  by rewrite Ha Rmult_0_l !Generic_fmt.round_0. 
 Qed.
 
 Lemma fma_dot_prod_rel_nnzR :
 forall 
 (fp : ftype t)
 (Hfp : fma_dot_prod_rel (combine v1 v2) fp)
-(Hfin: Binary.is_finite (fprec t) (femax t) fp = true),
+(Hfin: is_finite fp = true),
 nnzR v1R = 0%nat -> FT2R fp = 0.
 Proof.
 intros.
 pose proof nnz_lemma _ _ v1R _ H.
 revert H0 H Hfp Hlen Hfin. revert v2 fp.
 induction v1; intros.
-simpl in *; inversion Hfp; auto.
+{  simpl in *; inversion Hfp; auto.
 destruct v2; try discriminate; auto.
-inversion Hfp; subst.
-unfold fst, snd.
+rewrite -B2R_float_of_ftype /Zconst float_of_ftype_of_float => //=. }  
+inversion Hfp; subst. 
+rewrite -B2R_float_of_ftype /Zconst float_of_ftype_of_float => //=.
+destruct xy => //=. 
 assert (Hin: forall x : R, In x (map FT2R l) -> x = 0).
 { intros. apply H0; simpl; auto. }
-assert (Hlen1:  length l = length l0) by (simpl; auto).
-assert (HFIN: Binary.is_finite (fprec t) (femax t) s = true).
-{ simpl in Hfin. destruct a; destruct f; destruct s;
-  destruct s0; destruct s1; destruct s; try discriminate; simpl in *; auto; 
-  try discriminate; auto. }
-pose proof nnz_is_zero_cons _ (FT2R a) (map FT2R l) _ _ H as H1.
-specialize (IHl l0 s Hin H1 H4 Hlen1 HFIN).
-assert (Ha: FT2R a = 0).
+have Hlen1:  length l = length l0.
+  destruct v2; try discriminate H1.
+  have hl: length l = length l1 by (simpl; auto).
+  inversion H1; subst. rewrite combine_length hl Nat.min_id => //.
+move: Hfin => //=. subexpr_finite. 
+let A:= fresh in pose proof nnz_is_zero_cons _ (FT2R a) (map FT2R l) _ _ H as A.
+destruct v2 => //. inversion H1; subst. 
+have Hs: FT2R s = 0.
+{  apply (IHl l1) => //. simpl; auto. }
+BFMA_correct t a f1 s.
+rewrite Hs Rplus_0_r.
+have Ha:  FT2R a = 0.
 apply H0; simpl; auto.
-rewrite (Bfma_mult_0R a f s  Hfin Ha).
-rewrite IHl; auto.
+  by rewrite Ha Rmult_0_l !Generic_fmt.round_0. 
 Qed.
 
 
