@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  docker-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - env: { COQ_VERSION: "8.17", DOCKER_MATHCOMP_VERSION: "1.17.0" }
+        - env: { COQ_VERSION: "8.16", DOCKER_MATHCOMP_VERSION: "1.17.0" }
+
+    runs-on: ubuntu-latest
+    env: ${{ matrix.env }}
+    name: ${{ matrix.env.COQ_VERSION }}
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.env.COQ_VERSION }}-${{ github.head_ref || github.run_id }}
+      cancel-in-progress: true
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    - uses: coq-community/docker-coq-action@v1
+      with:
+        custom_image: mathcomp/mathcomp:${{ matrix.env.DOCKER_MATHCOMP_VERSION }}-coq-${{ matrix.env.COQ_VERSION }}
+        export: CI
+        custom_script: |
+          eval $(opam env)
+          sudo chmod -R a=u .
+          # Work around https://github.com/actions/checkout/issues/766
+          git config --global --add safe.directory "*"
+          echo '::group::install dependencies'
+          opam install -y -v coq-flocq coq-coquelicot coq-vcfloat coq-mathcomp-analysis coq-mathcomp-algebra-tactics coq-mathcomp-finmap coq-vst coq-vst-lib
+          echo '::endgroup::'
+          make pretty-timed -j2
+          make print-pretty-timed
