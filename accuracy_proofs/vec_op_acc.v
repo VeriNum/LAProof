@@ -22,7 +22,7 @@ Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
 Section SCALE_V_ERROR.
 (* mixed error vector scaling *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -47,7 +47,7 @@ elim: v => /= [a _|].
   by exists [], []. }
 move => v0 v IH. intros. 
 have Hfin':  is_finite_vec (scaleVF a v) /\
-Binary.is_finite _ _ (BMULT a v0).
+is_finite (BMULT a v0).
   by apply is_finite_vec_cons in Hfinv.
 case Hfin' =>  HA HB.
 destruct (IH a) as 
@@ -86,7 +86,7 @@ End SCALE_V_ERROR.
 
 Section VECSUMERROR.
 (* mixed error matrix addition *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -122,7 +122,7 @@ case: v => //.
 move => v0 v. intros. 
 rewrite /vec_sumF vec_sum_cons.
 have Hfin:  is_finite_vec (vec_sum BPLUS u v) /\
-  (Binary.is_finite  _ _ (BPLUS u0 v0) = true).
+  (is_finite (BPLUS u0 v0) = true).
 simpl in Hfinv. rewrite /vec_sumF vec_sum_cons in Hfinv.  
 apply is_finite_vec_cons in Hfinv.
 destruct Hfinv => //.
@@ -233,7 +233,7 @@ End VECSUMERROR.
 
 Section SCALEFMV. 
 (* mixed error bounds over lists *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -269,10 +269,10 @@ Lemma Smat_vec_mul_mixed_error:
 Proof.
 (* proof follows from previous bounds for scaling
 and multiplication *)
-destruct (@scaleV_mixed_error NAN t (A *f v) b)
+destruct (scaleV_mixed_error (A *f v) b)
   as (e & eta & Heq & H) => //.
 rewrite Heq. clear Heq.
-destruct (@mat_vec_mul_mixed_error NAN t A v)
+destruct (mat_vec_mul_mixed_error A v)
   as (E & eta1 & Heq1 & H1).
 { apply (is_finite_scaleV b) => //. } 
 { intros; by apply Hlen. } 
@@ -310,7 +310,7 @@ End SCALEFMV.
 
 Section GEMV. 
 (* mixed error bounds over lists *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).

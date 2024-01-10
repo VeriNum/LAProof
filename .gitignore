@@ -23,6 +23,7 @@ CoqMakefile.conf
 *.vo
 *.vok
 *.vos
+*.v.crashcoqide
 .coq-native/
 .csdp.cache
 .lia.cache

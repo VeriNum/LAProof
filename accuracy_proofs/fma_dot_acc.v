@@ -5,23 +5,23 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
-From LAProof.accuracy_proofs Require Import common op_defs float_acc_lems list_lemmas.
-From LAProof.accuracy_proofs Require Import dotprod_model sum_model dot_acc_lemmas.
-
+From LAProof.accuracy_proofs Require Import common op_defs float_acc_lems list_lemmas
+                                            dotprod_model sum_model dot_acc_lemmas.
 Require Import Reals.
 Open Scope R.
 
 Section MixedError. 
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD : is_standard t}.
 
 Notation g := (@g t).
 Notation g1 := (@g1 t).
 Notation D := (@default_rel t).
 Notation E := (@default_abs t).
+Notation neg_zero := (ftype_of_float neg_zero).
 
 Variables (v1 v2: list (ftype t)).
 Hypothesis Hlen: length v1 = length v2.
-Hypothesis Hfin: Binary.is_finite (fprec t) (femax t) (fma_dotprod v1 v2) = true.
+Hypothesis Hfin: is_finite(fma_dotprod v1 v2) = true.
 
 Lemma fma_dotprod_mixed_error:
   exists (u : list R) (eta : R),
@@ -80,7 +80,7 @@ End MixedError.
 
 
 Section ForwardError. 
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD : is_standard t}.
 
 Variables v1 v2 : list (ftype t).
 Notation v1R  := (map FT2R v1).
@@ -91,9 +91,10 @@ Notation n    := (length v2).
 
 Notation g := (@g t).
 Notation g1 := (@g1 t).
+Notation neg_zero := (ftype_of_float neg_zero).
 
 Hypothesis Hlen: length v1 = length v2.
-Hypothesis Hfin: Binary.is_finite (fprec t) (femax t) (fma_dotprod v1 v2) = true.
+Hypothesis Hfin: is_finite(fma_dotprod v1 v2) = true.
 
 Lemma fma_dotprod_forward_error:
   Rabs (FT2R (fma_dotprod v1 v2) - dotprodR v1R v2R ) 
@@ -123,7 +124,7 @@ pose proof R_dot_prod_rel_fold_right' t v1 v2 as HB.
 pose proof R_dot_prod_rel_fold_right_Rabs' t v1 v2 as HC.
   simpl in HB, HC. rewrite <- map_rev in HC, HB.
   rewrite <- map_rev in HC.
-pose proof @sparse_fma_dotprod_forward_error NAN t (rev v1) (rev v2).
+pose proof sparse_fma_dotprod_forward_error (rev v1) (rev v2).
   rewrite !rev_length,  combine_rev in H; auto.
 specialize (H Hlen (fma_dotprod v1 v2) HA Hfin (dotprodR v1R v2R)
   (dotprodR v1R' v2R') HB HC). 

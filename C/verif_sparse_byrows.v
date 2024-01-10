@@ -1,9 +1,9 @@
 Require Import VST.floyd.proofauto.
-Require Import LAProof.floatlib.
 From LAProof.C Require Import sparse sparse_model spec_sparse.
-Require Import vcfloat.VCFloat.
-Require Import vcfloat.FPCompCert.
+Require Import vcfloat.FPStdLib.
+Require Import vcfloat.FPStdCompCert.
 Require Import VSTlib.spec_math.
+Require Import LAProof.floatlib.
 
 Set Bullet Behavior "Strict Subproofs".
 
@@ -103,10 +103,7 @@ forward_call (Znth h vals, Znth (Znth h col_ind) vval, partial_row i h vals col_
 forward.
 entailer!.
 f_equal.
-change (Binary.Bfma _ _ _ _ _ _ _ _ _) with 
-   (@BFMA _ Tdouble (Znth h vals) (Znth (Znth h col_ind) vval)
-     (partial_row i h vals col_ind row_ptr vval)
-  ).
+rewrite BFMA_eq.
 eapply partial_row_next; try eassumption; lia.
 -
  forward.
@@ -121,7 +118,7 @@ eapply partial_row_next; try eassumption; lia.
  entailer!.
 Qed.
 
-Lemma body_crs_matrix_vector_multiply_byrows: semax_body Vprog Gprog f_crs_matrix_vector_multiply_byrows crs_matrix_vector_multiply_byrows_spec.
+Lemma body_crs_matrix_vector_multiply_byrows : semax_body Vprog Gprog f_crs_matrix_vector_multiply_byrows crs_matrix_vector_multiply_byrows_spec.
 Proof.
 start_function.
 forward_call.

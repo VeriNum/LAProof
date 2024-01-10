@@ -22,7 +22,7 @@ Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
 Section MMERROR. 
 (* forward error matrix multiplication *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -114,7 +114,7 @@ End MMERROR.
 
 Section SCALE_M_ERROR.
 (* mixed error matrix scaling *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -213,7 +213,7 @@ End SCALE_M_ERROR.
 
 Section SMMERROR. 
 (* forward error matrix multiplication *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -280,7 +280,7 @@ End SMMERROR.
 Section MATADDERROR.
 
 (* mixed error matrix addition *)
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -405,7 +405,7 @@ End MATADDERROR.
 
 Section MATAXPBY.
 
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -462,8 +462,8 @@ destruct (mat_sum_error (scaleMF x A) (scaleMF y B) n)
 { rewrite /eq_size; split. 
 rewrite !map_length. by destruct HA.
 destruct HA; intros.
-rewrite (scaleM_length x A n (@BMULT NAN t)) => //.
-symmetry. pose proof (scaleM_length y B n (@BMULT NAN t)) => //.
+rewrite (scaleM_length x A n BMULT) => //.
+symmetry. pose proof (scaleM_length y B n BMULT) => //.
 rewrite H3 => //. }  
 have HB: length B = m. destruct HA; lia.
 rewrite HEQ.
@@ -497,22 +497,22 @@ exists x0. apply H16. }
 by apply eq_size_symm. }
   split => //.
 { apply (eq_size_trans ea (scaleMF x A) A) => //.
-  apply (eq_size_scale x A (@BMULT NAN t) n).
+  apply (eq_size_scale x A BMULT n).
   intros; by apply Hn. } 
   split => //.
 { apply (eq_size_trans eb (scaleMF x A) A) => //.
-  apply (eq_size_scale x A (@BMULT NAN t) n).
+  apply (eq_size_scale x A BMULT n).
   intros; by apply Hn. } 
 split.
 rewrite /eq_size; split => //.
 { apply (eq_size_trans eta2 B A) => //.
 by apply eq_size_symm. }
 apply (eq_size_trans (scaleMF x A) A (scaleMF y B)) => //.
-  apply (eq_size_scale x A (@BMULT NAN t) n).
+  apply (eq_size_scale x A BMULT n).
   intros; by apply Hn. 
 apply (eq_size_trans A B (scaleMF y B)) => //.
   apply eq_size_symm.
-  apply (eq_size_scale y B (@BMULT NAN t) n).
+  apply (eq_size_scale y B BMULT n).
   intros; by apply Hn2. 
 Qed.
  
@@ -520,8 +520,7 @@ Qed.
 End MATAXPBY.
 
 Section GEMM.
-
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -582,8 +581,8 @@ Proof.
 (* len hyps for composing errors *)
 have Hlen1 : forall v : seq (ftype t),
     In v (MMCF A B) -> length v = m.
-{ by apply (in_MMC_length A B (@BPLUS NAN t) 
-  (@BMULT NAN t) m (Zconst t 0)). }
+{ by apply (in_MMC_length A B BPLUS
+  BMULT m (Zconst t 0)). }
 have Hleny : forall a : seq (ftype t), In a Y -> length a = m.
 { move : HY. rewrite /size_col; move => HY1; destruct HY1; intros.
 by apply H0. } 
@@ -593,9 +592,9 @@ have Hlen2 :  eq_size (MMCF A B) Y.
 intros. symmetry; rewrite H0 => //. by symmetry; apply Hlen1. }
 have Hsz : eq_size (scaleMF s1 (MMCF A B)) (scaleMF s2 Y).
 { apply (eq_size_trans (scaleMF s1 (MMCF A B)) (MMCF A B) (scaleMF s2 Y)).
-apply (eq_size_scale  s1 (MMCF A B) (@BMULT NAN t) m) => //.
+apply (eq_size_scale  s1 (MMCF A B) BMULT m) => //.
 apply (eq_size_trans (MMCF A B) Y (scaleMF s2 Y)) => //.
-apply eq_size_symm. apply (eq_size_scale  s2 Y (@BMULT NAN t) m) => //. } 
+apply eq_size_symm. apply (eq_size_scale  s2 Y BMULT m) => //. } 
 (* compose errors from axpby and MMC *)
 destruct (mat_axpby_error (MMCF A B) Y s1 s2 m)  
   as (ab3 & y1 & ab5 & y3 & ab4 & y2 & Heq1 & H1) => //.

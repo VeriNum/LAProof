@@ -1,37 +1,43 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
-From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
-From LAProof.accuracy_proofs Require Import float_acc_lems list_lemmas.
-From LAProof.accuracy_proofs Require Import dot_acc_lemmas sum_acc.
-
+From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model
+                                            float_acc_lems list_lemmas
+                                            dot_acc_lemmas sum_acc.
+Require Import mathcomp.ssreflect.ssreflect.
 Require Import Reals.
 Open Scope R.
 
 Section NAN.
-Variable NAN: Nans.
+Context {NAN: Nans} {t : type} {STD : is_standard t}.
 
-Definition fmax (t: type) := bpow Zaux.radix2 (femax t).
+Definition fmax := bpow Zaux.radix2 (femax t).
 
-Lemma is_finite_fma_no_overflow' (t : type) :
+Lemma is_finite_fma_no_overflow' :
   forall x y z
-  (Hfinx: Binary.is_finite (fprec t) (femax t) x = true)
-  (Hfiny: Binary.is_finite (fprec t) (femax t) y = true)
-  (Hfinz: Binary.is_finite (fprec t) (femax t) z = true)
+  (Hfinx:is_finite x = true)
+  (Hfiny:is_finite y = true)
+  (Hfinz:is_finite z = true)
   (Hov : @fma_no_overflow t (FT2R x) (FT2R y) (FT2R z)),
- Binary.is_finite (fprec t) (femax t) (BFMA x y z) = true.
+is_finite (BFMA x y z) = true.
 Proof.
 intros.
+rewrite !is_finite_Binary in Hfinx, Hfiny, Hfinz.
 pose proof (Binary.Bfma_correct  (fprec t) (femax t)  (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan t)
-                      BinarySingleNaN.mode_NE x y z Hfinx Hfiny Hfinz).
-unfold fma_no_overflow, FT2R, rounded in Hov;
-apply Rlt_bool_true in Hov.
-cbv zeta in H.
-rewrite Hov in H; simpl in H; destruct H as (_ & B & _); simpl; auto.
+                      BinarySingleNaN.mode_NE 
+                      (float_of_ftype x) 
+                      (float_of_ftype y)
+                      (float_of_ftype z) Hfinx Hfiny Hfinz).
+cbv zeta in H. 
+move: H; rewrite !B2R_float_of_ftype. 
+rewrite Rlt_bool_true.
+move => [] _ [] HFIN _.
+by rewrite /BFMA is_finite_Binary float_of_ftype_of_float. 
+move: Hov. by rewrite /fma_no_overflow /rounded.
 Qed.
 
 Definition fun_bnd (t : type) (n : nat) :=
-let x := (fmax t - @default_abs t) / (1 + @default_rel t) - @g1 t n (n-1) in
+let x := (fmax - @default_abs t) / (1 + @default_rel t) - @g1 t n (n-1) in
 let y := 1 / (1 + INR n * (@g t (n - 1) + 1)) in x * y.
 
 Lemma rdiv_lt (a b: R) :
@@ -70,10 +76,10 @@ Lemma Rminus_lt_minus a b c :
  b < c -> a - c < a - b.
 Proof.  nra. Qed.
 
-Lemma defualt_abs_le_fmax t :
-@default_abs t <= fmax t.
+Lemma defualt_abs_le_fmax :
+@default_abs t <= fmax.
 Proof.
-replace (fmax t) with (1 * fmax t) by nra.
+replace (fmax) with (1 * fmax) by nra.
 unfold default_abs, fmax; apply Rmult_le_compat; try nra.
 apply bpow_ge_0.
 apply bpow_le.
@@ -94,7 +100,7 @@ eapply Z.le_trans with (1 + 1 + 1)%Z;
 apply fprec_gt_one].
 Qed.
 
-Lemma bpow_femax_lb t : 
+Lemma bpow_femax_lb : 
 4 <= bpow Zaux.radix2 (femax t).
 Proof. 
 pose proof fprec_gt_one t.
@@ -106,7 +112,7 @@ unfold bpow; simpl; nra.
 apply bpow_le; lia.
 Qed.
 
-Lemma bpow_fprec_lb t : 
+Lemma bpow_fprec_lb : 
 2 <= bpow Zaux.radix2 (fprec t).
 Proof. 
 pose proof fprec_gt_one t.
@@ -115,28 +121,22 @@ unfold bpow; simpl; nra.
 apply bpow_le; lia.
 Qed.
 
-Lemma default_abs_ub t :
+Lemma default_abs_ub :
 @default_abs t <= 1.
-Proof.
-unfold default_abs.
-pose proof bpow_gt_0 Zaux.radix2 (femax t).
-pose proof bpow_gt_0 Zaux.radix2 (fprec t).
-replace (3 - femax t - fprec t)%Z with (3 +- femax t +- fprec t)%Z by lia.
-rewrite !bpow_plus.
-rewrite <- !Rmult_assoc.
-replace (/ 2 * bpow Zaux.radix2 3) with 4; [|simpl;nra].
-rewrite !bpow_opp, !Rcomplements.Rle_div_r. 
-field_simplify; try nra.
-eapply Rle_trans; [| apply Rmult_le_compat ;[ | | apply bpow_fprec_lb | apply bpow_femax_lb  ]]; try nra.
-apply Rlt_gt. 
-replace (/ bpow Zaux.radix2 (femax t)) with (1 / bpow Zaux.radix2 (femax t)) by nra.
-apply Rdiv_lt_0_compat; try nra.
-apply Rlt_gt;
-replace (/ bpow Zaux.radix2 (fprec t)) with (1 / bpow Zaux.radix2 (fprec t)) by nra;
-apply Rdiv_lt_0_compat; try nra.
+Proof. 
+pose proof (@abs_le_rel t).
+eapply Rle_trans. apply H.
+rewrite /default_rel bpow_plus bpow_opp.
+replace (bpow _ 1) with 2.
+refine (Rle_trans _ (1/bpow Zaux.radix2 (fprec t)) _ _ _);
+  [try nra | apply Rdiv_le_left ].
+apply bpow_gt_0.
+refine (Rle_trans _ 2 _ _ _); try nra.
+rewrite Rmult_1_l. apply bpow_fprec_lb.
+simpl; nra.
 Qed.
 
-Lemma default_rel_ub t :
+Lemma default_rel_ub  :
 @default_rel t <= 1.
 Proof.
 unfold default_rel.
@@ -146,7 +146,7 @@ rewrite <- !Rmult_assoc.
 rewrite Rmult_comm.
 rewrite <- !Rmult_assoc.
 replace (bpow Zaux.radix2 1 * / 2) with 1; [|simpl;nra].
-rewrite !bpow_opp, !Rcomplements.Rle_div_r. 
+rewrite !bpow_opp !Rcomplements.Rle_div_r. 
 field_simplify; try nra.
 replace 1 with  (bpow Zaux.radix2 0).
 apply bpow_le.
@@ -159,9 +159,9 @@ Qed.
 
 
 Lemma fun_bnd_pos_1 : 
-forall t n
-(Hn : @g1 t (n + 1) n <= fmax t), 
-0 <= (fmax t - @default_abs t) / (1 + @default_rel t) - @g1 t n (n-1).
+forall n
+(Hn : @g1 t (n + 1) n <= fmax ), 
+0 <= (fmax - @default_abs t) / (1 + @default_rel t) - @g1 t n (n-1).
 Proof.
 intros;
 apply Rle_0_minus. apply Generic_proof.Rdiv_le_mult_pos;
@@ -186,8 +186,8 @@ replace (S (n - 1)) with n by lia; auto.
 Qed.
 
 
-Lemma fun_bnd_le (t : type) (n : nat) :
-forall (Hn : @g1 t (S n + 1) (S n) <= fmax t), 
+Lemma fun_bnd_le  (n : nat) :
+forall (Hn : @g1 t (S n + 1) (S n) <= fmax), 
 fun_bnd t (S n) <= fun_bnd t n.
 Proof.
 assert (Hn': (n=0)%nat \/ (1<=n)%nat) by lia; destruct Hn'; subst.
@@ -241,8 +241,8 @@ destruct a; simpl; destruct (List.split l); simpl.
 simpl in IHl; lia.
 Qed.
 
-Lemma fun_bound_pos t n :
-forall (Hn : @g1 t (n + 1) n <= fmax t), 
+Lemma fun_bound_pos n :
+forall (Hn : @g1 t (n + 1) n <= fmax), 
 0 <= fun_bnd t n. 
 Proof.
 intros;
@@ -264,35 +264,36 @@ Qed.
 
 
 Lemma finite_sum_from_bounded : 
-  forall (t: type) (v1 v2: list (ftype t))
+  forall (v1 v2: list (ftype t))
   (fp : ftype t) 
   (Hfp: fma_dot_prod_rel (List.combine v1 v2) fp)
-  (Hn : @g1 t (S  (length (List.combine v1 v2)) + 1) (S (length (List.combine v1 v2))) <= fmax t),
+  (Hn : @g1 t (S  (length (List.combine v1 v2)) + 1) (S (length (List.combine v1 v2))) <= fmax ),
   (forall x, In x (List.combine v1 v2) -> 
-    Binary.is_finite _ _ (fst x) = true /\ 
-    Binary.is_finite _ _ (snd x) = true /\ 
+    is_finite (fst x) = true /\ 
+    is_finite (snd x) = true /\ 
     Rabs (FT2R (fst x)) < sqrt  (fun_bnd t (length (List.combine v1 v2))) /\
     Rabs (FT2R (snd x)) < sqrt  (fun_bnd t (length (List.combine v1 v2))))-> 
-  Binary.is_finite _ _ fp = true. 
+  is_finite fp = true. 
 Proof.
-intros ? ? ? .
+intros ? ? .
 induction (List.combine v1 v2).
-{ intros; inversion Hfp; subst; simpl; auto. }
+{ intros; inversion Hfp; subst;
+rewrite is_finite_Binary float_of_ftype_of_float //=. } 
 { intros. inversion Hfp; subst.
-assert (Hn' : @g1 t (S (length l) + 1) (S (length l)) <= fmax t).
+assert (Hn' : @g1 t (S (length l) + 1) (S (length l)) <= fmax).
 { eapply Rle_trans; [ | apply Hn]; simpl. set (n:= (length l + 1)%nat).
   replace (length l) with (n-1)%nat by lia.
   replace (S(n-1))%nat with (S n - 1)%nat by lia; apply g1n_le_g1Sn; lia. }
 assert (Hin: forall x : (ftype t * ftype t),
-       In x l -> Binary.is_finite _ _ (fst x) = true /\
-       Binary.is_finite _ _ (snd x) = true /\
+       In x l -> is_finite (fst x) = true /\
+       is_finite (snd x) = true /\
        Rabs (FT2R (fst x)) < sqrt (fun_bnd t (length l)) /\
        Rabs (FT2R (snd x)) < sqrt (fun_bnd t (length l))).
   { intros. repeat split; [apply H; simpl; auto | apply H; simpl; auto  | | ]. 
     eapply Rlt_le_trans; [apply H; simpl; auto | apply sqrt_le_1_alt; apply fun_bnd_le; auto  ].
     eapply Rlt_le_trans; [apply H; simpl; auto | apply sqrt_le_1_alt; apply fun_bnd_le; auto ]. }
-assert (Hfina : Binary.is_finite (fprec t) (femax t) (fst a) = true /\
-        Binary.is_finite (fprec t) (femax t) (snd a) = true) by
+assert (Hfina :is_finite (fst a) = true /\
+       is_finite (snd a) = true) by
   (split; apply H; simpl; auto); destruct Hfina as (Hfina1 & Hfina2).
 specialize (IHl s H3 Hn' Hin). 
 apply is_finite_fma_no_overflow'; auto. 
@@ -300,8 +301,8 @@ unfold fma_no_overflow, rounded.
 destruct (@generic_round_property t (FT2R (fst a) * FT2R (snd a) + FT2R s)) as 
   (del & eps & Hed & Hd & He & Hrn );
 rewrite Hrn; clear Hrn.
-destruct (dotprod_rel_R_exists_fma t l s H3) as (rs & Hrs).
-destruct (sum_rel_R_abs_exists_fma t l s H3) as (rs_abs & Habs).
+destruct (dotprod_rel_R_exists_fma l s H3) as (rs & Hrs).
+destruct (sum_rel_R_abs_exists_fma  l s H3) as (rs_abs & Habs).
 pose proof fma_dotprod_forward_error_rel l
    s H3 IHl rs rs_abs Hrs Habs as Hacc. 
 apply Rabs_le_minus in Hacc.
@@ -350,7 +351,7 @@ replace (length (a :: l)) with (S n) by (simpl; lia).
 set (x:= (@g t ((S n) - 1) + 1)).
 set (y:= (1 + INR (S n) * x)).
 set (z:= @g1 t (S n) ((S n) - 1)).
-set (u := ((fmax t - @default_abs t) / (1 + @default_rel t) - z) * (1 / y)).
+set (u := ((fmax - @default_abs t) / (1 + @default_rel t) - z) * (1 / y)).
 rewrite <- !Rplus_assoc.
 replace (( u + (@g t n + 1) * (INR (length l) *  u)))
   with ( u * (1 + (@g t n + 1) * (INR (length l))))

@@ -8,7 +8,9 @@ Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
 
-Inductive crs_row_rep {t: type}: forall (cols: Z) (vals: list (ftype t)) (col_ind: list Z) (v: list  (ftype t)), Prop :=
+Inductive crs_row_rep {t: type} : 
+  forall (cols: Z) (vals: list (ftype t)) (col_ind: list Z) 
+  (v: list  (ftype t)), Prop :=
  | crs_row_rep_nil: crs_row_rep 0%Z nil nil nil
  | crs_row_rep_zero: forall cols vals col_ind v,
           crs_row_rep (cols-1) vals (map Z.pred col_ind) v ->
@@ -17,7 +19,8 @@ Inductive crs_row_rep {t: type}: forall (cols: Z) (vals: list (ftype t)) (col_in
           crs_row_rep (cols-1) vals (map Z.pred col_ind) v ->
           crs_row_rep cols (x::vals) (0::col_ind) (x::v).
 
-Definition crs_rep_aux {t} (mval: matrix t) (cols: Z) (vals: list (ftype t)) (col_ind: list Z) (row_ptr: list Z) : Prop :=
+Definition crs_rep_aux {t: type} 
+  (mval: matrix t) (cols: Z) (vals: list (ftype t)) (col_ind: list Z) (row_ptr: list Z) : Prop :=
   Zlength row_ptr = 1 + Zlength mval /\
   Zlength vals = Znth (Zlength mval) row_ptr /\
   Zlength col_ind = Znth (Zlength mval) row_ptr /\
@@ -135,14 +138,14 @@ inversion H0; auto.
 inversion H0; constructor; auto.
 Qed.
 
-Fixpoint rowmult {t} (s: ftype t)
+Fixpoint rowmult {NAN: Nans} {t} (s: ftype t)
             (vals: list (ftype t)) (col_ind: list Z) (vval: list (ftype t)) :=
  match vals, col_ind with
   | v1::vals', c1::col_ind' => rowmult (BFMA v1 (Znth c1 vval) s) vals' col_ind' vval
   | _, _ => s
  end.
 
-Add Parametric Morphism {t: type}  : rowmult
+Add Parametric Morphism {NAN: Nans} {t: type} : rowmult
   with signature (@feq t) ==> Forall2 feq ==> @eq (list Z) ==> Forall2 feq ==> feq
   as rowmult_mor.
 Proof.
@@ -165,7 +168,7 @@ apply Forall2_Znth with (i:=z) in Hvval; auto.
 lia.
 Qed.
 
-Add Parametric Morphism {t: type}  : rowmult
+Add Parametric Morphism {NAN: Nans} {t: type} : rowmult
   with signature (@feq t) ==> Forall2 strict_feq ==> @eq (list Z) ==> Forall2 strict_feq ==> feq
   as rowmult_stricter_mor.
 Proof.
@@ -188,13 +191,13 @@ apply Forall2_Znth with (i:=z) in Hvval; auto.
 lia.
 Qed.
 
-Definition partial_row {t} (i: Z) (h: Z) (vals: list (ftype t)) (col_ind: list Z) (row_ptr: list Z) 
+Definition partial_row {NAN: Nans} {t} (i: Z) (h: Z) (vals: list (ftype t)) (col_ind: list Z) (row_ptr: list Z) 
                 (vval: vector t) : ftype t :=
  let vals' := sublist (Znth i row_ptr) h vals in
  let col_ind' := sublist (Znth i row_ptr) h col_ind in
    rowmult (Zconst t 0) vals' col_ind' vval.
 
-Lemma partial_row_start:
+Lemma partial_row_start {NAN: Nans}:
  forall {t} i (mval: matrix t) cols vals col_ind row_ptr vval,
   crs_rep_aux mval cols vals col_ind row_ptr ->
   partial_row i (Znth i row_ptr) vals col_ind row_ptr vval = Zconst t 0.
@@ -205,7 +208,7 @@ autorewrite with sublist.
 reflexivity.
 Qed.
 
-Lemma strict_feq_i:
+Lemma strict_feq_i :
  forall {t} (x: ftype t), finite x -> strict_feq x x.
 Proof. auto. Qed.
 
@@ -217,7 +220,7 @@ induction H; constructor; auto.
 Qed.
 #[export] Hint Resolve strict_feq_i strict_floatlist_eqv_i : core.
 
-Lemma partial_row_end:
+Lemma partial_row_end {NAN: Nans}:
  forall {t} i (mval: matrix t) cols vals col_ind row_ptr vval
   (FINvval: Forall finite vval)
   (FINmval: Forall (Forall finite) mval)
@@ -328,7 +331,7 @@ destruct vval as [ | v0 vval'].
    list_solve.
 Qed.
 
-Lemma rowmult_app:
+Lemma rowmult_app {NAN : Nans }:
  forall {t} (s: ftype t) vals1 col_ind1 vals2 col_ind2 vvals,
    Zlength vals1 = Zlength col_ind1 ->
    rowmult s (vals1++vals2) (col_ind1++col_ind2) vvals =
@@ -340,7 +343,7 @@ revert s col_ind1 H.
 induction vals1; destruct col_ind1; simpl; intros; inv H; auto.
 Qed.
 
-Lemma partial_row_next:
+Lemma partial_row_next {NAN : Nans }:
  forall {t} i h (mval: matrix t) cols vals col_ind row_ptr vval,
   0 <= Znth i row_ptr ->
   Znth i row_ptr <= h < Zlength vals ->

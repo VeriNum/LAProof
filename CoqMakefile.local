@@ -1,8 +1,0 @@
-VSTLIB=$(COQMF_COQLIB)/user-contrib/VSTlib
-SRC=C/src
-INCLUDE=C/include
-CFLAGS=-I$(INCLUDE) -I$(VSTLIB)/include
-CC=gcc
-
-C/sparse.v: $(SRC)/sparse.c $(INCLUDE)/sparse.h
-	clightgen $(CFLAGS) -flongdouble -normalize $< -o $@ 

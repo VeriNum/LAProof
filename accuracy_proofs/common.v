@@ -10,17 +10,29 @@ Definition rounded t r:=
 
 Definition neg_zero  {t: type} := Binary.B754_zero (fprec t) (femax t) true.
 Definition pos_zero  {t: type} := Binary.B754_zero (fprec t) (femax t) false.
-Definition Beq_dec_t {t: type} := (@Beq_dec (fprec t) (femax t)).
+Definition Beq_dec_t {t: type} {STD: is_standard t} 
+    (x y  : ftype t) : {x = y} + {x <> y}.
+    destruct (Beq_dec (fprec t) (femax t) 
+      (float_of_ftype x) (float_of_ftype y)).
+  { left. move : e. 
+    rewrite /float_of_ftype //=.
+    destruct t => //; destruct nonstd => //. } 
+    right; move : n; 
+    destruct t => //; destruct nonstd => //. 
+  Defined. 
 
 Create HintDb commonDB discriminated.
 Global Hint Resolve 
   bpow_gt_0 bpow_ge_0 pos_INR lt_0_INR pow_le: commonDB.
 
 Section NonZeros.
-Context {NAN: Nans} {t : type}.
+Context {NAN: Nans} {t : type} {STD: is_standard t} .
 
-Definition nnz A dec l zero := (length l - @count_occ A dec l zero)%nat.
-Definition nnzF l := nnz (ftype t) Beq_dec_t l pos_zero.
+Definition nnz (A : Type) 
+  (dec : forall x y : A, {x = y} + {x <> y}) 
+  (l : list A) (zero : A) := 
+    (length l - @count_occ A dec l zero)%nat.
+Definition nnzF l := nnz (ftype t) Beq_dec_t l (ftype_of_float pos_zero).
 Definition nnzR l := nnz R Req_EM_T l 0%R.
 
 Lemma nnz_zero A dec l zero :
@@ -465,6 +477,20 @@ suff : 0 < D; try nra; auto with commonDB.
 Qed.
 
 End ErrorRels.
+
+Section Format.
+Context {NAN : Nans} {t :  type} {STD : is_standard t}. 
+
+Lemma round_FT2R a :
+  (Generic_fmt.round Zaux.radix2 (SpecFloat.fexp (fprec t) (femax t))
+     (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE) (FT2R a)) = @FT2R t a.
+Proof. 
+rewrite -B2R_float_of_ftype 
+  Generic_fmt.round_generic => //.
+apply Binary.generic_format_B2R.
+Qed.
+
+End Format. 
 
 Global Hint Resolve 
   g_pos

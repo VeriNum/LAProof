@@ -1,21 +1,35 @@
-KNOWNTARGETS := CoqMakefile
-KNOWNFILES   := Makefile _CoqProject
+.PHONY: clean all coq verif
 
-.DEFAULT_GOAL := invoke-coqmakefile
+COQPATHFILE=$(wildcard _CoqPath)
 
-CoqMakefile: Makefile _CoqProject
-	$(COQBIN)coq_makefile -docroot LAProof -f _CoqProject -o CoqMakefile
+build: coq
 
-invoke-coqmakefile: CoqMakefile
-	$(echo hello)
-	$(MAKE) --no-print-directory -f CoqMakefile $(filter-out $(KNOWNTARGETS),$(MAKECMDGOALS))
+include common.mk
 
-.PHONY: invoke-coqmakefile $(KNOWNFILES)
+all:
+	$(MAKE) coq
+	$(MAKE) C
 
-clean:
-	if [ -e CoqMakefile ]; then $(MAKE) -f CoqMakefile cleanall; fi
-	$(RM) $(wildcard CoqMakefile CoqMakefile.conf) 
+verif:
+	$(MAKE) -C C
 
-# This should be the last rule, to handle any targets not declared above
-%: invoke-coqmakefile
-	@true
+clean: clean-top
+	$(RM) _CoqProject	
+	$(MAKE) -C C clean
+
+_CoqProject: _CoqProject.make
+	cp _CoqProject.make _CoqProject
+
+INSTALLFILES1 ?= $(shell awk '/accuracy_proofs/{print $$NF"o"}' _CoqProject)
+
+INSTALLFILES2 ?= $(shell awk '/mathcomp_compat/{print $$NF"o"}' _CoqProject)
+
+INSTALLDIR ?= $(shell realpath `coqc -where` | tr -d [:space:])/user-contrib/LAProof
+
+install: build
+	install -d $(INSTALLDIR)
+	install -d $(INSTALLDIR)/accuracy_proofs
+	install -d $(INSTALLDIR)/mathcomp_compat
+	install -m 0644 $(INSTALLFILES1) $(INSTALLDIR)/accuracy_proofs
+	install -m 0644 $(INSTALLFILES2) $(INSTALLDIR)/mathcomp_compat
+
