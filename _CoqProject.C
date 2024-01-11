@@ -1,5 +1,5 @@
 -Q . LAProof
-
+  
 mathcomp_compat/CommonSSR.v
 
 accuracy_proofs/common.v
@@ -16,10 +16,16 @@ accuracy_proofs/dot_acc.v
 accuracy_proofs/vecnorm_acc.v
 accuracy_proofs/fma_dot_acc.v
 accuracy_proofs/fma_is_finite.v
-
 accuracy_proofs/mv_mathcomp.v
 accuracy_proofs/mc_extra2.v
 accuracy_proofs/gemv_acc.v
 accuracy_proofs/vec_op_acc.v
 accuracy_proofs/gemm_acc.v
 
+C/floatlib.v
+C/sparse_model.v
+C/sparse.v
+C/spec_sparse.v
+C/verif_sparse.v
+C/verif_sparse_byrows.v
+C/VSU_sparse.v

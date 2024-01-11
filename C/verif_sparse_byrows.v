@@ -3,7 +3,7 @@ From LAProof.C Require Import sparse sparse_model spec_sparse.
 Require Import vcfloat.FPStdLib.
 Require Import vcfloat.FPStdCompCert.
 Require Import VSTlib.spec_math.
-Require Import LAProof.floatlib.
+Require Import LAProof.C.floatlib.
 
 Set Bullet Behavior "Strict Subproofs".
 
