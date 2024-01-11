@@ -2,7 +2,7 @@ Require Import VST.floyd.proofauto.
 From LAProof.C Require Import sparse sparse_model.
 Require Import vcfloat.FPStdCompCert.
 Require Import VSTlib.spec_math.
-Require Import LAProof.floatlib.
+Require Import LAProof.C.floatlib.
 
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.

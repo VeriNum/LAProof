@@ -1,10 +1,9 @@
 Require Import VST.floyd.proofauto VST.floyd.VSU.
-Require Import LAProof.floatlib.
-From LAProof.C Require Import sparse sparse_model spec_sparse.
 Require Import vcfloat.VCFloat.
 Require Import vcfloat.FPStdCompCert.
 Require Import VSTlib.spec_math.
-From LAProof.C Require Import verif_sparse verif_sparse_byrows.
+From LAProof.C Require Import sparse sparse_model spec_sparse
+                            floatlib verif_sparse verif_sparse_byrows.
 
 Set Bullet Behavior "Strict Subproofs".
 
