@@ -11,9 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - env: { COQ_VERSION: "8.18", DOCKER_MATHCOMP_VERSION: "2.0.0" }
-        - env: { COQ_VERSION: "8.17", DOCKER_MATHCOMP_VERSION: "1.17.0" }
-        - env: { COQ_VERSION: "8.16", DOCKER_MATHCOMP_VERSION: "1.17.0" }
+        - env: { COQ_VERSION: "8.19", DOCKER_MATHCOMP_VERSION: "2.0.0" }
 
     runs-on: ubuntu-latest
     env: ${{ matrix.env }}
