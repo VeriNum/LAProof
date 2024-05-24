@@ -71,7 +71,8 @@ rewrite Hlen.
 rewrite H2. 
 rewrite <- Nat.sub_succ_l.
 simpl. lia.
-apply Arith_prebase.lt_le_S_stt; auto.
+Search (S _ <= _)%nat.
+eapply Nat.le_trans; auto.
 apply HD.
 rewrite rev_length in H2. 
 rewrite H2; auto.
