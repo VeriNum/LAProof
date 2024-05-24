@@ -5,8 +5,9 @@ From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_mod
                                                 dot_acc float_acc_lems list_lemmas
                                                               gem_defs mv_mathcomp.
 From mathcomp.analysis Require Import Rstruct.
+Set Warnings "-notation-overriden, -parsing".
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
-From LAProof.accuracy_proofs Require Import mc_extra2.
+(* From LAProof.accuracy_proofs Require Import mc_extra2. *)
 
 From Coq Require Import ZArith Reals Psatz.
 From Coq Require Import Arith.Arith.
@@ -187,7 +188,7 @@ Open Scope ring_scope.
 Delimit Scope ring_scope with Ri.
 Delimit Scope R_scope with Re.
 
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: Nans} {t : FPCore.type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -291,7 +292,7 @@ End MixedErrorMath.
 
 Section ForwardError.
 
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: Nans} {t : FPCore.type} {STD: is_standard t} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -329,9 +330,9 @@ remember (Ar *m vr) as y. remember (E *m vr) as x. subst m.
 apply /matrixP => i j; do ![rewrite mxE | ] => /=; ring.
 rewrite H0. clear H0. fold m in H1, H2.
 eapply (le_trans (normv_triang _ _ _)). 
-apply ler_add.
+apply lerD.
 eapply (le_trans (subMultNorm _ _ _ )).
-apply ler_pmul => //. 
+apply ler_pM => //. 
 apply normM_pos.
 apply normv_pos.
 rewrite /normM mulrC big_max_mul.

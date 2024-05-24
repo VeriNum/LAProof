@@ -4,6 +4,7 @@
 Require Import vcfloat.VCFloat.
 From LAProof.accuracy_proofs 
   Require Import common op_defs.
+Set Warnings "-notation-overriden, -parsing".
 Require Import mathcomp.ssreflect.ssreflect.
 
 Section GenFloat.

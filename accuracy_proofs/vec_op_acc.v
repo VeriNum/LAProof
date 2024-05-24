@@ -6,8 +6,8 @@ From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas.
 From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp gemv_acc.
 
 From mathcomp.analysis Require Import Rstruct.
+Set Warnings "-notation-overriden, -parsing".
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
-From LAProof.accuracy_proofs Require Import mc_extra2.
 
 From Coq Require Import ZArith Reals Psatz.
 From Coq Require Import Arith.Arith.
@@ -260,7 +260,7 @@ Lemma Smat_vec_mul_mixed_error:
     /\ eq_size E A 
     /\ length eta2 = m
     /\ (forall i : nat, (i < m)%nat ->
-        exists d : GRing.Ring.sort R_ringType,
+        exists d : R,
         (List.nth i e 0 = List.nth i (A *fr v) 0 * d /\
            (Rabs d) <= g m))
     /\ (forall k : R,

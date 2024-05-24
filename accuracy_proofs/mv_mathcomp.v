@@ -10,8 +10,9 @@ From LAProof Require Import  mathcomp_compat.CommonSSR.
 
 From Coq Require Import ZArith Reals Psatz Arith.Arith.
 From mathcomp.analysis Require Import Rstruct.
+Set Warnings "-notation-overriden, -parsing".
 From mathcomp Require Import matrix all_ssreflect all_algebra ssrnum bigop.
-From LAProof.accuracy_proofs Require Import mc_extra2.
+(* From LAProof.accuracy_proofs Require Import mc_extra2. *)
 
 Require Import VST.floyd.functional_base.
 
@@ -53,10 +54,10 @@ Section MVtoMC_Lems.
 Lemma matrix_to_mx_nil m n': 
 matrix_to_mx m n' [] = 0.
 Proof.
-by rewrite /matrix_to_mx/getm// /=;
-apply/matrixP =>  k i /[!mxE];
-destruct k; destruct i => /=;
-destruct m1; destruct m0 => /=. 
+rewrite /matrix_to_mx/getm// /=.
+apply/matrixP =>  k i /[!mxE].
+destruct k; destruct i => /=.
+destruct m1; destruct m0 => //=. 
 Qed.
 
 Lemma vector_to_vc_nil m: 
@@ -572,7 +573,7 @@ Proof.
 move => Ha.
 apply big_mul => //.
 move => i  b.
-rewrite maxr_pmull // mul0r //.
+rewrite maxr_pMl // mul0r //.
 Qed.
 
 (* Lemmas about norm defs *)
@@ -602,10 +603,10 @@ Rabs (\sum_j F j) <= \sum_j Rabs (F j).
 Proof.
 elim : n => [F | n IH F]. 
 rewrite !big_ord_recr!big_ord0/=. 
-  eapply le_trans ; [apply Rleb_norm_add| rewrite Rabs_R0; apply ler_add => /= //].
+  eapply le_trans ; [apply Rleb_norm_add| rewrite Rabs_R0; apply lerD => /= //].
 eapply le_trans.
 1, 2: rewrite big_ord_recr /=. apply Rleb_norm_add.
-apply ler_add => /= //.
+apply lerD => /= //.
 Qed.
 
 
@@ -622,7 +623,7 @@ elim/big_rec2: _ =>  // [ |i1 y1 y2 _ Hy].
 apply mulr_ge0 => //. 
 rewrite Hequmax; apply normv_pos.
 rewrite mulrDl.
-apply ler_add => //.
+apply lerD => //.
 rewrite Rabs_mult.
 apply ler_pmul => //.
 1,2: apply /RleP; apply Rabs_pos.
@@ -639,7 +640,7 @@ apply: bigmax_le => [ | i _].
 apply addr_ge0; apply normv_pos.
 rewrite mxE => /=.
 eapply le_trans.
-apply Rleb_norm_add. apply ler_add;
+apply Rleb_norm_add. apply lerD;
 apply: le_bigmax => [ | i _]. 
 Qed.
 

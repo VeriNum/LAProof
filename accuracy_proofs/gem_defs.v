@@ -15,7 +15,7 @@ From LAProof.accuracy_proofs Require Import common
                                             float_acc_lems 
                                             list_lemmas
                                             float_tactics.
-
+Set Warnings "-notation-overriden, -parsing".
 
 (* General list matrix and vector definitions *)
 Section MVGenDefs. 
@@ -36,10 +36,10 @@ Fixpoint zero_matrix {A: Type} (m n: nat) (zero : A) : matrix :=
   | _, _ => []
   end. 
 
-Definition is_finite_vec {t : type} {STD: is_standard t} (v: vector) : Prop := 
+Definition is_finite_vec {t} {STD: is_standard t} (v: vector) : Prop := 
   Forall (fun (x : ftype t) => is_finite x = true) v.
 
-Definition is_finite_mat {t : type} {STD : is_standard t} (A: matrix) : Prop := 
+Definition is_finite_mat {t} {STD : is_standard t} (A: matrix) : Prop := 
   Forall (fun x => is_finite_vec x) A.
 
 Definition is_zero_vector {A: Type} v (zero : A) : Prop := forall x, In x v -> x = zero.
@@ -85,7 +85,7 @@ Definition vec_sumR :=  vec_sum Rplus.
 
 (* sum vectors of floats *)
 Definition vec_sumF 
-  {NAN : Nans} {t : type} {STD : is_standard t} :=  vec_sum BPLUS.
+  {NAN : Nans} {t} {STD : is_standard t} :=  vec_sum BPLUS.
 
 (* generic matrix sum *)
 Definition mat_sum {T: Type} (sum : T -> T -> T):= 
@@ -187,7 +187,7 @@ Definition scaleV {T} (mul: T -> T -> T) (a : T) (v : vector) : vector :=
   map (mul a) v.
 
 Definition scaleVR := @scaleV R Rmult.
-Definition scaleVF {NAN : Nans} {t : type} {STD : is_standard t} := @scaleV (ftype t) BMULT.
+Definition scaleVF {NAN : Nans} {t} {STD : is_standard t} := @scaleV (ftype t) BMULT.
 
 (* multiply row a of size m by matrix B of size (m x p)*)
 Fixpoint rowM {T} (d: T) (sum : @vector T -> @vector T -> @vector T) 
@@ -226,7 +226,7 @@ Example checkMMC: let A:= trans 0%R 2 [[1;1];[1;1]] in
 simpl. unfold dotprodR. simpl. repeat f_equal ;field_simplify; nra. Qed. 
 
 Definition MMCR := MMC dotprodR.
-Definition MMCF {NAN : Nans} {t : type} {STD : is_standard t} := MMC dotprodF.
+Definition MMCF {NAN : Nans} {t} {STD : is_standard t} := MMC dotprodF.
 
 Definition scaleM {T} (mul : T -> T -> T) a M :=  map_mat (mul a) M.
 
@@ -371,7 +371,7 @@ rewrite vec_sum_cons, IHv.
 rewrite Hsum; auto.
 Qed.
 
-Lemma vec_sum_zeroF {NAN : Nans} {t : type} {STD : is_standard t}:
+Lemma vec_sum_zeroF {NAN : Nans} {t} {STD : is_standard t}:
   forall (v : vector),
   map FT2R (vec_sumF v (zero_vector (length v) (Zconst t 0)))  
           = map FT2R v.
@@ -580,7 +580,7 @@ Lemma nth_cons_mvR b B u : forall i,
   nth (S i) ( (b::B) *r u) = nth i (B *r u).
 Proof. intros; simpl; auto. Qed.
 
-Lemma length_mvR_mvF {NANS : Nans} {t : type} : 
+Lemma length_mvR_mvF {NANS : Nans} {t : FPCore.type} : 
   forall (m : matrix) (v : vector), 
   length ((map_mat FT2R m) *r (map FT2R v)) = length (m *fr v).
 Proof.
@@ -1093,7 +1093,7 @@ by left; right; left.
 by left; right; right.
 Qed.
 
-Lemma is_finite_mat_cons {NAN : Nans} {t : type} {STD : is_standard t}  a A:
+Lemma is_finite_mat_cons {NAN : Nans} {t} {STD : is_standard t}  a A:
 @is_finite_mat t STD (a :: A) -> 
   (@is_finite_mat t STD A /\ is_finite_vec a).
 Proof.
@@ -1103,7 +1103,7 @@ move => H1. split.
 apply H1. by left.
 Qed.
 
-Lemma is_finite_mat_cons2 {NAN : Nans} {t : type} {STD : is_standard t} a A:
+Lemma is_finite_mat_cons2 {NAN : Nans} {t} {STD : is_standard t} a A:
 @is_finite_mat t STD A -> is_finite_vec a -> @is_finite_mat t STD (a :: A). 
 Proof.
 rewrite /is_finite_mat !Forall_forall /=.
@@ -1112,14 +1112,14 @@ by rewrite -H.
 by apply Hx.
 Qed.
 
-Lemma in_zero_vec {NAN : Nans} {t : type} {STD : is_standard t} m x:
+Lemma in_zero_vec {NAN : Nans} {t} {STD : is_standard t} m x:
 In x (zero_vector m (Zconst t 0)) -> x = (Zconst t 0).
 Proof.
 elim: m => //=;
 move => [_ [|]| [_ [|]| _ _ [|] ] ] //=. 
 Qed.
 
-Lemma is_finite_vec_cons {NAN : Nans} {t : type} {STD : is_standard t} v0 v : 
+Lemma is_finite_vec_cons {NAN : Nans} {t} {STD : is_standard t} v0 v : 
   @is_finite_vec t STD (v0 :: v) -> 
   is_finite_vec v /\ is_finite v0.
 Proof.
@@ -1128,7 +1128,7 @@ rewrite /is_finite_vec
 apply H. by right. by left.
 Qed.
 
-Lemma is_finite_vec_sum {NAN : Nans} {t : type} {STD : is_standard t} u v : 
+Lemma is_finite_vec_sum {NAN : Nans} {t} {STD : is_standard t} u v : 
 length u = length v ->
 @is_finite_vec t STD (vec_sumF u v) -> 
   @is_finite_vec t STD u /\ @is_finite_vec t STD v.
@@ -1162,7 +1162,7 @@ rewrite /is_finite_vec !Forall_forall; move => H3.
 by apply H3.   
 Qed.
 
-Lemma is_finite_scaleV {NAN : Nans} {t : type} {STD : is_standard t} a0 a : 
+Lemma is_finite_scaleV {NAN : Nans} {t} {STD : is_standard t} a0 a : 
 is_finite_vec (scaleV BMULT a0 a) ->
   @is_finite_vec t STD a .
 Proof.
@@ -1172,7 +1172,7 @@ specialize (H (BMULT a0 x) H1).
   by move : H; subexpr_finite.
 Qed.
 
-Lemma is_finite_scaleV' {NAN : Nans} {t : type} {STD : is_standard t} a0 a : 
+Lemma is_finite_scaleV' {NAN : Nans} {t} {STD : is_standard t} a0 a : 
 a <> [] -> 
 @is_finite_vec t STD (scaleV BMULT a0 a) ->
   is_finite a0.
@@ -1187,7 +1187,7 @@ by subexpr_finite.
 Qed.
 
 
-Lemma is_finite_rowM {NAN : Nans} {t : type} {STD : is_standard t} a B m
+Lemma is_finite_rowM {NAN : Nans} {t} {STD : is_standard t} a B m
    (Hm: (0 < m)%nat) (Hb :forall b, In b B -> length b = m) 
   (Hlen: length a = length B) : 
   is_finite_vec (rowM (Zconst t 0) vec_sumF BMULT
@@ -1222,7 +1222,7 @@ move => b0 Hb0. apply H1 => /=. by right.
 Qed.
 
 
-Lemma in_MMF_finite' {NAN : Nans} {t : type} {STD : is_standard t} 
+Lemma in_MMF_finite' {NAN : Nans} {t} {STD : is_standard t} 
 (A B : seq.seq (seq.seq (ftype t))) (m : nat)
 (HB : B <> [])
 (Hm : (0 < m)%nat)
@@ -1248,7 +1248,7 @@ all: simpl; auto.
 Qed.
 
 
-Lemma in_MMF_finite {NAN : Nans} {t : type} {STD : is_standard t} A B m
+Lemma in_MMF_finite {NAN : Nans} {t } {STD : is_standard t} A B m
 (HB : B <> [])
 (Hm : (0 < m)%nat)
 (Hb :forall b, In b B -> length b = m)
@@ -1310,7 +1310,7 @@ apply (IH l) => //; lia.
 Qed.
 
 
-Lemma is_finite_scaleM {NAN : Nans} {t : type} {STD : is_standard t} x A : 
+Lemma is_finite_scaleM {NAN : Nans} {t} {STD : is_standard t} x A : 
   @is_finite_mat t STD (scaleM BMULT x A) ->
   @is_finite_mat t STD A .
 Proof.

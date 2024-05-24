@@ -11,9 +11,8 @@ Require Import Coq.Lists.List.
 From HB Require Export structures.
 Set Warnings "-notation-overriden, -parsing".
 
-From mathcomp Require Import all_ssreflect ssralg matrix.
+From mathcomp Require Import all_ssreflect.
 Require Import mathcomp.algebra.matrix.
-
 Require Import mathcomp.algebra.ssralg.
 
 

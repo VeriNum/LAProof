@@ -2,6 +2,7 @@
   the repository. *)
 
 Require Import vcfloat.VCFloat vcfloat.IEEE754_extra List.
+Set Warnings "--notation-overriden, -parsing".
 Require Import mathcomp.ssreflect.ssreflect.
 
 Definition rounded t r:=
@@ -352,7 +353,7 @@ rewrite Rplus_comm.
 suff H1: (1 + D)^1  <= (1 + D) ^ m; try nra.
 apply: Rle_pow; auto with commonDB.
 rewrite Nat.add_comm. 
-rewrite S_O_plus_INR; simpl; nra.
+rewrite plus_INR; simpl; nra.
 Qed.
 Hint Resolve plus_d_e_g1_le' : commonDB.
 
@@ -365,9 +366,9 @@ intros; replace (S n) with (n + 1)%nat by lia.
 replace (S m) with (m + 1)%nat by lia.
 unfold g1, g; field_simplify.
 replace (INR (n + 1)) with (INR n + 1) by 
-  (rewrite Nat.add_comm; rewrite S_O_plus_INR; simpl; nra).
+  (rewrite Nat.add_comm; rewrite plus_INR; simpl; nra).
 replace (INR (m + 1)) with (INR m + 1) by
-  (rewrite Nat.add_comm; rewrite S_O_plus_INR; simpl; nra).
+  (rewrite Nat.add_comm; rewrite plus_INR; simpl; nra).
 rewrite !Rmult_plus_distr_l !Rmult_1_r. replace
 (INR n * E * (1 + D) ^ m * D +
 INR n * E * (1 + D) ^ m) with
@@ -409,7 +410,7 @@ apply: Rplus_le_compat_l.
 apply: Rmult_le_compat; try nra;
 auto with commonDB.
 rewrite Nat.add_comm. 
-rewrite S_O_plus_INR; simpl; nra. 
+rewrite plus_INR; simpl; nra. 
 Qed.
 Hint Resolve plus_e_g1_le : commonDB.
 
@@ -427,7 +428,7 @@ auto with commonDB.
 apply: Rmult_le_compat; try nra; auto with commonDB.
 apply: Rplus_le_compat_l; auto with commonDB.
 rewrite Nat.add_comm. 
-rewrite S_O_plus_INR; simpl; nra. 
+rewrite plus_INR; simpl; nra. 
 Qed.
 Hint Resolve g1n_le_g1Sn : commonDB.
 
@@ -470,7 +471,7 @@ apply: Rmult_le_lt_compat; try nra; auto with commonDB.
 suff : INR n < INR n + 1 ; simpl; try nra. 
 move => H.
 rewrite Nat.add_comm. 
-rewrite S_O_plus_INR; simpl; nra. 
+rewrite plus_INR; simpl; nra. 
 rewrite /g; field_simplify. 
 apply: Rlt_pow; auto with commonDB.
 suff : 0 < D; try nra; auto with commonDB.

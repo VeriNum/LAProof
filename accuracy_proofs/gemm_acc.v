@@ -6,8 +6,9 @@ From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas.
 From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp gemv_acc vec_op_acc.
 
 From mathcomp.analysis Require Import Rstruct.
+Set Warnings "-notation-overriden, -parsing".
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
-From LAProof.accuracy_proofs Require Import mc_extra2.
+(* From LAProof.accuracy_proofs Require Import mc_extra2. *)
 
 From Coq Require Import ZArith Reals Psatz.
 From Coq Require Import Arith.Arith.
@@ -162,7 +163,7 @@ destruct (HE j) as (del & Heq & HE').
 rewrite Ha. lia.
 rewrite Heq !CommonSSR.map_map_equiv.
 rewrite Rabs_mult Rmult_comm -Ha. 
-apply ler_pmul => //; apply /RleP; try apply Rabs_pos.
+apply ler_pM => //; apply /RleP; try apply Rabs_pos.
 apply IH1; lia.  } 
 { intros. rewrite /matrix_index.
 destruct i => /=.

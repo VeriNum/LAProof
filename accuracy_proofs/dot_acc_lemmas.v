@@ -49,7 +49,7 @@ inversion Hfp;
 inversion Hra;
 subst.
 unfold g, g1; simpl;
-rewrite Rminus_eq_0 Rminus_0_r //= FT2R_Zconst_0 Rabs_R0.
+rewrite Rminus_diag Rminus_0_r //= FT2R_Zconst_0 Rabs_R0.
 field_simplify; try apply default_rel_sep_0;
   try apply Stdlib.Rdiv_pos_compat; try nra;
 apply default_rel_gt_0.
@@ -214,7 +214,7 @@ inversion Hfp;
 inversion Hra;
 subst.
 unfold g, g1; simpl;
-rewrite Rminus_eq_0 FT2R_Zconst_0 Rminus_0_r;
+rewrite Rminus_diag FT2R_Zconst_0 Rminus_0_r;
 rewrite Rabs_R0;
 field_simplify; try apply default_rel_sep_0;
   try apply Stdlib.Rdiv_pos_compat; try nra;
