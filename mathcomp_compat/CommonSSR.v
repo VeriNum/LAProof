@@ -81,14 +81,14 @@ Definition pred_ord (n: nat) (Hn: 0 < n) : 'I_n := Ordinal (pred_lt Hn).
 
 (*Working with enums of ordinals*)
 Lemma ordinal_enum_size: forall n,
-  size (Finite.enum (ordinal_finType n)) = n.
+  size (Finite.enum (ordinal n)) = n.
 Proof.
   move => n. have: size ([seq val i | i <- enum 'I_n]) = n. rewrite val_enum_ord. by apply: size_iota.
   rewrite size_map. unfold enum. rewrite size_map //.
 Qed.
 
 Lemma ordinal_enum: forall {n: nat} (x: 'I_n) y,
-  nth y (Finite.enum (ordinal_finType n)) x = x.
+  nth y (Finite.enum (ordinal n)) x = x.
 Proof.
   move => n x y. have nth_ord := (nth_ord_enum y x). unfold enum in nth_ord. move: nth_ord.
   rewrite (@nth_map _ y) //. by rewrite ordinal_enum_size.
@@ -111,7 +111,7 @@ Proof.
   by move => /eqP Heq.
 Qed.
 
-Lemma index_ord_enum: forall (n: nat), (index_enum (ordinal_finType n)) = ord_enum n.
+Lemma index_ord_enum: forall (n: nat), (index_enum (ordinal n)) = ord_enum n.
 Proof.
   move => n. have: 0 <= n by []. rewrite leq_eqVlt => /orP[/eqP Hn0 | Hnpos].
   - subst. rewrite /ord_enum /= /index_enum /=. apply size0nil. apply ordinal_enum_size.
