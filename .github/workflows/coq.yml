@@ -35,7 +35,7 @@ jobs:
           # Work around https://github.com/actions/checkout/issues/766
           git config --global --add safe.directory "*"
           echo '::group::install dependencies'
-          opam install -y -v coq-flocq coq-interval coq-coquelicot coq-vcfloat coq-mathcomp-ssreflect coq-mathcomp-algebra coq-mathcomp-analysis coq-mathcomp-algebra-tactics coq-mathcomp-finmap coq-vst coq-vst-lib
+          opam install -y -v coq-flocq coq-interval coq-coquelicot coq-vcfloat coq-mathcomp-ssreflect coq-mathcomp-algebra coq-mathcomp-analysis coq-mathcomp-algebra-tactics coq-mathcomp-finmap coq-vst
           echo '::endgroup::'
           make pretty-timed -j2
           make print-pretty-timed
