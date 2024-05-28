@@ -69,7 +69,8 @@ Proof.
 intros.
 unfold matrix_by_index, matrix_cols_nat.
 pose (k := 0). change (seq 0 rows) with (seq k rows).
-clearbody k. revert k; induction rows; intros; constructor; auto.
+clearbody k. revert k; induction rows;
+   intros; constructor; auto.
 rewrite map_length, seq_length. auto.
 Qed.
 
@@ -191,7 +192,7 @@ Lemma norm2_snoc:
    norm2 (al ++ [x]) = BFMA x x (norm2 al).
  Proof.
   intros. unfold norm2, dotprod.
- rewrite combine_app by auto.
+ rewrite combine_app; auto.
  rewrite fold_left_app. reflexivity.
  Qed.
 
@@ -207,7 +208,7 @@ Proof.
  pose proof (Forall2_length H0).
  rewrite <- !fold_left_rev_right.
  apply Forall2_rev in H, H0.
- rewrite !rev_combine by lia.
+ rewrite !rev_combine; try lia.
  clear - H H0.
  set (a := rev x) in *; clearbody a. set (a' := rev x') in *; clearbody a'.
  set (b := rev y) in *; clearbody b. set (b' := rev y') in *; clearbody b'.
@@ -225,7 +226,7 @@ unfold norm2.
 unfold dotprod.
  rewrite <- !fold_left_rev_right.
  apply Forall2_rev in H.
- rewrite !rev_combine by lia.
+ rewrite !rev_combine ; try lia.
 set (a := rev x) in *. set (b := rev x') in *. clearbody a. clearbody b.
 induction H; simpl; intros; auto.
 set (u := fold_right _ _ _) in *. clearbody u.
@@ -257,8 +258,8 @@ Lemma Znth_vector_sub:
 Proof.
 intros.
 unfold vector_sub, map2.
-rewrite Znth_map by (rewrite Zlength_combine; lia).
-rewrite Znth_combine by lia.
+rewrite Znth_map ; try (rewrite Zlength_combine; lia).
+rewrite Znth_combine ; try lia.
 reflexivity.
 Qed.
 
@@ -283,7 +284,7 @@ unfold norm2.
 unfold dotprod.
 rewrite <- !fold_left_rev_right.
 pose proof (Forall2_length H).
-rewrite !rev_combine by auto.
+rewrite !rev_combine ; auto.
 clear H0.
 apply Forall2_rev in H.
 set (a := rev x) in *. clearbody a.
@@ -313,7 +314,7 @@ intros.
 rewrite !Zlength_correct in H. apply Nat2Z.inj in H.
 unfold dotprod in H0.
 rewrite <- fold_left_rev_right in H0.
-rewrite rev_combine in H0 by auto.
+rewrite rev_combine in H0 ; auto.
 rewrite <- (rev_length x), <- (rev_length y) in H.
 assert (Forall finite (rev x) /\ Forall finite (rev y)).
 2:rewrite <- (rev_involutive x), <- (rev_involutive y);
@@ -352,11 +353,10 @@ intros.
 unfold matrix_by_index.
 apply Forall_nth; intros.
 rewrite map_length, seq_length in H1.
-rewrite nth_map_seq by auto.
+rewrite nth_map_seq ; auto.
 apply Forall_nth; intros.
 rewrite map_length, seq_length in H2.
-rewrite nth_map_seq by auto.
-apply H0; auto.
+rewrite nth_map_seq ; auto.
 Qed.
 
 Lemma Zmatrix_cols_nat: 
@@ -414,7 +414,7 @@ intros.
 unfold dotprod.
 set (a := Zconst t 0) at 1. 
 set (a' := Zconst t 0).
-assert (feq a a') by reflexivity.
+assert (feq a a') ; try reflexivity.
 clearbody a. clearbody a'.
 revert x0 y0 H0 a a' H1; induction H; intros.
 destruct x0, y0; inv H0; simpl; auto.
