@@ -1,0 +1,52 @@
+opam-version: "2.0"
+synopsis: "LAProof: a library of formal proofs of accuracy and correctness for linear algebra programs"
+description: """LAProof is a modular, portable proof layer between
+the verification of application software and the verification
+of programs implementing operations defined by the basic linear algebra subprograms (BLAS) specification.
+
+LAProof provides formal machine-checked proofs of the accuracy of basic linear algebra operations:
+inner product using conventional multiply and add, inner product
+using fused multiply-add, scaled matrix-vector and matrix-matrix
+multiplication, and scaled vector and matrix addition. LAProof error bounds are backward error
+bounds and mixed backward-forward error bounds that account
+for underflow, proved subject to no assumptions except a low-
+level formal model of IEEE-754 arithmetic. We treat low-order
+error terms concretely, not approximating as $O(u^2)$.
+
+The LAProof repository contains a machine-checked correctness proof of a C function
+implementing compressed sparse row matrix-
+vector multiplication as an example of connecting LAProof to concrete programs.
+"""
+authors: [
+  "Ariel E. Kellison"
+  "Andrew W. Appel"
+  "Mohit Tekriwal"
+  "David Bindel"
+]
+homepage: "https://github.com/VeriNum/LAProof"
+maintainer: "Ariel E. Kellison <ak2485@cornell.edu>"
+dev-repo: "git+https://github.com/VeriNum/LAProof"
+bug-reports: "https://github.com/VeriNum/LAProof/issues"
+license: "MIT"
+
+build: [
+  [ make "-j%{jobs}%" "COQEXTRAFLAGS=-native-compiler ondemand" {coq-native:installed & coq-compcert:version < "3.13~"}]
+]
+install: [
+  [ make "-j%{jobs}%" "install" "COQEXTRAFLAGS=-native-compiler ondemand" {coq-native:installed & coq-compcert:version < "3.13~"}]
+]
+depends: [
+  "coq" {>= "8.17"}
+  "coq-flocq"
+  "coq-coquelicot"
+  "coq-vcfloat"
+  "coq-mathcomp-ssreflect" {< "2.0~"}
+  "coq-mathcomp-analysis"
+  "coq-mathcomp-algebra-tactics"
+  "coq-mathcomp-finmap"
+  "coq-vst"
+  "coq-vst-lib"
+]
+tags: [
+  "logpath:LAProof"
+]
