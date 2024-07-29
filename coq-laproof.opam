@@ -36,11 +36,11 @@ install: [
   [ make "-j%{jobs}%" "install" "COQEXTRAFLAGS=-native-compiler ondemand" {coq-native:installed & coq-compcert:version < "3.13~"}]
 ]
 depends: [
-  "coq" {>= "8.17"}
+  "coq" {>= "8.19"}
   "coq-flocq"
   "coq-coquelicot"
   "coq-vcfloat"
-  "coq-mathcomp-ssreflect" {< "2.0~"}
+  "coq-mathcomp-ssreflect" {>= "2.2.0~"}
   "coq-mathcomp-analysis"
   "coq-mathcomp-algebra-tactics"
   "coq-mathcomp-finmap"
