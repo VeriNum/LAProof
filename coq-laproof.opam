@@ -46,8 +46,8 @@ depends: [
   "coq-mathcomp-analysis"
   "coq-mathcomp-algebra-tactics"
   "coq-mathcomp-finmap"
-  "coq-vst.2.14"
-  "coq-vst-lib.2.14"
+  "coq-vst" {>= "2.14~"}
+  "coq-vst-lib" {>= "2.14~"}
 ]
 tags: [
   "logpath:LAProof"
