@@ -1,23 +1,21 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
+Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
 From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
 From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas.
-From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp gemv_acc vec_op_acc.
-
+From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp gemv_acc(* vec_op_acc*).
 From mathcomp.analysis Require Import Rstruct.
-Set Warnings "-notation-overriden, -parsing".
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
-(* From LAProof.accuracy_proofs Require Import mc_extra2. *)
-
 From Coq Require Import ZArith Reals Psatz.
 From Coq Require Import Arith.Arith.
-
 Open Scope R_scope.
 Open Scope ring_scope.
-
 Delimit Scope ring_scope with Ri.
 Delimit Scope R_scope with Re.
+Set Warnings "notation-overridden,ambiguous-paths,overwriting-delimiting-key".
+
+Require Import LAProof.accuracy_proofs.vec_op_acc.
 
 Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 

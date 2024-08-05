@@ -5,10 +5,8 @@ From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_mod
                                                 dot_acc float_acc_lems list_lemmas
                                                               gem_defs mv_mathcomp.
 From mathcomp.analysis Require Import Rstruct.
-Set Warnings "-notation-overriden, -parsing".
+Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
-(* From LAProof.accuracy_proofs Require Import mc_extra2. *)
-
 From Coq Require Import ZArith Reals Psatz.
 From Coq Require Import Arith.Arith.
 
@@ -180,8 +178,6 @@ From mathcomp Require Import matrix all_algebra bigop.
 
 Section MixedErrorMath.  
 
-Import VST.floyd.functional_base.
-
 Open Scope R_scope.
 Open Scope ring_scope.
 
@@ -237,12 +233,12 @@ have Hin1 :
 apply matrix_sum_preserves_length'.
 destruct H4. intros.
 rewrite map_length.
-set (y := nth 0 A []).
-have Hy : In y A. subst y; apply nth_In; lia.
+set (y := List.nth 0 A []).
+have Hy : In y A. subst y; apply List.nth_In; lia.
 specialize (H0 x y H4 Hy); rewrite H0.
 apply Hlen'; auto.
 move => x Hx. 
-apply list_in_map_inv in Hx.
+apply Coqlib.list_in_map_inv in Hx.
 destruct Hx as (x0 & Hx0 & Hx0').
 subst.
 rewrite !map_length.
@@ -261,11 +257,11 @@ unfold map_mat in H. rewrite map_length in H.
 rewrite H. clear H. f_equal.
 destruct H4; lia.
 move => a e Ha Hep; split. 
-apply list_in_map_inv in Ha.
+apply Coqlib.list_in_map_inv in Ha.
 destruct Ha as (x0 & Hx0 & Hx0').
 subst. rewrite map_length. apply Hlen; auto.
 destruct H4.
-apply list_in_map_inv in Ha.
+apply Coqlib.list_in_map_inv in Ha.
 destruct Ha as (x0 & Hx0 & Hx0').
 subst. pose proof (H4 e x0 Hep Hx0').
 rewrite H6. apply Hlen; auto.
@@ -285,7 +281,7 @@ move => i Hi.
 rewrite vector_to_vc_index => /= //.
 have Hv : (length v = n.+1) by (subst m; lia).
 rewrite Hv in H3.
-apply H3. apply nth_In. lia.
+apply H3. apply List.nth_In. lia.
 Qed.
 
 End MixedErrorMath.
@@ -306,7 +302,7 @@ Let m := (length A - 1)%nat.
 Hypothesis Hlenv1: (length v - 1)%nat = m.
 
 Notation Ar := (matrix_to_mx m.+1 m.+1 (map_mat FT2R A)).
-Notation vr := (vector_to_vc m.+1 (map FT2R v)).
+Notation vr := (vector_to_vc m.+1 (List.map FT2R v)).
 
 Hypothesis Hfin : is_finite_vec (A *f v).
 Hypothesis Hlen : forall x, In x A -> length x = m.+1.
@@ -338,7 +334,7 @@ apply normv_pos.
 rewrite /normM mulrC big_max_mul.
 apply: le_bigmax2 => i0 _.
 rewrite /sum_abs.
-rewrite big_mul =>  [ | i b | ]; try ring.
+rewrite big_mul =>  [ | i b | ]; [ | ring | ].
 apply ler_sum => i _.
 rewrite mulrC.
   destruct i0. destruct i. apply H1.

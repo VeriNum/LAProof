@@ -15,7 +15,6 @@ From LAProof.accuracy_proofs Require Import common
                                             float_acc_lems 
                                             list_lemmas
                                             float_tactics.
-Set Warnings "-notation-overriden, -parsing".
 
 (* General list matrix and vector definitions *)
 Section MVGenDefs. 
@@ -384,7 +383,6 @@ set (z := (zero_vector (length (a::v)) (Zconst t 0))).
 rewrite vec_sum_cons.
 simpl. unfold vec_sumF in IHv.
  rewrite IHv. f_equal.
-Search Binary.B2R FT2R. 
 rewrite <-!B2R_float_of_ftype;
   unfold BPLUS, BINOP.
 rewrite float_of_ftype_of_float.
@@ -617,13 +615,10 @@ Qed.
 
 End MVLems.
 
-
+Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
 From mathcomp Require Import all_ssreflect all_algebra ssrnum.
-Require Import VST.floyd.functional_base.
-
 Open Scope R_scope.
 Open Scope ring_scope.
-
 Delimit Scope ring_scope with Ri.
 Delimit Scope R_scope with R.
 
@@ -933,17 +928,25 @@ Qed.
 End MxLems.
 
 Section MMLems.
+Lemma nth_map':
+  forall {A B} (f: A -> B) (d: B) (d': A) i al,
+  (i < List.length al)%coq_nat ->
+   List.nth i (List.map f al) d = f (List.nth i al d').
+Proof.
+induction i; destruct al; simpl; intros; try lia; auto.
+apply IHi; lia.
+Qed.
 
 Lemma nth_mul' : forall (A : list (list R)) b i j
 ( Hj : (j < length b)%nat),
-(nth 0 (nth i A []) 0%R * nth j b 0%R =
-nth j (nth i (map (fun a0 : R => map (Rmult a0) b) (map (hd 0%R) A)) []) 0%R)%R.
+(List.nth 0 (List.nth i A []) 0%R * List.nth j b 0%R =
+List.nth j (List.nth i (map (fun a0 : R => map (Rmult a0) b) (map (hd 0%R) A)) []) 0%R)%R.
 Proof.
 move =>  A. elim: A => [b i j H| a A IH b i j Hj] /=.
 destruct i; destruct j => /=; ring.   
 destruct i => /= //.
 rewrite hd_nth => /=. 
-rewrite (nth_map' (Rmult (nth 0 a 0%R)) 0%R 0%R j b) => //=.
+rewrite (nth_map' (Rmult (List.nth 0 a 0%R)) 0%R 0%R j b) => //=.
 apply /ssrnat.ltP => //.
 specialize (IH b i j Hj). rewrite -IH => //.
 Qed.

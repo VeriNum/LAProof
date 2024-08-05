@@ -1,22 +1,23 @@
 Require Import vcfloat.VCFloat.
 Require Import List.
 Import ListNotations.
+Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
 From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
 From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas.
 From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp gemv_acc.
-
 From mathcomp.analysis Require Import Rstruct.
-Set Warnings "-notation-overriden, -parsing".
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
-
 From Coq Require Import ZArith Reals Psatz.
 From Coq Require Import Arith.Arith.
+Delimit Scope ring_scope with Ri.
+Delimit Scope R_scope with Re.
+Set Warnings "notation-overridden,ambiguous-paths,overwriting-delimiting-key".
+
+Set Bullet Behavior "Strict Subproofs".
 
 Open Scope R_scope.
 Open Scope ring_scope.
 
-Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with Re.
 
 Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
@@ -35,51 +36,48 @@ Lemma scaleV_mixed_error :
   exists (e eta: vector),
   map FT2R (scaleVF a v) =  scaleVR (FT2R a) (vr +v e) +v eta
   /\ (forall i, (i < m)%nat -> exists d,
-      List.nth i e 0 = (List.nth i vr 0%R) * d
+      List.nth i e 0%Re = ((List.nth i vr 0%Re) * d)%Re
         /\ Rabs d <= g m) 
   /\ (forall e0, In e0 eta -> Rabs e0 <= g1 m m) 
   /\ length e   = length v
   /\ length eta = length v .
 Proof.
-move => v.
-elim: v => /= [a _|].
-{ rewrite /vec_sumR/vec_sum/map2/=. 
-  by exists [], []. }
-move => v0 v IH. intros. 
-have Hfin':  is_finite_vec (scaleVF a v) /\
-is_finite (BMULT a v0).
+elim => /= [a _|].
+-
+rewrite /vec_sumR/vec_sum/map2/=. 
+by exists [], [].
+-
+move => v0 v IH a Hfinv. 
+have [HA HB]:  is_finite_vec (scaleVF a v) /\ is_finite (BMULT a v0).
   by apply is_finite_vec_cons in Hfinv.
-case Hfin' =>  HA HB.
-destruct (IH a) as 
-  (e & eta & Heq & He & Heta) => //.
+destruct (IH a) as (e & eta & Heq & He & Heta) => //.
 clear IH. rewrite Heq. clear Heq.
-destruct (BMULT_accurate a v0) as 
-  (del & eps & HD & HE & HF & Heq).
+destruct (BMULT_accurate a v0) as (del & eps & HD & HE & HF & Heq).
 by apply is_finite_BMULT_no_overflow.
 rewrite Heq. clear Heq.
-remember ((FT2R v0) * del) as d.
-exists (d :: e), (eps :: eta); repeat split.
-{ rewrite /scaleVR/vec_sumR/vec_sum/map2/= Heqd -RmultE;
-f_equal; nra. }
-{ move => i Hi. rewrite Heqd.
-destruct i => /=.
-exists del; split; [nra|].
-apply /RleP. eapply Rle_trans.
-apply HE => /=. rewrite -Nat.add_1_r;
-auto with commonDB. 
-have Hi': (i < length v)%nat by lia.
-destruct (He i Hi') as (x & He' & Hx).
-rewrite He'. 
-exists x; split => //=. 
-eapply le_trans. apply Hx. 
-apply /RleP; auto with commonDB. }
-move => e0 [Hin| Hin].
-{ rewrite -Hin. apply /RleP.
-  eapply Rle_trans; [apply HF|].
-  apply e_le_g1; lia. }
-eapply le_trans. apply Heta => //.
-apply /RleP. apply g1n_le_g1Sn'.
-all: simpl; lia.
+remember ((FT2R v0) * del)%Re as d.
+exists (d :: e), (eps :: eta); repeat split; try (simpl; lia).
++ rewrite /scaleVR/vec_sumR/vec_sum/map2 /= Heqd. (*-RmultE.*)
+  f_equal; nra.
++ move => i Hi.
+ rewrite Heqd.
+  destruct i => /=.
+  * exists del; split; [nra|].
+    apply /RleP. eapply Rle_trans.
+    apply HE => /=. 
+    rewrite -Nat.add_1_r; auto with commonDB.
+  * have Hi': (i < length v)%nat by lia.
+    destruct (He i Hi') as (x & He' & Hx).
+    rewrite He'.
+    exists x; split => //=.
+    eapply le_trans; [apply Hx | ].
+    apply /RleP; auto with commonDB.
++ move => e0 [Hin| Hin].
+  * rewrite -Hin. apply /RleP.
+    eapply Rle_trans; [apply HF|].
+    apply e_le_g1; lia.
+  * eapply le_trans; [apply Heta => // | ].
+    apply /RleP. apply g1n_le_g1Sn'.
 Qed.
 
 End SCALE_V_ERROR.

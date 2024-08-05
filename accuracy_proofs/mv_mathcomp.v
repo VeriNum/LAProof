@@ -10,11 +10,8 @@ From LAProof Require Import  mathcomp_compat.CommonSSR.
 
 From Coq Require Import ZArith Reals Psatz Arith.Arith.
 From mathcomp.analysis Require Import Rstruct.
-Set Warnings "-notation-overriden, -parsing".
+Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
 From mathcomp Require Import matrix all_ssreflect all_algebra ssrnum bigop.
-(* From LAProof.accuracy_proofs Require Import mc_extra2. *)
-
-Require Import VST.floyd.functional_base.
 
 Open Scope R_scope.
 Open Scope ring_scope.
@@ -26,7 +23,8 @@ Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
 From mathcomp.algebra_tactics Require Import ring.
 
-Notation " i ' " := (Ordinal i) (at level 40).
+Import Coq.Lists.List.
+(*Notation " i ' " := (Ordinal i) (at level 40).*)
 
 Section MVtoMC_Defs.
 
@@ -76,7 +74,7 @@ forall x, In x (B +m E) -> length x = m0.
 Proof. 
 intros. unfold mat_sumR, mat_sum in H1.
 unfold map2 at 1 in H1.
-apply list_in_map_inv in H1.
+apply Coqlib.list_in_map_inv in H1.
 destruct H1 as (x0 & H1 & H2).
 destruct x0. rewrite H1.
 pose proof in_combine_r _ _ _ _ H2. 
@@ -88,13 +86,13 @@ Qed.
 
 Lemma matrix_to_mx_index E (i j m0 n0: nat)
 (Hi: (i < m0)%nat) (Hj: (j < n0)%nat) :
-matrix_index E i j 0 = matrix_to_mx m0 n0 E (Hi ') (Hj ').
+matrix_index E i j 0 = matrix_to_mx m0 n0 E (Ordinal Hi) (Ordinal Hj).
 Proof.
 by rewrite !mxE; rewrite /getm/matrix_index.
 Qed.
 
 Lemma vector_to_vc_index u (j n0: nat) (Hj: (j < n0)%nat):
-vector_to_vc n0 u  (Hj ') 0 = nth j u 0%R.
+vector_to_vc n0 u  (Ordinal Hj) 0 = nth j u 0%R.
 Proof.
 by rewrite !mxE; rewrite /getv/matrix_index.
 Qed.
@@ -260,7 +258,7 @@ have Hi: ( ((nat_of_ord i)=0)%nat \/
 destruct Hi. 
 { by rewrite H0 nth_zero_vector. }
 move: H0. elim: i => m0 Hm0 Hord'.
-replace (nat_of_ord (Hm0 ')) with m0.
+replace (nat_of_ord (Ordinal Hm0)) with m0.
 move : Hm0 Hord'. case : m0 => //= m0 Hm0 Hord'.
 have Hord : (m0 < m)%nat by lia.
 by rewrite (H (b::B) m Hlen1 Hl
@@ -296,7 +294,7 @@ rewrite (nth_rowM_big a (b::B) m n.+1
 apply eq_big =>  k // _ /[!mxE].
 by rewrite H. }
 move: H. elim: i => m0 Hm0.
-replace (nat_of_ord (Hm0 ')) with m0.
+replace (nat_of_ord (Ordinal Hm0)) with m0.
 move : Hm0. case : m0 => //= m0 Hm0 Hord'.
 have Hord : (m0 < m)%nat by lia.
 rewrite /getm in IH.
@@ -625,7 +623,7 @@ rewrite Hequmax; apply normv_pos.
 rewrite mulrDl.
 apply lerD => //.
 rewrite Rabs_mult.
-apply ler_pmul => //.
+apply ler_pM => //.
 1,2: apply /RleP; apply Rabs_pos.
 rewrite Hequmax/normv.
 by apply /le_bigmax.
