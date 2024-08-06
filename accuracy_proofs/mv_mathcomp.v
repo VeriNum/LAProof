@@ -34,16 +34,11 @@ Definition getv  (l:  (list R)) i  :=
 Definition getm  (l: list (list R)) i j :=
    (nth j (nth i l []) 0%R).
 
-Definition vector_to_vc (m' : nat) (v: @vector R) : 'cV[R]_m' := 
-  let m := Z.of_nat m' in 
-\matrix_(i < m', j < 1) 
-  (getv v  (fintype.nat_of_ord i)).
+Definition vector_to_vc (m' : nat) (v: @vector R) : 'cV[R]_m' :=
+  \matrix_(i < m', j < 1) (getv v  i).
 
 Definition matrix_to_mx (m' n': nat) (mx: @gem_defs.matrix R) : 'M[R]_(m',n') := 
-  let m := Z.of_nat m' in 
-  let n := Z.of_nat n' in 
-\matrix_(i < m', j < n') 
-  (getm mx (fintype.nat_of_ord i) (fintype.nat_of_ord j)).
+\matrix_(i < m', j < n') (getm mx i j).
 
 End MVtoMC_Defs.
 
@@ -66,6 +61,16 @@ apply/matrixP =>  k i /[!mxE] /=.
 by destruct (nat_of_ord k).
 Qed.
 
+Lemma list_in_map_inv: forall [A B : Type] (f : A -> B) (l : list A) (y : B),
+       In y (map f l) -> exists x : A, y = f x /\ In x l.
+Proof.
+induction l; simpl; intros; try contradiction.
+destruct H.
+exists a; auto.
+apply IHl in H.
+destruct H as [x [? ?]].
+eauto.
+Qed.
 
 Lemma matrix_sum_preserves_length' B E m0:
 (forall x, In x E -> length x = m0 ) -> 
@@ -74,7 +79,7 @@ forall x, In x (B +m E) -> length x = m0.
 Proof. 
 intros. unfold mat_sumR, mat_sum in H1.
 unfold map2 at 1 in H1.
-apply Coqlib.list_in_map_inv in H1.
+apply list_in_map_inv in H1.
 destruct H1 as (x0 & H1 & H2).
 destruct x0. rewrite H1.
 pose proof in_combine_r _ _ _ _ H2. 

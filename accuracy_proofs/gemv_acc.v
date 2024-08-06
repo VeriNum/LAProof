@@ -19,6 +19,8 @@ Delimit Scope R_scope with Re.
 Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
 From mathcomp.algebra_tactics Require Import ring.
+Set Bullet Behavior "Strict Subproofs".
+
 
 Section MixedErrorList. 
 (* mixed error bounds over lists *)
@@ -203,7 +205,7 @@ Notation vr := (vector_to_vc (n.+1) (map FT2R v)).
 Hypothesis Hfin : is_finite_vec (A *f v).
 Hypothesis Hlen : forall x, In x A -> length x = n.+1.
 
-Notation " i ' " := (Ordinal i) (at level 40).
+(*Notation " i ' " := (Ordinal i) (at level 40).*)
 
 Notation Av := (vector_to_vc (m.+1) (A *fr v)).
 
@@ -211,8 +213,8 @@ Lemma mat_vec_mul_mixed_error':
   exists (E : 'M[R]_(m.+1,n.+1)) (eta : 'cV[R]_m.+1),
     Av =  (Ar + E) *m vr + eta 
     /\ (forall i j (Hi : (i < m.+1)%nat) (Hj : (j < n.+1)%nat), 
-      Rabs (E  (Hi ') (Hj ')) <= g n.+1 * Rabs (Ar  (Hi ') (Hj ')))
-    /\ forall i (Hi: (i < m.+1)%nat), Rabs (eta (Hi ')  0) <= g1 n.+1 n.+1 .
+      Rabs (E  (Ordinal Hi) (Ordinal Hj)) <= g n.+1 * Rabs (Ar  (Ordinal Hi) (Ordinal Hj)))
+    /\ forall i (Hi: (i < m.+1)%nat), Rabs (eta (Ordinal Hi)  0) <= g1 n.+1 n.+1 .
 Proof.
 have Hlen' : forall x : seq.seq (ftype t), In x A -> Datatypes.length x = length v.
   move => x Hin. rewrite Hlen => //. lia. 
@@ -238,7 +240,7 @@ have Hy : In y A. subst y; apply List.nth_In; lia.
 specialize (H0 x y H4 Hy); rewrite H0.
 apply Hlen'; auto.
 move => x Hx. 
-apply Coqlib.list_in_map_inv in Hx.
+apply list_in_map_inv in Hx.
 destruct Hx as (x0 & Hx0 & Hx0').
 subst.
 rewrite !map_length.
@@ -257,11 +259,11 @@ unfold map_mat in H. rewrite map_length in H.
 rewrite H. clear H. f_equal.
 destruct H4; lia.
 move => a e Ha Hep; split. 
-apply Coqlib.list_in_map_inv in Ha.
+apply list_in_map_inv in Ha.
 destruct Ha as (x0 & Hx0 & Hx0').
 subst. rewrite map_length. apply Hlen; auto.
 destruct H4.
-apply Coqlib.list_in_map_inv in Ha.
+apply list_in_map_inv in Ha.
 destruct Ha as (x0 & Hx0 & Hx0').
 subst. pose proof (H4 e x0 Hep Hx0').
 rewrite H6. apply Hlen; auto.
@@ -283,6 +285,24 @@ have Hv : (length v = n.+1) by (subst m; lia).
 rewrite Hv in H3.
 apply H3. apply List.nth_In. lia.
 Qed.
+
+Lemma mat_vec_mul_mixed_error'':
+  exists (E : 'M[R]_(m.+1,n.+1)) (eta : 'cV[R]_m.+1),
+    Av =  (Ar + E) *m vr + eta 
+    /\ (forall i j, Rabs (E  i j) <= g n.+1 * Rabs (Ar  i j))
+    /\ forall i, Rabs (eta i 0) <= g1 n.+1 n.+1 .
+Proof.
+destruct mat_vec_mul_mixed_error' as (E & eta & H & H0 & H1).
+exists E, eta; split; auto.
+split.
+-
+move => [i Hi] [j Hj].
+apply (H0 i j Hi Hj).
+-
+move => [i Hi].
+apply (H1 i Hi).
+Qed.
+
 
 End MixedErrorMath.
 
@@ -307,11 +327,47 @@ Notation vr := (vector_to_vc m.+1 (List.map FT2R v)).
 Hypothesis Hfin : is_finite_vec (A *f v).
 Hypothesis Hlen : forall x, In x A -> length x = m.+1.
 
-Notation " i ' " := (Ordinal i) (at level 40).
+(*Notation " i ' " := (Ordinal i) (at level 40).*)
 
 Notation Av' := (vector_to_vc m.+1 (map FT2R (mvF A v))).
 
 Notation "| u |" := (normv u) (at level 40).
+
+
+Theorem forward_error'' :
+ |Av' - (Ar *m vr)| <= (g m.+1 * normM Ar * |vr|) + g1 m.+1 m.+1.
+Proof.
+destruct (mat_vec_mul_mixed_error'' A v) as (E & eta & HE & H1 & H2) => //.
+rewrite Hlenv1 => //.
+rewrite HE mulmxDl. fold m. clear HE.  
+have Hvr : vector_to_vc m.+1 (List.map FT2R v) = vr => //=.
+move: H1. move: E. rewrite Hlenv1 Hvr. move => E H1.
+have H0 : Ar *m vr + E *m vr + eta - Ar *m vr = E *m vr + eta. 
+remember (Ar *m vr) as y. remember (E *m vr) as x. subst m. 
+apply /matrixP => i j; do ![rewrite mxE | ] => /=; ring.
+rewrite H0. clear H0. fold m in H1, H2.
+eapply (le_trans (normv_triang _ _ _)). 
+apply lerD.
+eapply (le_trans (subMultNorm _ _ _ )).
+apply ler_pM => //. 
+apply normM_pos.
+apply normv_pos.
+rewrite /normM mulrC big_max_mul.
+apply: le_bigmax2 => i0 _.
+rewrite /sum_abs.
+rewrite big_mul =>  [ | i b | ]; [ | ring | ].
+apply ler_sum => i _.
+rewrite mulrC.
+  destruct i0. destruct i. apply H1.
+apply /RleP; auto with commonDB.
+apply /RleP; auto with commonDB.
+rewrite /normv.
+apply bigmax_le => [|i _].  
+apply /RleP; auto with commonDB.
+destruct i. 
+rewrite Hlenv1 in H2.
+apply H2.
+Qed.
 
 Theorem forward_error :
  |Av' - (Ar *m vr)| <= (g m.+1 * normM Ar * |vr|) + g1 m.+1 m.+1.
