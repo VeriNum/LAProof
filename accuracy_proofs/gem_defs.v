@@ -16,6 +16,9 @@ From LAProof.accuracy_proofs Require Import common
                                             list_lemmas
                                             float_tactics.
 
+Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
+From mathcomp Require all_ssreflect.
+
 (* General list matrix and vector definitions *)
 Section MVGenDefs. 
 
@@ -64,8 +67,8 @@ end.
 Definition in_matrix {T : Type} (A : list (list T)) (a : T) := 
   let A' := flat_map (fun x => x) A in In a A'.
 
-Definition matrix_index {A} (m: matrix) (i j: nat) (zero: A) : A :=
- nth j (nth i m nil) zero.
+Definition matrix_index {A} (zero: A) (m: matrix) (i j: nat) : A :=
+ List.nth j (List.nth i m nil) zero.
 
 Definition eq_size {T1 T2} 
   (A : list (list T1)) (B : list (list T2)) := length A = length B /\
@@ -255,7 +258,7 @@ Notation "A -m B" := (mat_sumR A (map_mat Ropp B)) (at level 40).
 Notation "A +m B" := (mat_sumR A B) (at level 40).
 
 Notation "E _( i , j )"  :=
-  (matrix_index E i j 0%R) (at level 15).
+  (matrix_index 0%R E i j) (at level 15).
 
 Section MVLems.
 
@@ -550,8 +553,8 @@ induction l0; auto.
 simpl. assert False by auto; contradiction.
 Qed.
 
-Lemma matrix_index_nil {A} (i j: nat) (zero: A) : 
-   matrix_index [] i j zero = zero.
+Lemma matrix_index_nil {A} (zero: A) (i j: nat) : 
+   matrix_index zero [] i j = zero.
 Proof. unfold matrix_index. destruct i; destruct j; simpl; auto. Qed.
 
 Lemma vec_sumR_nth :
@@ -615,14 +618,7 @@ Qed.
 
 End MVLems.
 
-Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
-From mathcomp Require Import all_ssreflect all_algebra ssrnum.
-Open Scope R_scope.
-Open Scope ring_scope.
-Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with R.
-
-Import Order.TTheory GRing.Theory Num.Def Num.Theory.
+Import all_ssreflect.
 
 Section SIZEDEFS.
 

@@ -243,10 +243,10 @@ Theorem sMMC_error:
     /\ (forall i j, (i < p)%nat -> (j < m)%nat -> 
       Rabs (eta1 _(i,j)) <= g1 n n) 
     /\ forall i j : nat,(i < p)%nat -> (j < m)%nat -> 
-       Rabs (matrix_index eta1 i j 0%Re) <= g1 n n
+       Rabs (matrix_index 0%Re eta1 i j) <= g1 n n
     /\ forall i j : nat, (i < p)%nat -> (j < m)%nat ->
-      Rabs (matrix_index E i j 0%Re) <=
-     g m * Rabs (matrix_index ((MMCR Ar Br +m E1) +m eta1) i j 0%Re)
+      Rabs (matrix_index 0%Re E i j) <=
+     g m * Rabs (matrix_index 0%Re ((MMCR Ar Br +m E1) +m eta1) i j)
     /\ size_col E1 m p
     /\ size_col eta1 m p
     /\ eq_size E (MMCF A B)
@@ -429,25 +429,25 @@ Theorem mat_axpby_error:
      mat_sumR (scaleMR (FT2R x) (Ar +m EA) +m eta1 +m ea) 
           (scaleMR (FT2R y) (Br +m EB) +m eta2 +m eb)
     /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-      Rabs (matrix_index EA i j 0%R) <=
-      g n * Rabs (matrix_index Ar i j 0%R))
+      Rabs (matrix_index 0%R EA i j) <=
+      g n * Rabs (matrix_index 0%R Ar i j))
     /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-     Rabs (matrix_index EB i j 0%R) <=
-     g n * Rabs (matrix_index Br i j 0%R))
+     Rabs (matrix_index 0%R EB i j) <=
+     g n * Rabs (matrix_index 0%R Br i j))
     /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
        exists d,
-       matrix_index ea i j 0%R =
-       matrix_index (scaleMR (FT2R x) (Ar +m EA) +m eta1) i j 0%R * d 
+       matrix_index 0%R ea i j =
+       matrix_index 0%R (scaleMR (FT2R x) (Ar +m EA) +m eta1) i j * d 
         /\ Rabs d <= @default_rel t)
     /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
        exists d,
-       matrix_index eb i j 0%R =
-       matrix_index (scaleMR (FT2R y) (Br +m EB) +m eta2) i j 0%R * d
+       matrix_index 0%R eb i j =
+       matrix_index 0%R (scaleMR (FT2R y) (Br +m EB) +m eta2) i j * d
         /\ Rabs d <= @default_rel t)
     /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-      Rabs (matrix_index eta1 i j 0%Re) <= g1 n n)
+      Rabs (matrix_index 0%Re eta1 i j) <= g1 n n)
     /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-      Rabs (matrix_index eta2 i j 0%Re) <= g1 n n)
+      Rabs (matrix_index 0%Re eta2 i j) <= g1 n n)
     /\ eq_size EA A 
     /\ eq_size EB A 
     /\ eq_size ea A 
@@ -548,34 +548,34 @@ Theorem GEMM_error:
       exists E0 : matrix,
         List.nth k ab1 [::] = E0 *r List.nth k Br [] /\
         (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-         Rabs (matrix_index E0 i j 0%Re) <= g n * Rabs (matrix_index Ar i j 0%Re))) 
+         Rabs (matrix_index 0%Re E0 i j) <= g n * Rabs (matrix_index 0%Re Ar i j))) 
   /\ (forall i j : nat, (i < p)%nat -> (j < m)%nat ->
-      Rabs (matrix_index ab2 i j 0%Re) <= g1 n n)
+      Rabs (matrix_index 0%Re ab2 i j) <= g1 n n)
   /\ (forall i j : nat, (i < p)%nat -> (j < m)%nat ->
-      Rabs (matrix_index ab3 i j 0%Re) <= 
-        g m * Rabs (matrix_index ((MMCR Ar Br +m ab1) +m ab2) i j 0%Re)) 
+      Rabs (matrix_index 0%Re ab3 i j) <= 
+        g m * Rabs (matrix_index 0%Re ((MMCR Ar Br +m ab1) +m ab2) i j)) 
   /\ (forall i j : nat,
       (i < p)%nat -> (j < m)%nat ->
-     Rabs (matrix_index y1 i j 0%Re) <=
-        g m * Rabs (matrix_index Yr i j 0%Re)) 
+     Rabs (matrix_index 0%Re y1 i j) <=
+        g m * Rabs (matrix_index 0%Re Yr i j)) 
   /\ (forall i j : nat, (i < p)%nat -> (j < m)%nat ->
         exists d,
-        matrix_index ab5 i j 0%Re =
-        matrix_index
+        matrix_index 0%Re ab5 i j =
+        matrix_index 0%Re
           (scaleMR (FT2R s1)
-             (((MMCR Ar Br +m ab1) +m ab2) +m ab3) +m ab4) i j 0%Re * d 
+             (((MMCR Ar Br +m ab1) +m ab2) +m ab3) +m ab4) i j * d 
           /\ Rabs d <= @default_rel t) 
   /\ (forall i j : nat, (i < p)%nat -> (j < m)%nat ->
       exists d ,
-        matrix_index y3 i j 0%Re =
-        matrix_index
-          (scaleMR (FT2R s2) (Yr +m y1) +m y2) i j 0%Re * d 
+        matrix_index 0%Re y3 i j =
+        matrix_index 0%Re
+          (scaleMR (FT2R s2) (Yr +m y1) +m y2) i j * d 
           /\ Rabs d <= @default_rel t)
   /\ (forall i j : nat,
       (i < p)%nat -> (j < m)%nat ->
-      Rabs (matrix_index ab4 i j 0%Re) <= g1 m m)
+      Rabs (matrix_index 0%Re ab4 i j) <= g1 m m)
   /\ (forall i0 j0 : nat, (i0 < p)%nat -> (j0 < m)%nat ->
-       Rabs (matrix_index y2 i0 j0 0%Re) <= g1 m m).
+       Rabs (matrix_index 0%Re y2 i0 j0) <= g1 m m).
 Proof.
 (* len hyps for composing errors *)
 have Hlen1 : forall v : seq (ftype t),

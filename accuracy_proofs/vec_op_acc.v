@@ -335,7 +335,7 @@ Lemma gemv_error:
   ((scaleVR (FT2R s2) (List.map FT2R y +v e6) +v e7) +v e8)
 
   /\ (forall i j : nat, (i < m)%nat -> (j < n)%nat ->
-      Rabs (matrix_index e1 i j 0%Re) <= g n * Rabs (matrix_index Ar i j 0%Re)) 
+      Rabs (matrix_index 0%Re e1 i j) <= g n * Rabs (matrix_index 0%Re Ar i j)) 
   /\ (forall k : R, In k e2 -> Rabs k <= g1 n n) 
   /\ (forall i : nat, (i < m)%nat -> exists d,
         List.nth i e3 0 = List.nth i (((Ar +m e1) *r xr) +v e2) 0%Re * d 
