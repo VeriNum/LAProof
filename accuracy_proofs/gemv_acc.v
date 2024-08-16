@@ -5,10 +5,8 @@ From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_mod
                                                 dot_acc float_acc_lems list_lemmas
                                                               gem_defs mv_mathcomp.
 From mathcomp.analysis Require Import Rstruct.
-Set Warnings "-notation-overriden, -parsing".
+Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
-(* From LAProof.accuracy_proofs Require Import mc_extra2. *)
-
 From Coq Require Import ZArith Reals Psatz.
 From Coq Require Import Arith.Arith.
 
@@ -21,6 +19,8 @@ Delimit Scope R_scope with Re.
 Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
 From mathcomp.algebra_tactics Require Import ring.
+Set Bullet Behavior "Strict Subproofs".
+
 
 Section MixedErrorList. 
 (* mixed error bounds over lists *)
@@ -180,8 +180,6 @@ From mathcomp Require Import matrix all_algebra bigop.
 
 Section MixedErrorMath.  
 
-Import VST.floyd.functional_base.
-
 Open Scope R_scope.
 Open Scope ring_scope.
 
@@ -207,16 +205,13 @@ Notation vr := (vector_to_vc (n.+1) (map FT2R v)).
 Hypothesis Hfin : is_finite_vec (A *f v).
 Hypothesis Hlen : forall x, In x A -> length x = n.+1.
 
-Notation " i ' " := (Ordinal i) (at level 40).
-
 Notation Av := (vector_to_vc (m.+1) (A *fr v)).
 
 Lemma mat_vec_mul_mixed_error':
   exists (E : 'M[R]_(m.+1,n.+1)) (eta : 'cV[R]_m.+1),
     Av =  (Ar + E) *m vr + eta 
-    /\ (forall i j (Hi : (i < m.+1)%nat) (Hj : (j < n.+1)%nat), 
-      Rabs (E  (Hi ') (Hj ')) <= g n.+1 * Rabs (Ar  (Hi ') (Hj ')))
-    /\ forall i (Hi: (i < m.+1)%nat), Rabs (eta (Hi ')  0) <= g1 n.+1 n.+1 .
+    /\ (forall i j, Rabs (E i j) <= g n.+1 * Rabs (Ar i j))
+    /\ forall i, Rabs (eta i 0) <= g1 n.+1 n.+1 .
 Proof.
 have Hlen' : forall x : seq.seq (ftype t), In x A -> Datatypes.length x = length v.
   move => x Hin. rewrite Hlen => //. lia. 
@@ -237,8 +232,8 @@ have Hin1 :
 apply matrix_sum_preserves_length'.
 destruct H4. intros.
 rewrite map_length.
-set (y := nth 0 A []).
-have Hy : In y A. subst y; apply nth_In; lia.
+set (y := List.nth 0 A []).
+have Hy : In y A. subst y; apply List.nth_In; lia.
 specialize (H0 x y H4 Hy); rewrite H0.
 apply Hlen'; auto.
 move => x Hx. 
@@ -272,20 +267,17 @@ rewrite H6. apply Hlen; auto.
 destruct H4.
 rewrite /map_mat/mat_sumR/mat_sum/map2 !map_length combine_length
   map_length; lia.
-split.
-{ move => i j Hi Hj.
- rewrite -(matrix_to_mx_index E i j).
- rewrite -(matrix_to_mx_index (map_mat FT2R A) i j).
 have HA : (length A = m.+1) by (subst m; lia).
 have Hv : (length v = n.+1) by (subst m; lia).
-rewrite HA Hv in H2. 
-specialize (H2 i j Hi Hj).
-subst n => /= //. }
-move => i Hi.
-rewrite vector_to_vc_index => /= //.
-have Hv : (length v = n.+1) by (subst m; lia).
+split.
+{ move => [i Hi] [j Hj]. 
+  rewrite !mxE /=.
+  rewrite HA Hv in H2.
+  by apply H2. }
+move => [i Hi].
+rewrite /vector_to_vc mxE /=.
 rewrite Hv in H3.
-apply H3. apply nth_In. lia.
+apply H3. apply List.nth_In. lia.
 Qed.
 
 End MixedErrorMath.
@@ -306,16 +298,15 @@ Let m := (length A - 1)%nat.
 Hypothesis Hlenv1: (length v - 1)%nat = m.
 
 Notation Ar := (matrix_to_mx m.+1 m.+1 (map_mat FT2R A)).
-Notation vr := (vector_to_vc m.+1 (map FT2R v)).
+Notation vr := (vector_to_vc m.+1 (List.map FT2R v)).
 
 Hypothesis Hfin : is_finite_vec (A *f v).
 Hypothesis Hlen : forall x, In x A -> length x = m.+1.
 
-Notation " i ' " := (Ordinal i) (at level 40).
-
 Notation Av' := (vector_to_vc m.+1 (map FT2R (mvF A v))).
 
 Notation "| u |" := (normv u) (at level 40).
+
 
 Theorem forward_error :
  |Av' - (Ar *m vr)| <= (g m.+1 * normM Ar * |vr|) + g1 m.+1 m.+1.
@@ -338,7 +329,7 @@ apply normv_pos.
 rewrite /normM mulrC big_max_mul.
 apply: le_bigmax2 => i0 _.
 rewrite /sum_abs.
-rewrite big_mul =>  [ | i b | ]; try ring.
+rewrite big_mul =>  [ | i b | ]; [ | ring | ].
 apply ler_sum => i _.
 rewrite mulrC.
   destruct i0. destruct i. apply H1.

@@ -15,7 +15,9 @@ From LAProof.accuracy_proofs Require Import common
                                             float_acc_lems 
                                             list_lemmas
                                             float_tactics.
-Set Warnings "-notation-overriden, -parsing".
+
+Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
+From mathcomp Require all_ssreflect.
 
 (* General list matrix and vector definitions *)
 Section MVGenDefs. 
@@ -65,8 +67,8 @@ end.
 Definition in_matrix {T : Type} (A : list (list T)) (a : T) := 
   let A' := flat_map (fun x => x) A in In a A'.
 
-Definition matrix_index {A} (m: matrix) (i j: nat) (zero: A) : A :=
- nth j (nth i m nil) zero.
+Definition matrix_index {A} (zero: A) (m: matrix) (i j: nat) : A :=
+ List.nth j (List.nth i m nil) zero.
 
 Definition eq_size {T1 T2} 
   (A : list (list T1)) (B : list (list T2)) := length A = length B /\
@@ -256,7 +258,7 @@ Notation "A -m B" := (mat_sumR A (map_mat Ropp B)) (at level 40).
 Notation "A +m B" := (mat_sumR A B) (at level 40).
 
 Notation "E _( i , j )"  :=
-  (matrix_index E i j 0%R) (at level 15).
+  (matrix_index 0%R E i j) (at level 15).
 
 Section MVLems.
 
@@ -384,7 +386,6 @@ set (z := (zero_vector (length (a::v)) (Zconst t 0))).
 rewrite vec_sum_cons.
 simpl. unfold vec_sumF in IHv.
  rewrite IHv. f_equal.
-Search Binary.B2R FT2R. 
 rewrite <-!B2R_float_of_ftype;
   unfold BPLUS, BINOP.
 rewrite float_of_ftype_of_float.
@@ -552,8 +553,8 @@ induction l0; auto.
 simpl. assert False by auto; contradiction.
 Qed.
 
-Lemma matrix_index_nil {A} (i j: nat) (zero: A) : 
-   matrix_index [] i j zero = zero.
+Lemma matrix_index_nil {A} (zero: A) (i j: nat) : 
+   matrix_index zero [] i j = zero.
 Proof. unfold matrix_index. destruct i; destruct j; simpl; auto. Qed.
 
 Lemma vec_sumR_nth :
@@ -617,17 +618,7 @@ Qed.
 
 End MVLems.
 
-
-From mathcomp Require Import all_ssreflect all_algebra ssrnum.
-Require Import VST.floyd.functional_base.
-
-Open Scope R_scope.
-Open Scope ring_scope.
-
-Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with R.
-
-Import Order.TTheory GRing.Theory Num.Def Num.Theory.
+Import all_ssreflect.
 
 Section SIZEDEFS.
 
@@ -933,17 +924,25 @@ Qed.
 End MxLems.
 
 Section MMLems.
+Lemma nth_map':
+  forall {A B} (f: A -> B) (d: B) (d': A) i al,
+  (i < List.length al)%coq_nat ->
+   List.nth i (List.map f al) d = f (List.nth i al d').
+Proof.
+induction i; destruct al; simpl; intros; try lia; auto.
+apply IHi; lia.
+Qed.
 
 Lemma nth_mul' : forall (A : list (list R)) b i j
 ( Hj : (j < length b)%nat),
-(nth 0 (nth i A []) 0%R * nth j b 0%R =
-nth j (nth i (map (fun a0 : R => map (Rmult a0) b) (map (hd 0%R) A)) []) 0%R)%R.
+(List.nth 0 (List.nth i A []) 0%R * List.nth j b 0%R =
+List.nth j (List.nth i (map (fun a0 : R => map (Rmult a0) b) (map (hd 0%R) A)) []) 0%R)%R.
 Proof.
 move =>  A. elim: A => [b i j H| a A IH b i j Hj] /=.
 destruct i; destruct j => /=; ring.   
 destruct i => /= //.
 rewrite hd_nth => /=. 
-rewrite (nth_map' (Rmult (nth 0 a 0%R)) 0%R 0%R j b) => //=.
+rewrite (nth_map' (Rmult (List.nth 0 a 0%R)) 0%R 0%R j b) => //=.
 apply /ssrnat.ltP => //.
 specialize (IH b i j Hj). rewrite -IH => //.
 Qed.
