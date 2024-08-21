@@ -26,7 +26,7 @@ Qed.
 
 Definition symmetric {n} (A: 'M[F]_n) := A^T=A.
 
-Definition symmetric_castmx {n n'} (eqn: n=n') (A: 'M_n) : 
+Definition symmetric_castmx {n n'} (eqn: n=n') (A: 'M_n) :
   symmetric (castmx (eqn,eqn) A) = symmetric A.
 Proof. subst n'. by rewrite castmx_id. Qed.
 
@@ -40,7 +40,15 @@ Qed.
 Definition upper_triangular {n} (A: 'M[F]_n) :=
  (forall i j: 'I_n , (i>j)%N -> A i j = 0).
 
-Definition upper_triangular_castmx {n n'} (eqn: n=n') (A: 'M_n) : 
+Lemma upper_triangular_is_trig: forall {n} (A: 'M[F]_n),
+    upper_triangular A <-> is_trig_mx A^T.
+Proof.
+  rewrite /upper_triangular => n A. split => [ Hup | /is_trig_mxP Atrig].
+  - apply /is_trig_mxP => i j lt_ij. by rewrite mxE (Hup j i lt_ij).
+  - move => i j lt_ji. by rewrite - (Atrig j i lt_ji) mxE.
+Qed.
+
+Definition upper_triangular_castmx {n n'} (eqn: n=n') (A: 'M_n) :
   upper_triangular (castmx (eqn,eqn) A) = upper_triangular A.
 Proof. subst n'. by rewrite castmx_id. Qed.
 
@@ -55,14 +63,14 @@ Variable F : fieldType.
 
 (*  let L be a nonsingular lower triangular matrix,
     let c be a column matrix,
-    then solve_LT L c finds a column matrix x such that L x = c. *) 
+    then solve_LT L c finds a column matrix x such that L x = c. *)
 Fixpoint solve_LT {n} :  'M[F]_n.+1 -> 'M[F]_(n.+1,1) -> 'M[F]_(n.+1,1) :=
  match n with
  | 0 => fun L c => const_mx ((L 0 0)^-1 *  c 0 0 )
- | n'.+1 => fun L c => 
-        let L' : 'M_(1 + n'.+1) := L in 
+ | n'.+1 => fun L c =>
+        let L' : 'M_(1 + n'.+1) := L in
         let c' : 'M_(1+n'.+1,1) := c in
-        let x' := solve_LT (drsubmx L') (dsubmx c' - dlsubmx L' *m ((L 0 0)^-1 *: usubmx c')) in 
+        let x' := solve_LT (drsubmx L') (dsubmx c' - dlsubmx L' *m ((L 0 0)^-1 *: usubmx c')) in
          col_mx ( (L 0 0)^-1 *: usubmx c') x'
  end.
 
@@ -113,10 +121,10 @@ Fixpoint cholesky {n} : 'M[F]_n.+1 -> 'M[F]_n.+1 :=
          let A' : 'M_(n'.+1+1):= castmx (add_two,add_two) A in
          let A1 := ulsubmx A' in
          let c := ursubmx A' in
-         let α := drsubmx A' 0 0in 
+         let α := drsubmx A' 0 0in
          let R1 := cholesky A1 in
          let r := solve_LT R1^T c in
-         let β := Num.sqrt (α - ((r^T *m r) 0 0)) in 
+         let β := Num.sqrt (α - ((r^T *m r) 0 0)) in
          castmx (esym add_two, esym add_two) (block_mx R1 r 0 β%:M)
   end.
 
@@ -125,12 +133,12 @@ Definition diagonal_positive {n} (A: 'M[F]_n) :=
 
 Definition posdef' {n} (A: 'M_n) :=
    forall x : 'cV_n, x != 0 -> (x^T *m A *m x) 0 0 > 0 :>F.
- 
+
 Definition positive_definite {n} (A: 'M_n) :=
   symmetric A /\ posdef' A.
- 
 
-Definition positive_definite_castmx {n n'} (eqn: n=n') (A: 'M_n) : 
+
+Definition positive_definite_castmx {n n'} (eqn: n=n') (A: 'M_n) :
   positive_definite (castmx (eqn,eqn) A) = positive_definite A.
 Proof. subst n'. by rewrite castmx_id. Qed.
 
@@ -166,14 +174,18 @@ Admitted.
 Definition diagonal_of {n} (A: 'M[F]_n.+1) : 'rV[F]_n.+1 :=
   \row_i (A i i).
 
-Lemma det_upper_triangular {n} (A: 'M[F]_n.+1) : 
+Lemma det_upper_triangular {n} (A: 'M[F]_n.+1) :
   upper_triangular A -> \det A = \det (diag_mx (diagonal_of A)).
-Admitted.
+Proof.
+  rewrite upper_triangular_is_trig => Htrig.
+  rewrite -det_tr (det_trig Htrig) det_diag /diagonal_of.
+  apply: eq_bigr=> i _. by rewrite !mxE.
+Qed.
 
-Theorem cholesky_correct: 
-  forall n (A: 'M_n.+1), 
+Theorem cholesky_correct:
+  forall n (A: 'M_n.+1),
     positive_definite A ->
-    let R := cholesky A in 
+    let R := cholesky A in
       upper_triangular R /\ diagonal_positive R /\ R^T * R = A.
 Proof.
 elim => [|n IHn].
@@ -198,7 +210,7 @@ rewrite -(castmxK add_two add_two A).
 set A' : 'M_(n.+1 + 1) := castmx _ A.
 rewrite positive_definite_castmx.
 clearbody A'; clear A. move :A' => A PA.
-rewrite /cholesky -/cholesky 
+rewrite /cholesky -/cholesky
    upper_triangular_castmx trmx_cast tr_block_mx -mulmxE mulmx_castmx castmxKV /=.
 set A1 := ulsubmx A.
 case: (IHn A1) => [ | UPPER [DP H1]] {IHn};
@@ -209,7 +221,7 @@ set c := ursubmx A.
 have DN: diagonal_nonzero R.
   move => i. apply /negP => /eqP EQ. move :(DP i). rewrite EQ => GT.
   eapply Order.POrderTheory.lt_nsym; eassumption.
-have H2 := @solve_LT_correct _ _ (R^T) c 
+have H2 := @solve_LT_correct _ _ (R^T) c
                ltac:(by move => i j LESS; rewrite !mxE; apply UPPER)
                ltac:(by move => i; rewrite !mxE; apply DN).
 move :(solve_LT _ _) => r in H2 *.
@@ -220,7 +232,7 @@ have EQA: A = block_mx A1 c c^T α
 have Runit: R \in unitmx.
   {  rewrite unitmxE unitfE det_upper_triangular // det_diag.
      apply /prodf_neq0 => i _. by rewrite mxE.
-  } 
+  }
 assert (POSβ: 0 < β2). {
  have Adet: 0 < \det A1
   by apply det_positive_definite, positive_definite_ulsubmx, PA.
@@ -228,7 +240,7 @@ assert (POSβ: 0 < β2). {
   by rewrite unitmxE unitfE; apply Num.Theory.lt0r_neq0, Adet.
  have HH := PA; apply det_positive_definite in HH; move :HH.
  rewrite (@det_block_mx _ _ A) // -/A1 -/c -/α EQA block_mxKdl -H2 trmx_mul trmxK
-        mulmxA -!(mulmxA r^T) -{2}H1. 
+        mulmxA -!(mulmxA r^T) -{2}H1.
  rewrite -H1 in A1unit.
  move :(mulmxK A1unit (invmx R^T)).
  rewrite !(mulmxA (invmx _)) mulVmx ?unitmx_tr // mul1mx.
@@ -238,7 +250,7 @@ assert (POSβ: 0 < β2). {
  rewrite mxE Num.Theory.pmulr_rgt0 //.
 }
 repeat split.
-+ (* upper triangular *) 
++ (* upper triangular *)
   move => i j LESS.
   rewrite !mxE /split; case: (ltnP i n.+1) => Hi;
   rewrite !mxE /split; case: (ltnP j n.+1) => Hj.
@@ -258,7 +270,7 @@ rewrite mulmx_block !mulmx0 !addr0 !mulmxE !H1 !trmx0 !mul0mx !addr0
 f_equal.
 rewrite -mulmxE -scalar_mxM -expr2 Num.Theory.sqr_sqrtr;
  last by apply Order.POrderTheory.ltW.
-rewrite (mx11_scalar (_ *m _)) addrC scalar_mx_is_additive 
+rewrite (mx11_scalar (_ *m _)) addrC scalar_mx_is_additive
         -addrA addNr addr0 -mx11_scalar //.
 Qed.
 
@@ -269,14 +281,14 @@ Fixpoint cholesky_LDL {n} : 'M[F]_n.+1 -> 'M[F]_n.+1 * 'rV[F]_n.+1 :=
          let A' : 'M_((n'.+1)+1):= castmx (add_two,add_two) A in
          let A1 := ulsubmx A' in
          let c := ursubmx A' in
-         let An := drsubmx A' in 
+         let An := drsubmx A' in
          let: (L1,D1) := cholesky_LDL A1 in
          let r := solve_LT L1 c in
          let α := An 0 0 in
-         let β2 := α - ((r^T *m r) 0 0) in 
+         let β2 := α - ((r^T *m r) 0 0) in
          let L' : 'M_((n'.+1)+1):= block_mx L1 0 r^T 1 in
          let D' : 'rV_((n'.+1)+1) := row_mx D1 (β2%:M) in
-          (castmx (esym add_two, esym add_two) L', 
+          (castmx (esym add_two, esym add_two) L',
            castmx (erefl _, esym add_two) D')
   end.
 
