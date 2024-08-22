@@ -166,10 +166,24 @@ Lemma det_positive_definite: forall {n} (A: 'M[F]_(n.+1)),
   positive_definite A -> 0 < \det A .
 Admitted.
 
+Lemma block_decompose {n1 n2} {A: 'M[F]_n1} {B: 'M[F]_(n1, n2)}
+  {C: 'M[F]_(n2, n1)} {D: 'M[F]_n2}:
+  A \in unitmx ->
+  block_mx A B C D = (block_mx 1%:M 0 (C *m invmx A) 1%:M) *m
+                     (block_mx A 0 0 (D - C *m invmx A *m B)) *m
+                     (block_mx 1%:M (invmx A *m B) 0 1%:M).
+Proof.
+  move => Ai. rewrite !mulmx_block !mulmx0 !mul0mx !mulmx1 !mul1mx !addr0 add0r (mulmxA A).
+  by rewrite (mulmxV Ai) -(mulmxA C) (mulVmx Ai) !mulmx1 mul1mx mulmxA addrCA subrr addr0.
+Qed.
+
 Lemma det_block_mx {n1 n2} (A: 'M[F]_(n1+n2)):
   ulsubmx A \in unitmx ->
   \det A = \det (ulsubmx A) * \det (drsubmx A - dlsubmx A *m invmx (ulsubmx A) *m ursubmx A).
-Admitted.
+Proof.
+  move => Ai. rewrite -{1}(submxK A) (block_decompose Ai) !det_mulmx !det_lblock det_ublock.
+  by rewrite !det1 !mulr1 mul1r.
+Qed.
 
 Definition diagonal_of {n} (A: 'M[F]_n.+1) : 'rV[F]_n.+1 :=
   \row_i (A i i).
