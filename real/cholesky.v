@@ -8,7 +8,7 @@ Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 
 Import GroupScope.
-Import GRing.Theory.
+Import GRing.Theory Order.POrderTheory.
 Local Open Scope ring_scope.
 
 Local Notation "A ^T" := (trmx A) : ring_scope.
@@ -95,6 +95,7 @@ Qed.
 End Solve_LT.
 
 Require Import mathcomp.algebra.ssrnum.
+Import Num.Theory.
 
 Section Cholesky.
 
@@ -151,8 +152,52 @@ Proof.
  rewrite scalar_mxC mul_scalar_mx scale0r addr0 mulmxA //.
 Qed.
 
+Lemma posdef'_det_not_zero: forall {n} (A: 'M[F]_n), posdef' A -> \det A != 0.
+Proof.
+  move => n A. rewrite /posdef'. apply: contraPneq.
+  move /eqP /det0P => [v Hn0 Hm0] Hposdef.
+  have: v^T != 0 by move: Hn0; apply: contraTneq; move /eqP; rewrite trmx_eq0; move ->.
+  move => HTn0. move: Hposdef => /(_ v^T HTn0).
+  by rewrite trmxK Hm0 mul0mx mxE ltxx.
+Qed.
+
+Lemma posdef'_interval_det_not_zero: forall {n} (A: 'M[F]_n),
+    posdef' A -> forall (t: F), 0 <= t <= 1 -> \det (t%:M + (1 - t) *: A) != 0.
+Proof.
+  move => n A Hpos t /andP [Hle0 Hle1]. apply: posdef'_det_not_zero.
+  rewrite /posdef' => x Hx.
+  rewrite mulmxDr mulmxDl mul_mx_scalar -mulmxA -!scalemxAl -scalemxAr mulmxA.
+  rewrite mxE [x in 0 < x + _]mxE [x in 0 < _ + x]mxE.
+  have Hpos1: 0 < (x^T *m A *m x) 0 0 by move: Hpos; rewrite /posdef' => /(_ x Hx) //.
+  have Hpos2: 0 < (x^T *m x) 0 0. {
+    move: {Hpos1 Hpos Hle0 Hle1 t A} Hx. elim/col_ind: x => [x | m r x Hi].
+    - by rewrite !flatmx0 mulmx0 mxE => /eqP.
+    - rewrite tr_col_mx mul_row_col. case: (r == 0) /eqP => [-> | Hn _].
+      + rewrite mulmx0 add0r. case: (x == 0) /eqP => [-> | /eqP Hn _];
+        first by rewrite col_mx0 => /eqP. by apply: (Hi Hn).
+      + have Hlt0r: 0 < (r^T *m r) 0 0. {
+          rewrite (@mx11_scalar _ r) tr_scalar_mx -scalar_mxM mxE /= mulr1n -GRing.expr2.
+          have: 0 <= r 0 0 ^+ 2 by apply: sqr_ge0.
+          rewrite le0r => /orP [ | //]. rewrite sqrf_eq0.
+          move: Hn. rewrite {1}(@mx11_scalar _ r) => Hn Heq.
+          move: Heq Hn => /eqP -> /eqP. by rewrite -scalemx1 scale0r => /eqP. }
+        case: (x == 0) /eqP => [-> | /eqP Hneq]; first by rewrite mulmx0 addr0.
+        rewrite mxE. apply: ltr_pDl => //. by apply: Hi. }
+  move: Hle0. rewrite le0r.
+  move /orP => [/eqP -> | Heq]; first by rewrite mul0r add0r subr0 mul1r.
+  apply: ltr_pwDl; first by apply: mulr_gt0.
+  apply: mulr_ge0; last by apply: ltW.
+  by rewrite subr_ge0.
+Qed.
+
+(* Dan Shved (https://math.stackexchange.com/users/47560/dan-shved),
+   Does a positive definite matrix have positive determinant?, URL
+   (version: 2020-11-22): https://math.stackexchange.com/q/894397 *)
 Lemma det_positive_definite: forall {n} (A: 'M[F]_(n.+1)),
   positive_definite A -> 0 < \det A .
+Proof.
+  move => n A [Hs Hp].
+  remember ((fun t  => \det (t%:M + (1 - t)%:M *m A)) :> F -> F) as f.
 Admitted.
 
 Lemma block_decompose {n1 n2} {A: 'M[F]_n1} {B: 'M[F]_(n1, n2)}
@@ -196,16 +241,16 @@ elim => [|n IHn].
  simpl.
  move => A [H H0].
  repeat split.
- + rewrite /upper_triangular tr_scalar_mx; apply scalar_mx_is_trig. 
+ + rewrite /upper_triangular tr_scalar_mx; apply scalar_mx_is_trig.
  + move => i. rewrite !mxE eqxx /= mulr1n.
    move :(H0 1 ltac:(apply oner_neq0)).
-   rewrite trmx1 mul1mx mulmx1 Num.Theory.sqrtr_gt0 //.
- + rewrite tr_scalar_mx -mulmxE  mul_scalar_mx scale_scalar_mx -expr2 Num.Theory.sqr_sqrtr
+   rewrite trmx1 mul1mx mulmx1 sqrtr_gt0 //.
+ + rewrite tr_scalar_mx -mulmxE  mul_scalar_mx scale_scalar_mx -expr2 sqr_sqrtr
            -?mx11_scalar //=.
    move : (H0 1).
    rewrite !mulmxE trmx1 mulr1 mul1r.
    move => H1.
-   apply Order.POrderTheory.ltW.
+   apply ltW.
    apply H1, oner_neq0.
 -
 move => A.
@@ -223,7 +268,7 @@ set α := drsubmx A.
 set c := ursubmx A.
 have DN: diagonal_nonzero R.
   move => i. apply /negP => /eqP EQ. move :(DP i). rewrite EQ => GT.
-  eapply Order.POrderTheory.lt_nsym; eassumption.
+  eapply lt_nsym; eassumption.
 have H2 := @solve_LT_correct _ _ (R^T) c UPPER
                ltac:(by move => i; rewrite !mxE; apply DN).
 move :(solve_LT _ _) => r in H2 *.
@@ -239,7 +284,7 @@ assert (POSβ: 0 < β2). {
  have Adet: 0 < \det A1
   by apply det_positive_definite, positive_definite_ulsubmx, PA.
  have A1unit: A1 \in unitmx
-  by rewrite unitmxE unitfE; apply Num.Theory.lt0r_neq0, Adet.
+  by rewrite unitmxE unitfE; apply lt0r_neq0, Adet.
  have HH := PA; apply det_positive_definite in HH; move :HH.
  rewrite (@det_block_mx _ _ A) // -/A1 -/c -/α EQA block_mxKdl -H2 trmx_mul trmxK
         mulmxA -!(mulmxA r^T) -{2}H1.
@@ -249,25 +294,25 @@ assert (POSβ: 0 < β2). {
  move => GG. rewrite {}GG mulVmx ?unitmx_tr // mul1mx det_mx11 mxE /β2.
  move :(α 0 0) => a in β2 β *.
  move :(r^T *m r) => rr.
- rewrite mxE Num.Theory.pmulr_rgt0 //.
+ rewrite mxE pmulr_rgt0 //.
 }
 repeat split.
 + rewrite /upper_triangular tr_block_mx is_trig_block_mx //.
 rewrite tr_scalar_mx trmx0.
 apply /andP; split; auto.  (* HERE *)
-apply /andP; split; auto. 
+apply /andP; split; auto.
 + (* diagonal_positive *)
   move => i. rewrite castmxE /= esymK.
   case: (split_ordP (cast_ord add_two i)) => i0 e.
   * rewrite e block_mxEul //.
-  * rewrite e block_mxEdr ord1 mxE eqxx /= mulr1n /β Num.Theory.sqrtr_gt0 //.
+  * rewrite e block_mxEdr ord1 mxE eqxx /= mulr1n /β sqrtr_gt0 //.
 + (* R^T * R = A *)
 f_equal.
 rewrite mulmx_block !mulmx0 !addr0 !mulmxE !H1 !trmx0 !mul0mx !addr0
     -{2}(trmxK R) -trmx_mul H2 tr_scalar_mx EQA.
 f_equal.
-rewrite -mulmxE -scalar_mxM -expr2 Num.Theory.sqr_sqrtr;
- last by apply Order.POrderTheory.ltW.
+rewrite -mulmxE -scalar_mxM -expr2 sqr_sqrtr;
+ last by apply ltW.
 rewrite (mx11_scalar (_ *m _)) addrC scalar_mx_is_additive
         -addrA addNr addr0 -mx11_scalar //.
 Qed.
