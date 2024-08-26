@@ -94,12 +94,13 @@ Qed.
 
 End Solve_LT.
 
-Require Import mathcomp.algebra.ssrnum.
-Import Num.Theory.
+From mathcomp Require Import ssrnum reals interval classical_sets topology normedtype.
+Import Num.Theory Num.Def numFieldTopology.Exports.
+Local Open Scope classical_set_scope.
 
 Section Cholesky.
 
-Variable F : rcfType.  (* rcf = real closed field *)
+Variable F : realType.  (* rcf = real closed field *)
 
 Lemma add_two {n}: n.+2 = n.+1+1.
 Proof. rewrite addrC //. Qed.
@@ -156,9 +157,8 @@ Lemma posdef'_det_not_zero: forall {n} (A: 'M[F]_n), posdef' A -> \det A != 0.
 Proof.
   move => n A. rewrite /posdef'. apply: contraPneq.
   move /eqP /det0P => [v Hn0 Hm0] Hposdef.
-  have: v^T != 0 by move: Hn0; apply: contraTneq; move /eqP; rewrite trmx_eq0; move ->.
-  move => HTn0. move: Hposdef => /(_ v^T HTn0).
-  by rewrite trmxK Hm0 mul0mx mxE ltxx.
+  have HTn0: v^T != 0 by move: Hn0; apply: contraTneq; move /eqP; rewrite trmx_eq0; move ->.
+  move /(_ v^T HTn0): Hposdef. by rewrite trmxK Hm0 mul0mx mxE ltxx.
 Qed.
 
 Lemma posdef'_interval_det_not_zero: forall {n} (A: 'M[F]_n),
@@ -170,11 +170,11 @@ Proof.
   rewrite mxE [x in 0 < x + _]mxE [x in 0 < _ + x]mxE.
   have Hpos1: 0 < (x^T *m A *m x) 0 0 by move: Hpos; rewrite /posdef' => /(_ x Hx) //.
   have Hpos2: 0 < (x^T *m x) 0 0. {
-    move: {Hpos1 Hpos Hle0 Hle1 t A} Hx. elim/col_ind: x => [x | m r x Hi].
+    elim /col_ind: {Hpos1 Hpos Hle0 Hle1 t A} x Hx => [x | m r x Hi].
     - by rewrite !flatmx0 mulmx0 mxE => /eqP.
     - rewrite tr_col_mx mul_row_col. case: (r == 0) /eqP => [-> | Hn _].
       + rewrite mulmx0 add0r. case: (x == 0) /eqP => [-> | /eqP Hn _];
-        first by rewrite col_mx0 => /eqP. by apply: (Hi Hn).
+        first by rewrite col_mx0 => /eqP. exact: Hi Hn.
       + have Hlt0r: 0 < (r^T *m r) 0 0. {
           rewrite (@mx11_scalar _ r) tr_scalar_mx -scalar_mxM mxE /= mulr1n -GRing.expr2.
           have: 0 <= r 0 0 ^+ 2 by apply: sqr_ge0.
@@ -182,12 +182,41 @@ Proof.
           move: Hn. rewrite {1}(@mx11_scalar _ r) => Hn Heq.
           move: Heq Hn => /eqP -> /eqP. by rewrite -scalemx1 scale0r => /eqP. }
         case: (x == 0) /eqP => [-> | /eqP Hneq]; first by rewrite mulmx0 addr0.
-        rewrite mxE. apply: ltr_pDl => //. by apply: Hi. }
+        rewrite mxE. apply: ltr_pDl => //. exact: Hi. }
   move: Hle0. rewrite le0r.
   move /orP => [/eqP -> | Heq]; first by rewrite mul0r add0r subr0 mul1r.
-  apply: ltr_pwDl; first by apply: mulr_gt0.
-  apply: mulr_ge0; last by apply: ltW.
+  apply: ltr_pwDl; first exact: mulr_gt0.
+  apply: mulr_ge0; last exact: ltW.
   by rewrite subr_ge0.
+Qed.
+
+Lemma addr_continuous {K : numFieldType} {V : pseudoMetricNormedZmodType K} (x: V) :
+  continuous ( +%R x).
+Proof. by move=> t; apply: (cvg_comp2 (cvg_cst _) cvg_id (@add_continuous _ _ (_, _))). Qed.
+
+Lemma interval_continuous: forall {n} (A: 'M[F]_n.+1),
+    continuous ((fun t  => t%:M + (1 - t) *: A) :> F -> 'M[F]_n.+1).
+Proof.
+  move=> n A.
+  have -> : ((fun t => t%:M + (1 - t) *: A) :> F -> 'M[F]_n.+1) =
+          ((fun t => A + t *: (1%:M - A)) :> F -> 'M[F]_n.+1). {
+    by under boolp.eq_fun do
+           rewrite -scalemx1 scalerBl scale1r addrC -addrA [- _ + _] addrC -scalerBr. }
+  rewrite /continuous_at. move => x. apply: continuous_comp. apply: scalel_continuous.
+  by apply: addr_continuous.
+Qed.
+
+Lemma determinant_continuous: forall {n}, continuous (determinant :> 'M[F]_n.+1 -> F).
+Proof.
+  move=> n.
+Admitted.
+
+Lemma interval_det_continuous: forall {n} (A: 'M[F]_n.+1),
+    continuous ((fun t  => \det (t%:M + (1 - t) *: A)) :> F -> F).
+Proof.
+  move => n A. rewrite /continuous_at. move=> x.
+  apply: continuous_comp. apply: interval_continuous.
+  by apply: determinant_continuous.
 Qed.
 
 (* Dan Shved (https://math.stackexchange.com/users/47560/dan-shved),
@@ -197,8 +226,23 @@ Lemma det_positive_definite: forall {n} (A: 'M[F]_(n.+1)),
   positive_definite A -> 0 < \det A .
 Proof.
   move => n A [Hs Hp].
-  remember ((fun t  => \det (t%:M + (1 - t)%:M *m A)) :> F -> F) as f.
-Admitted.
+  remember ((fun t  => \det (t%:M + (1 - t) *: A)) :> F -> F) as f.
+  have Hfc: {within `[0, 1], continuous f}
+    by rewrite Heqf; apply: continuous_subspaceT; apply: interval_det_continuous.
+  have Hn: ~ (exists2 c : F, c \in `[0, 1]%R & f c = 0). {
+    move => [c Hin Hc]. move: Hin. rewrite itv_boundlr /<=%O /= => Hin.
+    move: Hc. rewrite Heqf. apply/eqP. by apply : (posdef'_interval_det_not_zero Hp) Hin. }
+  have: ~ (minr (f 0) (f 1) <= 0 <= maxr (f 0) (f 1))
+    by move: Hn; apply: contra_not (IVT ler01 Hfc).
+  move/negP /nandP. rewrite -!Order.TotalTheory.ltNge. move {Hn}.
+  have -> : f 0 = \det A by rewrite Heqf subr0 scale1r -scalemx1 scale0r add0r.
+  have -> : f 1 = 1 by rewrite Heqf subrr scale0r addr0 det1. move=> [Hlt | Hlt]; move: Hlt.
+  - rewrite minElt. case: ifPn => [// |]. rewrite -Order.TotalTheory.leNgt.
+    move/[swap] => _. apply: lt_le_trans ltr01.
+  - rewrite maxElt. case: ifPn => [_ |].
+    + rewrite Order.TotalTheory.ltNge. move /negP => Hc. exfalso. apply: Hc. by apply: ler01.
+    + rewrite -Order.TotalTheory.leNgt. move/[swap] => _. apply: lt_le_trans ltr01.
+Qed.
 
 Lemma block_decompose {n1 n2} {A: 'M[F]_n1} {B: 'M[F]_(n1, n2)}
   {C: 'M[F]_(n2, n1)} {D: 'M[F]_n2}:
