@@ -105,6 +105,7 @@ Variable F : realType.  (* rcf = real closed field *)
 Lemma add_two {n}: n.+2 = n.+1+1.
 Proof. rewrite addrC //. Qed.
 
+(* This algorithm is from Theorem 10.1 of Higham, Accuracy and Stability of Numerical Methods *)
 Fixpoint cholesky {n} : 'M[F]_n.+1 -> 'M[F]_n.+1 :=
   match n with
   | 0 => fun A => (Num.sqrt (A 0 0))%:M
@@ -112,11 +113,11 @@ Fixpoint cholesky {n} : 'M[F]_n.+1 -> 'M[F]_n.+1 :=
          let A' : 'M_(n'.+1+1):= castmx (add_two,add_two) A in
          let A1 := ulsubmx A' in
          let c := ursubmx A' in
-         let α := drsubmx A' 0 0in
+         let α := drsubmx A' in
          let R1 := cholesky A1 in
          let r := solve_LT R1^T c in
-         let β := Num.sqrt (α - ((r^T *m r) 0 0)) in
-         castmx (esym add_two, esym add_two) (block_mx R1 r 0 β%:M)
+         let β := map_mx Num.sqrt (α - ((r^T *m r))) in
+         castmx (esym add_two, esym add_two) (block_mx R1 r 0 β)
   end.
 
 Definition diagonal_positive {n} (A: 'M[F]_n) :=
@@ -317,14 +318,14 @@ have H2 := @solve_LT_correct _ _ (R^T) c UPPER
                ltac:(by move => i; rewrite !mxE; apply DN).
 move :(solve_LT _ _) => r in H2 *.
 set β2 := (_ -  _).
-set β : F := Num.sqrt β2.
+set β := map_mx Num.sqrt β2.
 have EQA: A = block_mx A1 c c^T α
     by rewrite -(submxK A) trmx_ursub (proj1 PA).
 have Runit: R \in unitmx.
   {  rewrite unitmxE unitfE det_upper_triangular // det_diag.
      apply /prodf_neq0 => i _. by rewrite mxE.
   }
-assert (POSβ: 0 < β2). {
+assert (POSβ: 0 < β2 0 0). {
  have Adet: 0 < \det A1
   by apply det_positive_definite, positive_definite_ulsubmx, PA.
  have A1unit: A1 \in unitmx
@@ -342,23 +343,25 @@ assert (POSβ: 0 < β2). {
 }
 repeat split.
 + rewrite /upper_triangular tr_block_mx is_trig_block_mx //.
-rewrite tr_scalar_mx trmx0.
+rewrite trmx0.
 apply /andP; split; auto.  (* HERE *)
 apply /andP; split; auto.
+apply mx11_is_trig.
 + (* diagonal_positive *)
   move => i. rewrite castmxE /= esymK.
   case: (split_ordP (cast_ord add_two i)) => i0 e.
   * rewrite e block_mxEul //.
-  * rewrite e block_mxEdr ord1 mxE eqxx /= mulr1n /β sqrtr_gt0 //.
+  * rewrite e block_mxEdr ord1 mxE sqrtr_gt0 //.
 + (* R^T * R = A *)
 f_equal.
 rewrite mulmx_block !mulmx0 !addr0 !mulmxE !H1 !trmx0 !mul0mx !addr0
-    -{2}(trmxK R) -trmx_mul H2 tr_scalar_mx EQA.
-f_equal.
-rewrite -mulmxE -scalar_mxM -expr2 sqr_sqrtr;
+    -{2}(trmxK R) -trmx_mul H2 EQA.
+ f_equal.
+Search (_ ^T = _).
+rewrite (mx11_scalar β) tr_scalar_mx -mulmxE -scalar_mxM /β mxE
+ -expr2 sqr_sqrtr;
  last by apply ltW.
-rewrite (mx11_scalar (_ *m _)) addrC scalar_mx_is_additive
-        -addrA addNr addr0 -mx11_scalar //.
+ rewrite -mx11_scalar /β2 (addrC α) addrA addrN add0r //.
 Qed.
 
 End Cholesky.
