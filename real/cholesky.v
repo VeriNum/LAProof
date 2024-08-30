@@ -94,8 +94,8 @@ Qed.
 
 End Solve_LT.
 
-From mathcomp Require Import ssrnum reals interval classical_sets topology normedtype.
-Import Num.Theory Num.Def numFieldTopology.Exports.
+From mathcomp Require Import ssrnum reals interval classical_sets topology normedtype boolp.
+Import Num.Theory Num.Def numFieldTopology.Exports numFieldNormedType.Exports.
 Local Open Scope classical_set_scope.
 
 Section Cholesky.
@@ -199,18 +199,54 @@ Lemma interval_continuous: forall {n} (A: 'M[F]_n.+1),
     continuous ((fun t  => t%:M + (1 - t) *: A) :> F -> 'M[F]_n.+1).
 Proof.
   move=> n A.
-  have -> : ((fun t => t%:M + (1 - t) *: A) :> F -> 'M[F]_n.+1) =
-          ((fun t => A + t *: (1%:M - A)) :> F -> 'M[F]_n.+1). {
-    by under boolp.eq_fun do
-           rewrite -scalemx1 scalerBl scale1r addrC -addrA [- _ + _] addrC -scalerBr. }
+  under eq_fun do
+      rewrite -scalemx1 scalerBl scale1r addrC -addrA [- _ + _] addrC -scalerBr.
   rewrite /continuous_at. move => x. apply: continuous_comp. apply: scalel_continuous.
   by apply: addr_continuous.
 Qed.
 
+Lemma fun_mul_continuous {K : numFieldType} {T: topologicalType} (f g: T -> K):
+  continuous f -> continuous g -> continuous (fun M : T => f M * g M).
+Proof.
+  move => cf cg. rewrite /continuous_at => x. apply: continuousM.
+  by apply cf. by apply cg.
+Qed.
+
+Lemma prod_continuous {K : numFieldType} {m: nat} {T: topologicalType} (f: T -> 'I_m.+1 -> K):
+  (forall i, continuous (f ^~ i)) -> continuous (fun A : T => \prod_i (f A) i).
+Proof.
+  move: f. elim: m => [|m IHm] => f cf.
+  - have -> : (fun A => \prod_i f A i) = (fun A => f A ord0).
+    by under eq_fun do rewrite big_ord1. apply: cf.
+  - have -> : (fun A => \prod_i f A i)=(fun A => f A ord0 * \prod_(i < m.+1) f A (lift ord0 i)).
+    { by under eq_fun do rewrite big_ord_recl. }
+    apply fun_mul_continuous. by apply: cf. by apply: IHm => i.
+Qed.
+
+Lemma sum_continuous {T: topologicalType} {I: eqType} {K : numFieldType}
+  {V : normedModType K} (f: T -> I -> V) (r: seq I):
+  (forall i, continuous (f ^~ i)) -> continuous (fun A : T => \sum_(i <- r) f A i).
+Proof.
+  move => cf. elim: r => [|h rest IHn].
+  - have -> : (fun A : T => \sum_(i <- [::]) f A i) = (fun A : T => 0).
+    { by under eq_fun do rewrite big_nil. } apply: cst_continuous.
+  - have -> : (fun A : T => \sum_(i <- (h :: rest)) f A i) =
+               (fun A : T => f A h + \sum_(i <- rest) f A i).
+    { by under eq_fun do rewrite big_cons. }.
+    rewrite /continuous_at => x. apply: continuousD. by apply cf. by apply IHn.
+Qed.
+
 Lemma determinant_continuous: forall {n}, continuous (determinant :> 'M[F]_n.+1 -> F).
 Proof.
-  move=> n.
-Admitted.
+  rewrite /determinant => n.
+  remember (fun (A : 'M_n.+1) (s : 'S_n.+1) => (-1) ^+ s * \prod_i A i (s i) :> F) as f.
+  have -> : (fun A : 'M_n.+1 => \sum_(s: 'S_n.+1) (-1) ^+ s * \prod_i A i (s i)) =
+             (fun A : 'M_n.+1 => \sum_s f A s) by rewrite Heqf.
+  apply: sum_continuous => /= => s. rewrite Heqf.
+  apply: fun_mul_continuous => /=.
+  - by apply: cst_continuous.
+  - apply: prod_continuous => /= => i. by apply: coord_continuous.
+Qed.
 
 Lemma interval_det_continuous: forall {n} (A: 'M[F]_n.+1),
     continuous ((fun t  => \det (t%:M + (1 - t) *: A)) :> F -> F).
