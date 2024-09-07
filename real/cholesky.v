@@ -14,6 +14,18 @@ Local Open Scope ring_scope.
 
 Local Notation "A ^T" := (trmx A) : ring_scope.
 
+Lemma pred_castmx_mn: forall 
+  [F: Type] (P: forall [m n], 'M[F]_(m,n) -> Prop),
+  forall {m m' n n'} (eqm: m=m') (eqn: n=n') (A: 'M[F]_(m,n)),
+   P (castmx (eqm,eqn) A) = P A.
+Proof. intros. subst m' n'. by rewrite castmx_id. Qed.
+
+Lemma pred_castmx: forall 
+  [F: Type] (P: forall [n], 'M[F]_n -> Prop),
+  forall {n n'} (eqn: n=n') (A: 'M[F]_n),
+   P (castmx (eqn,eqn) A) = P A.
+Proof. intros. subst n'. by rewrite castmx_id. Qed.
+
 Section SemiRing.
 
 Variable F: semiRingType.
@@ -27,10 +39,6 @@ Qed.
 
 Definition symmetric {n} (A: 'M[F]_n) := A^T=A.
 
-Definition symmetric_castmx {n n'} (eqn: n=n') (A: 'M_n) :
-  symmetric (castmx (eqn,eqn) A) = symmetric A.
-Proof. subst n'. by rewrite castmx_id. Qed.
-
 Lemma symmetric_ulsubmx:
  forall {n} (A: 'M_(n+1)),
   symmetric A -> symmetric (ulsubmx A).
@@ -38,11 +46,7 @@ Proof.
 move => n A H. rewrite /symmetric trmx_ulsub H //.
 Qed.
 
-Definition upper_triangular {n} (A: 'M[F]_n) := is_trig_mx A^T.
-
-Definition upper_triangular_castmx {n n'} (eqn: n=n') (A: 'M_n) :
-  upper_triangular (castmx (eqn,eqn) A) = upper_triangular A.
-Proof. subst n'. by rewrite castmx_id. Qed.
+Definition upper_triangular {n} (A: 'M[F]_n) : Prop := is_trig_mx A^T.
 
 Definition diagonal_nonzero {n} (A: 'M[F]_n) :=
   forall i, A i i != 0.
@@ -101,7 +105,7 @@ Local Open Scope classical_set_scope.
 
 Section Cholesky.
 
-Variable F : realType.  (* rcf = real closed field *)
+Variable F : realType.
 
 Lemma add_two {n}: n.+2 = n.+1+1.
 Proof. rewrite addrC //. Qed.
@@ -124,25 +128,11 @@ Fixpoint cholesky {n} : 'M[F]_n.+1 -> 'M[F]_n.+1 :=
 Definition diagonal_positive {n} (A: 'M[F]_n) :=
   forall i, A i i > 0 :>F.
 
-
-Lemma diagonal_positive_castmx {n n'} (eqn: n=n') (A: 'M_n) :
-  diagonal_positive (castmx (eqn,eqn) A) = diagonal_positive A.
-Proof. subst n'. by rewrite castmx_id. Qed.
-
 Definition posdef' {n} (A: 'M_n) :=
    forall x : 'cV_n, x != 0 -> (x^T *m A *m x) 0 0 > 0 :>F.
 
 Definition positive_definite {n} (A: 'M_n) :=
   symmetric A /\ posdef' A.
-
-
-Lemma posdef'_castmx {n n'} (eqn: n=n') (A: 'M_n) :
-  posdef' (castmx (eqn,eqn) A) = posdef' A.
-Proof. subst n'. by rewrite castmx_id. Qed.
-
-Lemma positive_definite_castmx {n n'} (eqn: n=n') (A: 'M_n) :
-  positive_definite (castmx (eqn,eqn) A) = positive_definite A.
-Proof. subst n'. by rewrite castmx_id. Qed.
 
 Lemma positive_definite_ulsubmx:
  forall {n} (A: 'M_(n+1)),
@@ -159,9 +149,9 @@ Proof.
    apply H0.
  }
  move :(H (col_mx x 0%:M) H2).
- rewrite -{1}(submxK A) /block_mx (tr_col_mx x) (mul_row_col x^T).
- rewrite tr_scalar_mx mul_scalar_mx scale0r addr0 -mulmxA (mul_row_col (ulsubmx A)).
- rewrite scalar_mxC mul_scalar_mx scale0r addr0 mulmxA //.
+ rewrite -{1}(submxK A) /block_mx (tr_col_mx x) (mul_row_col x^T)
+     tr_scalar_mx mul_scalar_mx scale0r addr0 -mulmxA (mul_row_col (ulsubmx A))
+     scalar_mxC mul_scalar_mx scale0r addr0 mulmxA //.
 Qed.
 
 Lemma posdef'_det_not_zero: forall {n} (A: 'M[F]_n), posdef' A -> \det A != 0.
@@ -177,8 +167,8 @@ Lemma posdef'_interval_det_not_zero: forall {n} (A: 'M[F]_n),
 Proof.
   move => n A Hpos t /andP [Hle0 Hle1]. apply: posdef'_det_not_zero.
   rewrite /posdef' => x Hx.
-  rewrite mulmxDr mulmxDl mul_mx_scalar -mulmxA -!scalemxAl -scalemxAr mulmxA.
-  rewrite mxE [x in 0 < x + _]mxE [x in 0 < _ + x]mxE.
+  rewrite mulmxDr mulmxDl mul_mx_scalar -mulmxA -!scalemxAl -scalemxAr mulmxA
+         mxE [x in 0 < x + _]mxE [x in 0 < _ + x]mxE.
   have Hpos1: 0 < (x^T *m A *m x) 0 0 by move: Hpos; rewrite /posdef' => /(_ x Hx) //.
   have Hpos2: 0 < (x^T *m x) 0 0. {
     elim /col_ind: {Hpos1 Hpos Hle0 Hle1 t A} x Hx => [x | m r x Hi].
@@ -335,29 +325,26 @@ Theorem cholesky_correct:
     let R := cholesky A in
       upper_triangular R /\ diagonal_positive R /\ R^T * R = A.
 Proof.
-elim => [|n IHn].
+elim => [|n IHn] A.
 -
  simpl.
- move => A [H H0].
+ move => [H H0].
  repeat split.
  + apply mx11_is_trig.
  + move => i. rewrite ord1 !mxE.
    move :(H0 1 ltac:(apply oner_neq0)).
    rewrite trmx1 mul1mx mulmx1 sqrtr_gt0 //.
  + rewrite (mx11_scalar A) !map_mx11 tr_scalar_mx -mulmxE -scalar_mxM -expr2 sqr_sqrtr //.
-   move : (H0 1).
+   move : (H0 1 (oner_neq0 _)).
    rewrite !mulmxE trmx1 mulr1 mul1r.
-   move => H1.
    apply ltW.
-   apply H1, oner_neq0.
 -
-move => A.
 rewrite -(castmxK add_two add_two A).
 set A' : 'M_(n.+1 + 1) := castmx _ A.
-rewrite positive_definite_castmx.
-clearbody A'; clear A. move :A' => A PA.
+rewrite pred_castmx.
+move :A' => {A} A PA.
 rewrite /cholesky -/cholesky
-   upper_triangular_castmx trmx_cast tr_block_mx -mulmxE mulmx_castmx castmxKV /=.
+ pred_castmx trmx_cast tr_block_mx -mulmxE mulmx_castmx castmxKV /=.
 set A1 := ulsubmx A.
 case: (IHn A1) => [ | UPPER [DP H1]] {IHn};
   first by apply positive_definite_ulsubmx.
@@ -374,8 +361,8 @@ set β2 := α - r^T *m r.
 set β := map_mx Num.sqrt β2.
 have EQA: A = block_mx A1 c c^T α
     by rewrite -(submxK A) trmx_ursub (proj1 PA).
-have Runit: R \in unitmx.
-  {  rewrite unitmxE unitfE det_upper_triangular // det_diag.
+have Runit: R \in unitmx. {
+     rewrite unitmxE unitfE det_upper_triangular // det_diag.
      apply /prodf_neq0 => i _. by rewrite mxE.
   }
 assert (POSβ: 0 < β2 0 0). {
@@ -383,48 +370,41 @@ assert (POSβ: 0 < β2 0 0). {
   by apply det_positive_definite, positive_definite_ulsubmx, PA.
  have A1unit: A1 \in unitmx
   by rewrite unitmxE unitfE; apply lt0r_neq0, Adet.
- have HH := PA; apply det_positive_definite in HH; move :HH.
+ move :(det_positive_definite PA).
  rewrite (@det_block_mx _ _ A) // -/A1 -/c -/α EQA block_mxKdl -H2 trmx_mul trmxK
         mulmxA -!(mulmxA r^T) -{2}H1.
  rewrite -H1 in A1unit.
  move :(mulmxK A1unit (invmx R^T)).
  rewrite !(mulmxA (invmx _)) mulVmx ?unitmx_tr // mul1mx.
  move => GG. rewrite {}GG mulVmx ?unitmx_tr // mul1mx det_mx11 mxE /β2.
- move :(α 0 0) => a in β2 β *.
- move :(r^T *m r) => rr.
  rewrite mxE pmulr_rgt0 //.
 }
 repeat split.
-+ rewrite /upper_triangular tr_block_mx is_trig_block_mx //.
-rewrite trmx0.
-apply /andP; split; auto.  (* HERE *)
-apply /andP; split; auto.
-apply mx11_is_trig.
-+ (* diagonal_positive *)
-  move => i. rewrite castmxE /= esymK.
++ rewrite /upper_triangular tr_block_mx is_trig_block_mx // trmx0
+       eqxx UPPER mx11_is_trig //.
++ move => i. rewrite castmxE /= esymK.
   case: (split_ordP (cast_ord add_two i)) => i0 e.
   * rewrite e block_mxEul //.
   * rewrite e block_mxEdr ord1 mxE sqrtr_gt0 //.
-+ (* R^T * R = A *)
++
 f_equal.
 rewrite mulmx_block !mulmx0 !addr0 !mulmxE !H1 !trmx0 !mul0mx !addr0
     -{2}(trmxK R) -trmx_mul H2 EQA.
- f_equal.
+f_equal.
 rewrite (mx11_scalar β) tr_scalar_mx -mulmxE -scalar_mxM /β mxE
- -expr2 sqr_sqrtr;
+  -expr2 sqr_sqrtr;
  last by apply ltW.
- rewrite -mx11_scalar /β2 (addrC α) addrA addrN add0r //.
+rewrite -mx11_scalar /β2 (addrC α) addrA addrN add0r //.
 Qed.
 
 Lemma vecnorm2_ge0: forall {n} (x: 'cV[F]_n), 0 <= (x^T *m x) 0 0.
 Proof.
 elim => [ | n IHn].
-- move => x. rewrite flatmx0. rewrite trmx0 mulmx0 mxE. apply le_refl.
+- move => x. rewrite flatmx0 trmx0 mulmx0 mxE //.
 -
 rewrite (_: n.+1 = n + 1); last by lia.
 move => x.
-rewrite -(vsubmxK x) tr_col_mx mul_row_col.
-rewrite mxE.
+rewrite -(vsubmxK x) tr_col_mx mul_row_col mxE.
 apply addr_ge0.
 apply IHn.
 rewrite (mx11_scalar (dsubmx x)).
@@ -437,7 +417,7 @@ Lemma vecnorm0: forall {n : nat} (x : 'cV[F]_n),
          (x^T *m x) 0 0 = 0 -> x=0.
 Proof.
 elim => [ | n IHn].
-- move => x. rewrite flatmx0. rewrite trmx0 mulmx0 mxE //.
+- move => x. rewrite flatmx0 trmx0 mulmx0 mxE //.
 -
 rewrite (_: n.+1 = n + 1); last by lia.
 move => x.
@@ -471,18 +451,14 @@ elim => [ | n IHn] A.
 - rewrite -(castmxK add_two add_two A).
 set A' : 'M_(n.+1 + 1) := castmx _ A.
 clearbody A'; clear A; move :A' => A.
-rewrite /cholesky -/cholesky upper_triangular_castmx.
+rewrite /cholesky -/cholesky pred_castmx.
 set A1 := ulsubmx _.
 move :(IHn A1). rewrite /upper_triangular {IHn} => IH.
 rewrite tr_block_mx is_trig_block_mx // trmx0 eqxx IH /=.
 apply mx11_is_trig.
 Qed.
 
-Lemma Ax0_unitmx: forall {n} (A: 'M[F]_n) (x: 'cV[F]_n),
-    A \in unitmx -> x != 0 -> A *m x != 0.
-Admitted.
-
-Lemma cholesky_posdef':
+Local Lemma cholesky_posdef':
   forall (n: nat) (A: 'M_n.+1),
     symmetric A ->
     let R := cholesky A in
@@ -509,11 +485,11 @@ elim => [|n IHn].
 move => A.
 rewrite -(castmxK add_two add_two A).
 set A' : 'M_(n.+1 + 1) := castmx _ A.
-rewrite posdef'_castmx symmetric_castmx.
+rewrite pred_castmx.
 clearbody A'; clear A.
 move :A' => A PA.
 rewrite /cholesky -/cholesky
-    diagonal_positive_castmx trmx_cast (*tr_block_mx*) -mulmxE mulmx_castmx castmxKV /=.
+    !pred_castmx trmx_cast -mulmxE mulmx_castmx castmxKV /=.
 set A1 := ulsubmx A.
 set α := drsubmx A.
 set c := ursubmx A.
@@ -526,15 +502,16 @@ clear IHn.
 move :(cholesky_upper_triangular A1) => UT1.
 move :(cholesky _) => R1 in UT1 DP *.
 move => H1 PD.
+set r := solve_LT R1^T c in DP *.
 have DPR: diagonal_positive R1.
   by move => i; move :(DP (lshift 1 i)); rewrite block_mxEul.
-have H2: R1^T *m solve_LT R1^T c = c. {
+have H2: R1^T *m r = c. {
      apply solve_LT_correct.
      apply UT1.
      move => i. rewrite mxE. 
      by apply lt0r_neq0. 
   }
-move :(solve_LT _ _) => r in DP H2 *.
+move :r => r in DP H2 *.
 set β2 : 'M_1 := α - r^T *m r in DP *.
 set β := map_mx Num.sqrt β2 in DP *.
 have EQA: A = block_mx A1 c c^T α
@@ -545,7 +522,7 @@ have R1unit: R1 \in unitmx.
      by apply lt0r_neq0. 
   }
 set R := block_mx R1 r 0 β in DP *.
-assert (POSβ: 0 < β2 0 0). {
+have POSβ: 0 < β2 0 0. {
  have A1det: 0 < \det A1.
    apply det_positive_definite. split; last done. by apply symmetric_ulsubmx.
  have A1unit: A1 \in unitmx
@@ -555,38 +532,37 @@ assert (POSβ: 0 < β2 0 0). {
  }
 have H3: R^T *m R = A. {
  rewrite /R tr_block_mx mulmx_block
-!mulmx0 !addr0 !mulmxE !H1 !trmx0 !mul0mx !addr0 H2 EQA.
+     !mulmx0 !addr0 !mulmxE !H1 !trmx0 !mul0mx !addr0 H2 EQA.
  f_equal.
  rewrite -H2 trmx_mul trmxK //.
- rewrite (mx11_scalar β) tr_scalar_mx -mulmxE -scalar_mxM /β mxE
- -expr2 sqr_sqrtr. 
+ rewrite (mx11_scalar β) tr_scalar_mx -mulmxE -scalar_mxM /β mxE -expr2 sqr_sqrtr. 
  rewrite -mx11_scalar /β2 (addrC α) addrA addrN add0r //.
  by apply ltW.
 }
- rewrite H3. split. done.
-  move => x Hx.
-  rewrite -H3. rewrite mulmxA -mulmxA.
-  rewrite -trmx_mul.
+ split; first by rewrite H3.
+ move => x Hx.
+ rewrite -H3 mulmxA -mulmxA -trmx_mul.
  suffices HRx: R *m x != 0. {
-   set a := R *m x in HRx *. clearbody a. clear - HRx.
+   move :(R *m x) => a in HRx *.
+   clear - HRx.
    rewrite lt0r. apply /andP. split.
    +  move :HRx; apply contra_neq => H. by apply vecnorm0.
    +  apply vecnorm2_ge0.
-}
-  have UT: upper_triangular R. {
-    rewrite /upper_triangular /R tr_block_mx is_trig_block_mx // trmx0 eqxx.
-    rewrite -/(upper_triangular R1) UT1 /=.
+ }
+ have UT: upper_triangular R. {
+    rewrite /upper_triangular /R tr_block_mx is_trig_block_mx // trmx0 eqxx
+            -/(upper_triangular R1) UT1 /=.
     apply mx11_is_trig.
-  }
-  have Runit: R \in unitmx.
-  {  rewrite unitmxE unitfE det_upper_triangular // det_diag.
+ }
+ have Runit: R \in unitmx.  {
+     rewrite unitmxE unitfE det_upper_triangular // det_diag.
      apply /prodf_neq0 => i _. rewrite mxE. 
      by apply lt0r_neq0. 
   }
-  clearbody R. clear - Runit Hx.
-  by apply Ax0_unitmx.
+  clearbody R; clear - Runit Hx.
+  move: Hx. apply: contra_neq => Hx.
+  by rewrite -(@mulKmx _ _ _ _ Runit x) Hx mulmx0.
 Qed.
-
 
 Theorem cholesky_positive_definite:
   forall (n: nat) (A: 'M_n.+1),
