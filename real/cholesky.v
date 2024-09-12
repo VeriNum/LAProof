@@ -57,6 +57,28 @@ Section Solve_LT.
 
 Variable F : fieldType.
 
+
+Lemma trig_unitmx_diagonal_nonzero: forall {n} (A: 'M[F]_n),
+  is_trig_mx A -> (A \in unitmx <-> forall i, A i i != 0).
+Proof.
+ move => n A H0. 
+ rewrite unitmxE.
+ rewrite (det_trig H0).
+ transitivity (forall i: 'I_n, is_true true -> A i i != 0).
+ - rewrite (rwP (prodf_neq0 _ _)) unitfE //.
+ - split; intros; auto.
+Qed.
+
+Lemma upper_unitmx_diagonal_nonzero: forall {n} (A: 'M[F]_n),
+  upper_triangular A -> (A \in unitmx <-> forall i, A i i != 0).
+Proof.
+move => n A H.
+rewrite -unitmx_tr trig_unitmx_diagonal_nonzero //.
+split; move => H0 i; move :(H0 i); by rewrite mxE.
+Qed.
+
+Ltac must_show P := lazymatch goal with |- ?Q => unify P Q end.
+
 (*  let L be a nonsingular lower triangular matrix,
     let c be a column matrix,
     then solve_LT L c finds a column matrix x such that L x = c. *)
@@ -73,27 +95,35 @@ Fixpoint solve_LT {n} :  'M[F]_n.+1 -> 'M[F]_(n.+1,1) -> 'M[F]_(n.+1,1) :=
 Lemma solve_LT_correct:
   forall n (L: 'M[F]_n.+1) (c: 'M[F]_(n.+1,1)),
     is_trig_mx L ->
-    diagonal_nonzero L ->
+    L \in unitmx ->  (*    diagonal_nonzero L ->*)
     L *m solve_LT L c = c.
 Proof.
+move => n L c H H0. rewrite (trig_unitmx_diagonal_nonzero H) in H0.
+move :n L c H H0.
 induction n.
 - intros; simpl.
 rewrite {1}(mx11_scalar L) mul_scalar_mx scalemx_const mulrA divrr ?unitfE //= mul1r.
 apply matrixP => i j; rewrite !ord1 !mxE //=.
 -
-simpl.
-rewrite -['M[F]_n.+2]/'M[F]_(1+n.+1) -['cV[F]_n.+2]/'cV[F]_(1+n.+1) => L c H H0.
-set c' := (dsubmx c - _).
-rewrite -{1}(submxK L) (mul_block_col (ulsubmx L)) (_: ursubmx L = 0).
-2: by apply ursubmx_trig.
-rewrite mul0mx addr0 -!scalemxAr {}IHn.
-2: by apply drsubmx_trig.
-2: move => i; rewrite !mxE //.
+rewrite /solve_LT -/solve_LT -['M[F]_n.+2]/'M[F]_(1+n.+1) 
+           -['cV[F]_n.+2]/'cV[F]_(1+n.+1) => L c H H0.
+set c' := dsubmx c - dlsubmx L *m ((L 0 0)^-1 *: usubmx c).
+must_show (L *m col_mx ((L 0 0)^-1 *: usubmx c) (solve_LT (drsubmx L) c') = c).
+rewrite -{1}(submxK L) (mul_block_col (ulsubmx L)) (ursubmx_trig (A:=L)) //
+         mul0mx addr0 -!scalemxAr.
+must_show (col_mx ((L 0 0)^-1 *: (ulsubmx L *m usubmx c))
+                  ((L 0 0)^-1 *: (dlsubmx L *m usubmx c) + drsubmx L *m solve_LT (drsubmx L) c') 
+           = c).
+rewrite {}IHn ; [ | by apply drsubmx_trig | by move => i; rewrite !mxE ].
+must_show (col_mx ((L 0 0)^-1 *: (ulsubmx L *m usubmx c))
+                  ((L 0 0)^-1 *: (dlsubmx L *m usubmx c) + c') = c).
 subst c'.
 rewrite -scalemxAr addrA (addrC _ (dsubmx c)) addrK scalemxAl (_: ulsubmx L = const_mx (L 0 0)).
 2: apply matrixP => i j; by rewrite !ord1 !mxE !lshift0.
+must_show (col_mx ((L 0 0)^-1 *: const_mx (L 0 0) *m usubmx c) (dsubmx c) = c).
 rewrite scalemx_const mulrC divrr ?unitfE //= (_: const_mx _ = 1).
 2: apply matrixP => i j; by rewrite !ord1 !mxE.
+must_show (col_mx (1 *m usubmx c) (dsubmx c) = c).
 by rewrite mulmxE mul1r vsubmxK.
 Qed.
 
@@ -103,30 +133,10 @@ From mathcomp Require Import ssrnum reals interval classical_sets topology norme
 Import Num.Theory Num.Def numFieldTopology.Exports numFieldNormedType.Exports.
 Local Open Scope classical_set_scope.
 
-Section Cholesky.
+Section PosDef.
+(* Properties of positive definite matrices *)
 
 Variable F : realType.
-
-Lemma add_two {n}: n.+2 = n.+1+1.
-Proof. rewrite addrC //. Qed.
-
-(* This algorithm is from Theorem 10.1 of Higham, Accuracy and Stability of Numerical Methods *)
-Fixpoint cholesky {n} : 'M[F]_n.+1 -> 'M[F]_n.+1 :=
-  match n with
-  | 0 => fun A => map_mx Num.sqrt A
-  | n'.+1 => fun A =>
-         let A' : 'M_(n'.+1+1):= castmx (add_two,add_two) A in
-         let A1 := ulsubmx A' in
-         let c := ursubmx A' in
-         let α := drsubmx A' in
-         let R1 := cholesky A1 in
-         let r := solve_LT R1^T c in
-         let β := map_mx Num.sqrt (α - ((r^T *m r))) in
-         castmx (esym add_two, esym add_two) (block_mx R1 r 0 β)
-  end.
-
-Definition diagonal_positive {n} (A: 'M[F]_n) :=
-  forall i, A i i > 0 :>F.
 
 Definition posdef' {n} (A: 'M_n) :=
    forall x : 'cV_n, x != 0 -> (x^T *m A *m x) 0 0 > 0 :>F.
@@ -148,7 +158,7 @@ Proof.
    apply eq_col_mx in H0.
    apply H0.
  }
- move :(H (col_mx x 0%:M) H2).
+ move :(H _ H2).
  rewrite -{1}(submxK A) /block_mx (tr_col_mx x) (mul_row_col x^T)
      tr_scalar_mx mul_scalar_mx scale0r addr0 -mulmxA (mul_row_col (ulsubmx A))
      scalar_mxC mul_scalar_mx scale0r addr0 mulmxA //.
@@ -281,6 +291,12 @@ Proof.
     + rewrite -Order.TotalTheory.leNgt. move/[swap] => _. apply: lt_le_trans ltr01.
 Qed.
 
+End PosDef.
+
+Section MiscMatrixFacts.
+
+Variable F : realType.
+
 Lemma block_decompose {n1 n2} {A: 'M[F]_n1} {B: 'M[F]_(n1, n2)}
   {C: 'M[F]_(n2, n1)} {D: 'M[F]_n2}:
   A \in unitmx ->
@@ -300,17 +316,6 @@ Proof.
   by rewrite !det1 !mulr1 mul1r.
 Qed.
 
-Definition diagonal_of {n} (A: 'M[F]_n.+1) : 'rV[F]_n.+1 :=
-  \row_i (A i i).
-
-Lemma det_upper_triangular {n} (A: 'M[F]_n.+1) :
-  upper_triangular A -> \det A = \det (diag_mx (diagonal_of A)).
-Proof.
-  rewrite /upper_triangular => Htrig.
-  rewrite -det_tr (det_trig Htrig) det_diag /diagonal_of.
-  apply: eq_bigr=> i _. by rewrite !mxE.
-Qed.
-
 Lemma map_mx11: forall {V T} (f: GRing.Nmodule.sort V -> GRing.Nmodule.sort T) (a: GRing.Nmodule.sort V),
     @map_mx _ _ f 1 1 (@scalar_mx _ 1 a) = @scalar_mx _ 1 (f a).
 Proof.
@@ -319,6 +324,33 @@ apply matrixP => i j.
 by rewrite !ord1 !mxE eqxx /=  !mulr1n.
 Qed.
 
+End MiscMatrixFacts.
+
+Section Cholesky.
+Variable F : realType.
+
+Lemma add_two {n}: n.+2 = n.+1+1.
+Proof. rewrite addrC //. Qed.
+
+(* This algorithm is from Theorem 10.1 of Higham, Accuracy and Stability of Numerical Methods *)
+Fixpoint cholesky {n} : 'M[F]_n.+1 -> 'M[F]_n.+1 :=
+  match n with
+  | 0 => fun A => map_mx Num.sqrt A
+  | n'.+1 => fun A =>
+         let A' : 'M_(n'.+1+1):= castmx (add_two,add_two) A in
+         let A1 := ulsubmx A' in
+         let c := ursubmx A' in
+         let α := drsubmx A' in
+         let R1 := cholesky A1 in
+         let r := solve_LT R1^T c in
+         let β := map_mx Num.sqrt (α - ((r^T *m r))) in
+         castmx (esym add_two, esym add_two) (block_mx R1 r 0 β)
+  end.
+
+Definition diagonal_positive {n} (A: 'M[F]_n) :=
+  forall i, A i i > 0 :>F.
+
+(*  Theorem 10.1 of Higham, Accuracy and Stability of Numerical Methods *)
 Theorem cholesky_correct:
   forall n (A: 'M_n.+1),
     positive_definite A ->
@@ -342,7 +374,7 @@ elim => [|n IHn] A.
 rewrite -(castmxK add_two add_two A).
 set A' : 'M_(n.+1 + 1) := castmx _ A.
 rewrite pred_castmx.
-move :A' => {A} A PA.
+move :A' => {}A PA.
 rewrite /cholesky -/cholesky
  pred_castmx trmx_cast tr_block_mx -mulmxE mulmx_castmx castmxKV /=.
 set A1 := ulsubmx A.
@@ -351,27 +383,24 @@ case: (IHn A1) => [ | UPPER [DP H1]] {IHn};
 move :(cholesky _) => R in UPPER DP H1 *.
 set α := drsubmx A.
 set c := ursubmx A.
-have DN: diagonal_nonzero R.
-  move => i. apply /negP => /eqP EQ. move :(DP i). rewrite EQ => GT.
+have Runit : R \in unitmx. {
+  rewrite upper_unitmx_diagonal_nonzero // => i.
+  apply /negP => /eqP EQ. move :(DP i). rewrite EQ => GT.
   eapply lt_nsym; eassumption.
-have H2 := @solve_LT_correct _ _ (R^T) c UPPER
-               ltac:(by move => i; rewrite !mxE; apply DN).
+}
+have H2 := @solve_LT_correct _ _ (R^T) c UPPER ltac:(rewrite unitmx_tr //).
 move :(solve_LT _ _) => r in H2 *.
 set β2 := α - r^T *m r.
 set β := map_mx Num.sqrt β2.
 have EQA: A = block_mx A1 c c^T α
     by rewrite -(submxK A) trmx_ursub (proj1 PA).
-have Runit: R \in unitmx. {
-     rewrite unitmxE unitfE det_upper_triangular // det_diag.
-     apply /prodf_neq0 => i _. by rewrite mxE.
-  }
 assert (POSβ: 0 < β2 0 0). {
  have Adet: 0 < \det A1
   by apply det_positive_definite, positive_definite_ulsubmx, PA.
  have A1unit: A1 \in unitmx
   by rewrite unitmxE unitfE; apply lt0r_neq0, Adet.
  move :(det_positive_definite PA).
- rewrite (@det_block_mx _ _ A) // -/A1 -/c -/α EQA block_mxKdl -H2 trmx_mul trmxK
+ rewrite (det_block_mx (A:=A)) // -/A1 -/c -/α EQA block_mxKdl -H2 trmx_mul trmxK
         mulmxA -!(mulmxA r^T) -{2}H1.
  rewrite -H1 in A1unit.
  move :(mulmxK A1unit (invmx R^T)).
@@ -458,12 +487,17 @@ rewrite tr_block_mx is_trig_block_mx // trmx0 eqxx IH /=.
 apply mx11_is_trig.
 Qed.
 
-Local Lemma cholesky_posdef':
+(* This useful theorem is not mentioned in Higham's book *)
+Theorem cholesky_positive_definite:
   forall (n: nat) (A: 'M_n.+1),
-    symmetric A ->
-    let R := cholesky A in
-      (diagonal_positive R -> R^T * R = A /\ posdef' A).
+    symmetric A ->  diagonal_positive (cholesky A) -> positive_definite A.
 Proof.
+intros.
+split. done.
+set R := cholesky A in H0 *.
+suffices HH: R^T * R = A /\ posdef' A. apply HH.
+revert n A H R H0.
+(* Now the right induction hypothesis is set up *)
 elim => [|n IHn].
 -
  simpl.
@@ -505,22 +539,18 @@ move => H1 PD.
 set r := solve_LT R1^T c in DP *.
 have DPR: diagonal_positive R1.
   by move => i; move :(DP (lshift 1 i)); rewrite block_mxEul.
-have H2: R1^T *m r = c. {
-     apply solve_LT_correct.
-     apply UT1.
-     move => i. rewrite mxE. 
+have R1unit: R1 \in unitmx. {
+     rewrite unitmxE unitfE -det_tr (det_trig UT1).
+     apply /prodf_neq0 => i _. rewrite mxE. 
      by apply lt0r_neq0. 
   }
+have H2: R1^T *m r = c.
+     by apply solve_LT_correct; auto; rewrite unitmx_tr.
 move :r => r in DP H2 *.
 set β2 : 'M_1 := α - r^T *m r in DP *.
 set β := map_mx Num.sqrt β2 in DP *.
 have EQA: A = block_mx A1 c c^T α
     by rewrite -(submxK A) trmx_ursub PA.
-have R1unit: R1 \in unitmx.
-  {  rewrite unitmxE unitfE det_upper_triangular // det_diag.
-     apply /prodf_neq0 => i _. rewrite mxE. 
-     by apply lt0r_neq0. 
-  }
 set R := block_mx R1 r 0 β in DP *.
 have POSβ: 0 < β2 0 0. {
  have A1det: 0 < \det A1.
@@ -555,21 +585,125 @@ have H3: R^T *m R = A. {
     apply mx11_is_trig.
  }
  have Runit: R \in unitmx.  {
-     rewrite unitmxE unitfE det_upper_triangular // det_diag.
+     rewrite unitmxE unitfE -det_tr (det_trig UT).
      apply /prodf_neq0 => i _. rewrite mxE. 
      by apply lt0r_neq0. 
   }
-  clearbody R; clear - Runit Hx.
   move: Hx. apply: contra_neq => Hx.
   by rewrite -(@mulKmx _ _ _ _ Runit x) Hx mulmx0.
 Qed.
 
-Theorem cholesky_positive_definite:
-  forall (n: nat) (A: 'M_n.+1),
-    symmetric A ->  diagonal_positive (cholesky A) -> positive_definite A.
+(* Algorithm 10.2 from Higham *)
+
+Section Cholesky_jik.
+
+Fixpoint sum_upto (k: nat) (f: nat -> F) :=
+ match k with O => 0 | S k' => sum_upto k' f + f k' end.
+
+Fixpoint cholesky_jik_iloop (n: nat) (A: nat -> nat -> F) (j: nat) : nat -> nat -> F :=
+ match j with
+ | O => fun _ _ => 0
+ | S j' => let R := cholesky_jik_iloop n A j' 
+            in fun i j => 
+              if (n.+1<=j)%N then 0
+              else if j==j' 
+              then if  (i<j)%N
+                   then (A i j - sum_upto i (fun k => R k i * R k j)) / R i i
+                   else if i==j
+                        then Num.sqrt (A j j - sum_upto j (fun k => R k j ^+ 2))
+                        else 0
+              else R i j
+  end.
+
+Search ('M[_]_ _ -> nat -> nat -> _).
+
+Definition Mij {n} (A: 'M[F]_n.+1) (i j : nat) : F :=
+ if insub i is Some i' then if insub j is Some j' then A i' j' else 0 else 0.
+
+
+Axiom proof_irr: forall (P: Prop) (H1 H2: P), H1=H2.
+
+Lemma insub_nat_of_ord: forall n (i: 'I_n),
+   @insub nat (fun i => (i < n)%N) (fintype_ordinal__canonical__eqtype_SubType n) (@nat_of_ord n i) = Some i.
 Proof.
 intros.
-split. done. by apply cholesky_posdef'.
+unfold insub.
+destruct idP. f_equal.
+unfold sub ; simpl. destruct i; f_equal.
+apply proof_irr.
+pose proof @ltn_ord n i.
+lia.
 Qed.
 
-End Cholesky.
+(** This lemma is very possibly true, but I am not at all sure
+  that this is the right induction to prove it.  -- Andrew *)
+Lemma cholesky_jik_correct:
+  forall n (A: 'M[F]_n.+1),
+    Mij (cholesky A) =2 cholesky_jik_iloop n (Mij A) n.+1.
+Proof.
+elim => [ | n Hn] A i j.
+-
+rewrite {1}/Mij. simpl.
+case: insubP => [ /= i'| Hi /= ].
+ + rewrite ord1 /= => Hi Hi'. subst i. clear i' Hi.
+   case: insubP => [j' Hj Hj' | Hj ].
+   * subst j. clear Hj. rewrite ord1 {j'}.
+     rewrite /= mxE subr0 /Mij insubT ord1 //.
+   * by have -> : (0<j)%N by lia.
+ + case: (@ltP 0 j) => // Hj.
+   have -> :(j=0) by lia. rewrite eqxx.
+   have -> :(i<0)%N=false  by lia.
+   have -> :(i==0)=false by lia.
+   done.
+- rewrite {1}/Mij.
+  set A1 := ulsubmx (castmx (add_two,add_two) A).
+  specialize (Hn A1).
+  case: insubP => [i' _ Hi | Hi]. 
+  + simpl in i'. simpl in Hi. subst i.
+    case: insubP => [ j' _ Hj | Hj ].
+    * simpl in j'. simpl in Hj. subst j.
+      rewrite /cholesky -/cholesky.
+      rewrite castmxE esymK.
+      rewrite -/A1.
+      set i := cast_ord add_two i'.
+      set j := cast_ord add_two j'.
+      change (nat_of_ord i') with (nat_of_ord i).
+      change (nat_of_ord j') with (nat_of_ord j).
+      case: (split_ordP j) => [j'' Hj'' | j'' Hj'']; subst j.
+      --
+       subst i. rewrite Hj''. rewrite block_mxEh row_mxEl.
+       case: (split_ordP (cast_ord add_two i')) => [i'' Hi'' | i'' Hi''];
+       rewrite Hi''.
+       ++ rewrite col_mxEu.
+         match type of Hn with ?X =2 ?Y => 
+           have Hn': X i'' j'' = Y i'' j'' by done end.
+         rewrite {Hn}. rewrite {1}/Mij in Hn'.
+         clear Hi'' Hj'' j' i'.
+         move : Hn'.
+         rewrite !insub_nat_of_ord.
+         move => H; rewrite {}H.
+       have cholesky_jik_iloop_lemma1:
+         forall n A i j, (j<n.+1)%coq_nat ->
+          cholesky_jik_iloop n (@Mij n (ulsubmx (castmx (add_two, add_two) A))) n.+1 i j = 
+          cholesky_jik_iloop n.+1 (@Mij n.+1 A) n.+2 i j.
+           clear. admit.
+         apply cholesky_jik_iloop_lemma1.
+         rewrite /lshift. simpl.
+         pose proof (@ltn_ord _ j''); lia.  (* why doesn't "have" work? *)
+       ++ rewrite col_mxEd.
+         match type of Hn with ?X =2 ?Y => 
+           have Hn': X i'' j'' = Y i'' j'' by done end.
+         rewrite {Hn}. rewrite {1}/Mij in Hn'.
+         clear Hi'' Hj'' j' i'.
+         move : Hn'.
+         rewrite !insub_nat_of_ord.
+         rewrite ord1. clear i''. simpl nat_of_ord.
+         rewrite insubT. unfold Sub. simpl isSub.Sub.
+         have -> : @Ordinal n.+1 0 is_true_true  = GRing.zero.
+         compute. f_equal. apply proof_irr.
+         rewrite addn0.
+         rewrite mxE.
+Abort.
+
+End Cholesky_jik.
+
