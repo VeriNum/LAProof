@@ -6,8 +6,8 @@ From mathcomp.algebra_tactics Require Import ring lra.
 From mathcomp Require Import ssrnum reals interval classical_sets topology normedtype boolp.
 Import Num.Theory Num.Def numFieldTopology.Exports numFieldNormedType.Exports.
 Require Import LAProof.real.cholesky.
-Set Implicit Arguments.
-Unset Strict Implicit.
+Unset Implicit Arguments.
+(*Unset Strict Implicit.*)
 Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 
@@ -25,34 +25,21 @@ Variable F : realType.
 
 Axiom proof_irr: forall (P: Prop) (H1 H2: P), H1=H2.
 
-Definition le_ord {n} {i: 'I_n} := ltnW (ltn_ord i).
+Definition widen_ik {n} (i: 'I_n) (k: 'I_i) : 'I_n := 
+   widen_ord (ltnW (ltn_ord i)) k.
 
-Definition widen_ik [n] (i: 'I_n.+1): 'I_i -> 'I_n.+1 := widen_ord le_ord.
+Definition widen_ik_subproof [n i: nat] (k: 'I_i) (H: (i<n.+1)%N) : (k < n.+1)%N := 
+  widen_ord_proof k (ltnW (ltn_ord (Ordinal H))).
 
+Lemma widen_ik_sub: 
+  forall (n i: nat) (H: (i < n.+1)%N) (k: 'I_i),
+   widen_ik (Sub i H) k = Sub (nat_of_ord k) (widen_ik_subproof k H).
+Proof. reflexivity. Qed.
 
-Lemma big_ord_narrow_special: forall n (L: 'M[F]_n) (r: 'cV_n) (i: 'I_n) H, 
-  \sum_(k<i) L i (widen_ord H k) * r (widen_ord H k) 0 =
-  \sum_(k<n| (k<i)%N) L i k * r k 0.
-Proof.
-intros.
-rewrite - (big_ord_narrow (F :=fun k => L i k * r k 0)) //.
-Qed.
-
-(*
-Lemma foo: forall n (L: 'M[F]_n.+1) (r: 'cV_n.+1) (i: 'I_n.+1), 
-  \sum_(k<i) L i (widen_ik k) * r (widen_ik k) 0 =
-  \sum_(k<n.+1| (k<i)%N) L i k * r k 0.
-Proof.
-intros.
-rewrite /widen_ik.
-rewrite - (big_ord_narrow (F :=fun k => L i k * r k 0)) //.
-Qed.
-*)
-
-Lemma solve_LT_eq: forall n (L: 'M[F]_n.+1) (c: 'cV[F]_n.+1),
+Lemma solve_LT_eq: forall [n] (L: 'M[F]_n.+1) (c: 'cV[F]_n.+1),
    let r := solve_LT L c in
      forall i: 'I_n.+1,
-        r i 0 = (c i 0 - \sum_(k<i) L i (widen_ord le_ord k) * r (widen_ord le_ord k) 0)/L i i.
+        r i 0 = (c i 0 - \sum_(k<i) (fun k' => L i k' * r k' 0) (widen_ik i k))/L i i.
 Proof.
 elim  => [ | n IH] L c r i.
 - rewrite /r ord1 big_ord0 /= mxE mulrC subr0 //.
@@ -82,19 +69,18 @@ elim  => [ | n IH] L c r i.
    rewrite mxE -addrA.
    f_equal.
    rewrite big_split_ord /= big_ord1 mxE mxE.
-   have ->: widen_ord (@le_ord _ (rshift 1 i')) (lshift i' 0) = lshift n.+1 0.
+   have ->: widen_ik (rshift 1 i') (lshift i' 0) = lshift n.+1 0.
       compute; f_equal; apply proof_irr.
    rewrite (col_mxEu x) big_ord1.
    have ->:  L' (rshift 1 i') (lshift n.+1 0) = dlsubmx L' i' 0.
       by rewrite -(submxK L') block_mxEdl block_mxKdl.
-   set u := (_ * _). clearbody u.
+   move :(_ * _) => u.
    set a := bigop _ _ _. set b := bigop _ _ _.
-   rewrite (_: a=b). clear. field; auto.
-   subst a b.
+   rewrite (_: a=b); first by field.
    apply eq_big; auto.
    move => i _.
-   have ->: widen_ord  (@le_ord _ (rshift 1 i')) (rshift 1 i) = rshift 1 (widen_ik i).
-       compute; f_equal; apply proof_irr.
+   have ->: widen_ik (rshift 1 i') (rshift 1 i) = rshift 1 (widen_ik i' i)
+       by compute; f_equal; apply proof_irr.
    f_equal.
    * rewrite -{2}(submxK L') (block_mxEdr (ulsubmx L')) //.
    *  rewrite (col_mxEd x) //.
@@ -131,41 +117,33 @@ Proof.
    f_equal. f_equal. lia.
 Qed.
 
+Lemma iota_0_index_iota: forall i, iota 0 i = index_iota 0 i.
+Proof.
+move => i. rewrite /index_iota; f_equal; lia.
+Qed.
+
 Lemma solve_LT_eq': forall n (L: 'M[F]_n.+1) (c: 'cV[F]_n.+1),
    let r := solve_LT L c in
      forall i: nat,
         (i < n.+1)%N ->
         Vi r i = (Vi c i - sumR (map (fun k => Mij L i k * Vi r k) (iota 0 i))) / Mij L i i.
 Proof.
-intros ? ? ? ? ? H.
-have ->: iota 0 i = index_iota 0 i by rewrite /index_iota; f_equal; lia.
-have H0 := solve_LT_eq L c.
-rewrite -/r in H0. cbv zeta in H0.
-clearbody r.
-set i' := Ordinal H.
-specialize (H0 i').
+move => n L c r i H.
+have H0 := solve_LT_eq L c (Sub i H).
+rewrite iota_0_index_iota.
+rewrite -/r in H0. 
 rewrite /Vi /Mij.
 rewrite insubT.
-change (Sub i H) with i'.
-change i with (nat_of_ord i').
 rewrite {}H0.
 f_equal. f_equal. f_equal.
 transitivity (\sum_(0 <= k < i) Mij L i k * Vi r k).
 -
-   rewrite big_mkord. apply eq_big; auto. intros.
-     rewrite /Mij. rewrite !insubT. destruct i0; simpl in *; lia.
-     intros. 
-     f_equal. f_equal. unfold Sub, widen_ord. simpl. f_equal. apply proof_irr.
-     rewrite /Vi. rewrite insubT. f_equal.
-      unfold Sub, widen_ord; destruct i0; simpl; f_equal. apply proof_irr.
--
-   unfold Mij, Vi.
-  rewrite insubT. change (Sub i H) with i'.
-  simpl.
-  match goal with |- _ = sumR (map ?g _) => set f := g end.
-  transitivity (\sum_(0 <= k < i) (f k)).
-  apply eq_big; auto. 
-  apply sum_nat_sumR.
+  rewrite big_mkord.
+  apply eq_bigr.
+  move => k _.
+  pose Hk := widen_ik_subproof k H.
+  rewrite widen_ik_sub /Mij /Vi !insubT //.
+- rewrite /Mij /Vi insubT sum_nat_sumR //.
 Qed.
 
 Fixpoint cholesky_jik_iloop (n: nat) (A: nat -> nat -> F) (d: nat) : nat -> nat -> F :=
@@ -189,9 +167,8 @@ Proof.
 intros.
 unfold insub.
 destruct idP. f_equal.
-unfold sub ; simpl. destruct i; f_equal.
-apply proof_irr.
-pose proof @ltn_ord n i.
+destruct i; compute; f_equal; apply proof_irr.
+have H := @ltn_ord n i.
 lia.
 Qed.
 
