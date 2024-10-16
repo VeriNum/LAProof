@@ -29,3 +29,5 @@ C/spec_sparse.v
 C/verif_sparse.v
 C/verif_sparse_byrows.v
 C/VSU_sparse.v
+C/cholesky.v
+C/verif_cholesky.v

@@ -3,8 +3,10 @@ From mathcomp Require Import fintype finfun bigop finset fingroup perm order.
 From mathcomp Require Import div prime binomial ssralg countalg finalg zmodp matrix.
 From mathcomp.zify Require Import ssrZ zify.
 From mathcomp.algebra_tactics Require Import ring lra.
-From mathcomp Require Import ssrnum reals interval classical_sets topology normedtype boolp.
-Import Num.Theory Num.Def numFieldTopology.Exports numFieldNormedType.Exports.
+From mathcomp Require Import ssrnum reals interval classical_sets normedtype boolp.
+Require mathcomp.analysis.topology.
+Import Num.Theory Num.Def topology.numFieldTopology.Exports numFieldNormedType.Exports.
+
 Require Import LAProof.real.cholesky.
 Unset Implicit Arguments.
 (*Unset Strict Implicit.*)
@@ -334,6 +336,32 @@ destruct idP; last by lia.
 apply ordinal_eq; reflexivity.
 Qed.
 
+End Cholesky_jik. 
 
-End Cholesky_jik.
+Require Import vcfloat.VCFloat vcfloat.IEEE754_extra List.
+
+
+Section WithSTD.
+Context {NAN: Nans} {t : type} {STD: is_standard t}.
+
+Definition neg_zero := ftype_of_float (Binary.B754_zero (fprec t) (femax t) true).
+
+Definition sumF := fold_right BPLUS neg_zero.
+
+Definition sum_upto (n: Z) (f: Z -> ftype t) :=
+  sumF (map (fun k => f (Z.of_nat k)) (iota 0 (Z.to_nat n))).
+
+Definition cholesky_jik_spec_plain (n: Z) (A R: Z -> Z -> ftype t) : Prop :=
+  forall i j :Z ,
+   (0 <= i < n)%Z -> (0 <= j < n)%Z ->
+   R i j = 
+   if Z.ltb i j 
+   then BMINUS (A i j) (BDIV (sum_upto i (fun k => BMULT (R k i) (R k j))) (R i i))
+   else if Z.eqb i j 
+   then BSQRT _ _ (BMINUS (A j j) (sum_upto i (fun k => BMULT (R i j) (R i j))))
+   else Zconst _ 0.
+
+
+
+
 
