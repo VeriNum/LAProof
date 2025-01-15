@@ -24,6 +24,13 @@ Inductive sum_rel {A : Type} (default: A) (sum_op : A -> A -> A) : list A -> A -
 
 Definition sum_rel_R := @sum_rel R 0%R Rplus.
 
+Inductive sum_rel_any {A : Type} (default: A) (sum_op : A -> A -> A) : list A -> A -> Prop :=
+| sum_rel_0  : sum_rel_any default sum_op [] default
+| sum_rel_1 : forall a, sum_rel_any default sum_op (a::nil) a
+| sum_rel_app: forall a1 a2 s1 s2,
+     sum_rel_any default sum_op a1 s1 ->
+     sum_rel_any default sum_op a2 s2 ->
+     sum_rel_any default sum_op (a1++a2) (sum sum_op s1 s2).
 
 Lemma sum_rel_R_abs :
 forall l s1 s2,

@@ -135,7 +135,7 @@ rewrite !is_finite_Binary //=
     !float_of_ftype_of_float.
 move => FINx FINy FINz.
 pose proof (Binary.Bfma_correct  (fprec t) (femax t)  
-                (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan t)
+                (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan (fprec t) (femax t) (fprec_gt_one t))
                       BinarySingleNaN.mode_NE 
                 (float_of_ftype x) 
                 (float_of_ftype y)
@@ -164,7 +164,7 @@ Lemma is_finite_fma_no_overflow_aux :
   forall x y z
   (HFINb : is_finite (BFMA x y z) = true),
   Binary.is_finite _ _  (Binary.Bfma (fprec t) (femax t)  
-    (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan t) BinarySingleNaN.mode_NE
+    (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE
       (float_of_ftype x) (float_of_ftype y) (float_of_ftype z)) = true. 
 Proof.
 intros. 
@@ -172,7 +172,7 @@ rewrite is_finite_Binary in HFINb.
 unfold BFMA in HFINb.
 set (F:=
   (Binary.Bfma (fprec t) (femax t) (fprec_gt_0 t) 
-  (fprec_lt_femax t) (fma_nan t) BinarySingleNaN.mode_NE
+  (fprec_lt_femax t) (fma_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE
      (float_of_ftype x) (float_of_ftype y) (float_of_ftype z))) in *.
 destruct F; simpl; auto;
 rewrite float_of_ftype_of_float in HFINb;
@@ -206,7 +206,7 @@ set (yb := float_of_ftype y).
 set (zb := float_of_ftype z).
 rewrite !is_finite_Binary in A B C.
 pose proof (Binary.Bfma_correct (fprec t) (femax t)  
-    (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan t) 
+    (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan (fprec t) (femax t) (fprec_gt_one t)) 
         BinarySingleNaN.mode_NE xb yb zb A B C) as H1.
 simpl in H1, H.
 rewrite <- !B2R_float_of_ftype in H.
@@ -263,7 +263,7 @@ intros.
 set (xb := float_of_ftype x).
 set (yb := float_of_ftype y).
 pose proof (Binary.Bmult_correct (fprec t) (femax t) (fprec_gt_0 t) (fprec_lt_femax t) 
-                (mult_nan t) BinarySingleNaN.mode_NE xb yb).
+                (mult_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE xb yb).
 cbv zeta in H.
 pose proof (
    Raux.Rlt_bool_spec
@@ -303,7 +303,7 @@ unfold rounded in H.
 set (xb := float_of_ftype x).
 set (yb := float_of_ftype y).
 pose proof (Binary.Bmult_correct  (fprec t) (femax t)  
-    (fprec_gt_0 t) (fprec_lt_femax t) (mult_nan t) BinarySingleNaN.mode_NE xb yb) as
+    (fprec_gt_0 t) (fprec_lt_femax t) (mult_nan (fprec t) (femax t) (fprec_gt_one t))   BinarySingleNaN.mode_NE xb yb) as
   H0.
 rewrite <- !B2R_float_of_ftype in H.
 rewrite <- !B2R_float_of_ftype.
@@ -403,7 +403,7 @@ rewrite !is_finite_Binary in FINx FINy.
 set (xb := float_of_ftype x).
 set (yb := float_of_ftype y).
 pose proof (Binary.Bplus_correct  (fprec t) (femax t) (fprec_gt_0 t) 
-                    (fprec_lt_femax t) (plus_nan t)
+                    (fprec_lt_femax t) (plus_nan (fprec t) (femax t) (fprec_gt_one t))
                       BinarySingleNaN.mode_NE xb yb FINx FINy).
 cbv zeta in H.
 pose proof (
@@ -477,7 +477,7 @@ unfold rounded in H.
 rewrite !is_finite_Binary in HFIN.
 destruct HFIN as (A & B). 
 pose proof (Binary.Bplus_correct  (fprec t) (femax t)  
-    (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan t) BinarySingleNaN.mode_NE 
+    (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
   (float_of_ftype x) (float_of_ftype y) A B) as
   H0.
 rewrite <- !B2R_float_of_ftype in H.
@@ -486,7 +486,7 @@ destruct H0 as ( C & _).
 unfold BPLUS, BINOP in HFINb.
     rewrite float_of_ftype_of_float in HFINb.
 destruct ((Binary.Bplus (fprec t) (femax t) (fprec_gt_0 t) (fprec_lt_femax t) 
-             (plus_nan t) BinarySingleNaN.mode_NE 
+             (plus_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
   (float_of_ftype x) (float_of_ftype y)));
 simpl; try discriminate.
 Qed.
@@ -503,7 +503,7 @@ rewrite !is_finite_Binary;
   unfold Bplus_no_overflow, BPLUS, BINOP; intros.
 rewrite float_of_ftype_of_float.
 pose proof (Binary.Bplus_correct  (fprec t) (femax t)  
-    (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan t) BinarySingleNaN.mode_NE 
+    (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
   (float_of_ftype x) (float_of_ftype y) H1 H2) as
   H0.
 remember (Rlt_bool _ _ ) as HB; destruct HB.  
@@ -567,7 +567,7 @@ rewrite !is_finite_Binary in HFINb;
 destruct HFIN as (A & B).
 unfold rounded in H.
 pose proof (Binary.Bminus_correct  (fprec t) (femax t)  
-    (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan t) BinarySingleNaN.mode_NE 
+    (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
     (float_of_ftype x) (float_of_ftype y) A B) as
   H0.
 rewrite <- !B2R_float_of_ftype in H.
@@ -576,7 +576,7 @@ destruct H0 as ( C & _).
 unfold BMINUS, BINOP in HFINb.
 rewrite float_of_ftype_of_float in HFINb.
 destruct ((Binary.Bminus (fprec t) (femax t) (fprec_gt_0 t) (fprec_lt_femax t) 
-             (plus_nan t) BinarySingleNaN.mode_NE 
+             (plus_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
               (float_of_ftype x) (float_of_ftype y)));
 simpl; try discriminate.
 Qed.
@@ -593,7 +593,7 @@ rewrite !is_finite_Binary;
   unfold Bminus_no_overflow, BMINUS, BINOP; intros.
 rewrite float_of_ftype_of_float.
 pose proof (Binary.Bminus_correct  (fprec t) (femax t)  
-    (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan t) BinarySingleNaN.mode_NE 
+    (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
   (float_of_ftype x) (float_of_ftype y) H1 H2) as
   H0.
 remember (Rlt_bool _ _ ) as HB; destruct HB.  
@@ -622,7 +622,7 @@ rewrite !is_finite_Binary in FINx FINy.
 set (xb := float_of_ftype x).
 set (yb := float_of_ftype y).
 pose proof (Binary.Bminus_correct  (fprec t) (femax t) (fprec_gt_0 t) 
-                    (fprec_lt_femax t) (plus_nan t)
+                    (fprec_lt_femax t) (plus_nan (fprec t) (femax t) (fprec_gt_one t))
                       BinarySingleNaN.mode_NE xb yb FINx FINy).
 cbv zeta in H.
 pose proof (
