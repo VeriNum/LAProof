@@ -24,7 +24,7 @@ match goal with | FIN : is_finite (BPLUS a b) = true |- context [FT2R (BPLUS a b
   | ]; rewrite !is_finite_Binary in H; 
     let H1 := fresh in let H2 := fresh in  destruct H as (H1 & H2);
     let H3 := fresh in pose proof (Binary.Bplus_correct  (fprec t) (femax t) 
-        (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan t) BinarySingleNaN.mode_NE 
+        (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
         (float_of_ftype a) (float_of_ftype b) H1 H2) as H3;
         rewrite !B2R_float_of_ftype in H3;
     rewrite H4 in H3 ;
@@ -50,7 +50,7 @@ match goal with | FIN : is_finite (BMINUS a b) = true |- context [FT2R (BMINUS a
   | ]; rewrite !is_finite_Binary in H ; 
     let H1 := fresh in let H2 := fresh in  destruct H as (H1 & H2);
     let H3 := fresh in pose proof (Binary.Bminus_correct (fprec t) (femax t) 
-        (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan t) BinarySingleNaN.mode_NE 
+        (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
         (float_of_ftype a) (float_of_ftype b) H1 H2) as H3 ;
     rewrite !B2R_float_of_ftype in H3;
     rewrite H4 in H3 ;
@@ -64,7 +64,7 @@ match goal with | FIN : is_finite (BMULT a b) = true |- context [FT2R (BMULT a b
   let X:= fresh in set (X:= FT2R (BMULT a b)); unfold BMULT, BINOP in X ;
   let H4 := fresh in pose proof (is_finite_BMULT_no_overflow a b FIN) as H4; apply Rlt_bool_true in H4 ;
     let H3 := fresh in try pose proof (Binary.Bmult_correct  (fprec t) (femax t) 
-        (fprec_gt_0 t) (fprec_lt_femax t) (mult_nan t) BinarySingleNaN.mode_NE 
+        (fprec_gt_0 t) (fprec_lt_femax t) (mult_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
         (float_of_ftype a) (float_of_ftype b)) as H3 ;
     unfold common.rounded in H4; rewrite !B2R_float_of_ftype in H3; rewrite H4 in H3;
     destruct H3 as (H3 & _); clear H4 ; unfold BMULT, BINOP in X; subst X; 
@@ -95,7 +95,7 @@ match goal with | FIN : is_finite (BFMA a b s) = true |- context [FT2R (BFMA a b
   | ]; rewrite !is_finite_Binary in H; 
     let H1 := fresh in let H2 := fresh in  destruct H as (H1 & H2 & HS);
     let H3 := fresh in pose proof (Binary.Bfma_correct  (fprec t) (femax t) 
-        (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan t) BinarySingleNaN.mode_NE 
+        (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE 
         (float_of_ftype a) (float_of_ftype b) (float_of_ftype s) H1 H2 HS) as H3; cbv zeta in H3;
     rewrite !B2R_float_of_ftype in H3;
     rewrite H4 in H3 ;

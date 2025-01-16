@@ -23,7 +23,9 @@ is_finite (BFMA x y z) = true.
 Proof.
 intros.
 rewrite !is_finite_Binary in Hfinx, Hfiny, Hfinz.
-pose proof (Binary.Bfma_correct  (fprec t) (femax t)  (fprec_gt_0 t) (fprec_lt_femax t) (fma_nan t)
+pose proof (Binary.Bfma_correct  (fprec t) (femax t) 
+                      (fprec_gt_0 t) (fprec_lt_femax t) 
+                      (fma_nan (fprec t) (femax t) (fprec_gt_one t))
                       BinarySingleNaN.mode_NE 
                       (float_of_ftype x) 
                       (float_of_ftype y)
