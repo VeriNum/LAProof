@@ -4,7 +4,7 @@ Import ListNotations.
 From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model
                                                 dot_acc float_acc_lems list_lemmas
                                                               gem_defs mv_mathcomp.
-From mathcomp.analysis Require Import Rstruct.
+From mathcomp Require Import Rstruct.
 Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
 From Coq Require Import ZArith Reals Psatz.

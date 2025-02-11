@@ -5,7 +5,7 @@ Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key"
 From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
 From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas.
 From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp gemv_acc.
-From mathcomp.analysis Require Import Rstruct.
+From mathcomp Require Import Rstruct.
 From mathcomp Require Import all_ssreflect ssralg ssrnum.
 From Coq Require Import ZArith Reals Psatz.
 From Coq Require Import Arith.Arith.
