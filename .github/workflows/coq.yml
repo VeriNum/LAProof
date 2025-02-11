@@ -35,6 +35,6 @@ jobs:
           # Work around https://github.com/actions/checkout/issues/766
           git config --global --add safe.directory "*"
           echo '::group::install dependencies'
-          opam install -y -v coq-flocq coq-interval coq-coquelicot coq-vcfloat.2.3 coq-mathcomp-ssreflect coq-mathcomp-algebra coq-mathcomp-analysis coq-mathcomp-algebra-tactics coq-mathcomp-finmap coq-vst.2.14 coq-vst-lib.2.14
+          opam install -y -v coq-flocq coq-interval coq-coquelicot coq-vcfloat.2.3 coq-mathcomp-ssreflect coq-mathcomp-algebra coq-mathcomp-analysis coq-mathcomp-algebra-tactics coq-mathcomp-finmap coq-vst.2.15 coq-vst-lib.2.15.1
           echo '::endgroup::'
           make -j2
