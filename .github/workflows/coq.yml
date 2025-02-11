@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - env: { COQ_VERSION: "8.19", DOCKER_MATHCOMP_VERSION: "2.2.0" }
+        - env: { COQ_VERSION: "8.20", DOCKER_MATHCOMP_VERSION: "2.2.0" }
 
     runs-on: ubuntu-latest
     env: ${{ matrix.env }}
@@ -35,6 +35,6 @@ jobs:
           # Work around https://github.com/actions/checkout/issues/766
           git config --global --add safe.directory "*"
           echo '::group::install dependencies'
-          opam install -y -v coq-flocq coq-interval coq-coquelicot coq-vcfloat coq-mathcomp-ssreflect coq-mathcomp-algebra coq-mathcomp-analysis coq-mathcomp-algebra-tactics coq-mathcomp-finmap coq-vst.2.14 coq-vst-lib.2.14
+          opam install -y -v coq-flocq coq-interval coq-coquelicot coq-vcfloat.2.3 coq-mathcomp-ssreflect coq-mathcomp-algebra coq-mathcomp-analysis coq-mathcomp-algebra-tactics coq-mathcomp-finmap coq-vst.2.14 coq-vst-lib.2.14
           echo '::endgroup::'
           make -j2
