@@ -45,6 +45,7 @@ depends: [
   "coq-mathcomp-algebra"
   "coq-mathcomp-analysis"
   "coq-mathcomp-algebra-tactics"
+  "coq-mathcomp-reals-stdlib"
   "coq-mathcomp-finmap"
   "coq-vst" {>= "2.15~"}
   "coq-vst-lib" {>= "2.15.1~"}
