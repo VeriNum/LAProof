@@ -875,7 +875,7 @@ symmetry. by apply H; left.
 rewrite !length_map. 
 destruct H1;
 by symmetry ;apply H2 => /=; left.
-rewrite !length_map combine_length !length_map.
+rewrite !length_map length_combine !length_map.
 have HB : length B = length C by lia.
 have HC : length C = length D .
 destruct H1; simpl in H1. lia.
@@ -989,7 +989,7 @@ case: v => //=[|a l].
 by rewrite zero_vector_length.
 specialize (IH l). 
 remember (rowM d (vec_sum sum) mul m l B) as u.
-rewrite /vec_sum/scaleV length_map combine_length length_map.
+rewrite /vec_sum/scaleV length_map length_combine length_map.
 rewrite H/=; [ | by left].
 rewrite IH; [lia | ]. 
 move => b0 Hb0. apply H => /=. by right.

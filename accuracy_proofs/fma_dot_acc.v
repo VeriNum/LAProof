@@ -33,7 +33,7 @@ Lemma fma_dotprod_mixed_error:
 Proof.
 intros.
 assert (Datatypes.length (combine v1 v2) = length v1) by
- (rewrite combine_length; lia).
+ (rewrite length_combine; lia).
 assert (Hlenr : length (List.rev v1) = length (List.rev v2)) by (rewrite !length_rev; auto).
 rewrite <- length_rev in Hlen.
 pose proof fma_dot_prod_rel_fold_right v1 v2 as H1.

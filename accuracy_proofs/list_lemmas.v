@@ -28,7 +28,7 @@ Lemma combine_nil_r (A : Type) (l1 l2: list A) :
 Proof. intros. 
 rewrite combine_nil in H0. symmetry in H0.      
 apply length_zero_iff_nil in H0.
-      rewrite combine_length in H0.
+      rewrite length_combine in H0.
   rewrite H in H0; clear H. rewrite Nat.min_id in H0. 
 apply length_zero_iff_nil; auto.
 Qed.
@@ -39,7 +39,7 @@ Lemma combine_nil_l (A : Type) (l1 l2: list A) :
 Proof. intros. 
 rewrite combine_nil in H0. symmetry in H0.      
 apply length_zero_iff_nil in H0.
-      rewrite combine_length in H0. symmetry in H.
+      rewrite length_combine in H0. symmetry in H.
   rewrite H in H0; clear H. rewrite Nat.min_id in H0. 
 apply length_zero_iff_nil; auto.
 Qed.
