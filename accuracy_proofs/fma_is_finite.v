@@ -80,7 +80,6 @@ apply bpow_ge_0.
 apply bpow_le.
 apply Z.le_sub_le_add_r.
 apply Z.le_sub_le_add_r.
-Search fprec femax.
 eapply Z.le_trans with (fprec t + fprec t + femax t)%Z; 
   [ | repeat apply Zplus_le_compat_r; apply Z.lt_le_incl; apply fprec_lt_femax].
 eapply Z.le_trans with (fprec t + fprec t + fprec t)%Z;
