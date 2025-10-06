@@ -1,14 +1,9 @@
-Require Import vcfloat.VCFloat.
-Require Import List.
-Import ListNotations.
-From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model
+From LAProof.accuracy_proofs Require Import preamble common 
+                                                 dotprod_model sum_model
                                                 dot_acc float_acc_lems list_lemmas
                                                               gem_defs mv_mathcomp.
 From mathcomp Require Import Rstruct.
 Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
-From mathcomp Require Import all_ssreflect ssralg ssrnum.
-From Coq Require Import ZArith Reals Psatz.
-From Coq Require Import Arith.Arith.
 
 Open Scope R_scope.
 Open Scope ring_scope.
@@ -16,7 +11,7 @@ Open Scope ring_scope.
 Delimit Scope ring_scope with Ri.
 Delimit Scope R_scope with Re.
 
-Import Order.TTheory GRing.Theory Num.Def Num.Theory.
+Import Order.TTheory GRing.Theory ssrnum.Num.Def ssrnum.Num.Theory.
 
 From mathcomp.algebra_tactics Require Import ring.
 Set Bullet Behavior "Strict Subproofs".
@@ -24,7 +19,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 Section MixedErrorList. 
 (* mixed error bounds over lists *)
-Context {NAN: Nans} {t : type} {STD : is_standard t}.
+Context {NAN: FPCore.Nans} {t : type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -36,7 +31,7 @@ Notation n := (length v).
 Notation m := (length A).
 Notation Ar := (map_mat FT2R A).
 Notation vr := (map FT2R v).
-Notation neg_zero := (ftype_of_float neg_zero).
+Notation neg_zero := (@common.neg_zero t).
 
 Hypothesis Hfin : is_finite_vec (A *f v).
 Hypothesis Hlen: forall row, In row A -> length row = length v.
@@ -62,17 +57,17 @@ have Hin2  : (forall row : list (ftype t), In row l -> length row = length v) by
 destruct (IH Hfin2 Hin2) as (E & eta & IH1 & IH2 & IH3 & IH4 & IH5); 
   clear IH; rewrite IH1; clear IH1.
 have Hlen': length a = n by apply Hlen; left => //. 
-have Hfin1 : is_finite (dotprodF a v) = true by 
+have Hfin1 : Binary.is_finite (dotprodF a v) = true by 
   revert Hfin';rewrite /is_finite_vec !Forall_forall => Hfin'; apply Hfin'; left => /= //.
 destruct (dotprod_mixed_error a v Hlen' Hfin1) as (u & ueta & X & Y & Z1 & Z2).
 set (A':= (map FT2R a :: map_mat FT2R l) : matrix).
-have Ha: (length u = length (map FT2R a)) by rewrite map_length; lia.
+have Ha: (length u = length (map FT2R a)) by rewrite length_map; lia.
 have : (length l = 0)%nat \/ (0 < length l)%nat by lia. move => [Hl | Hl].
 {  apply length_zero_iff_nil in Hl; subst => /=.
 exists (vec_sum Rminus u (map FT2R a) :: []) , ([ueta]); repeat split.
 { rewrite Y => /=. 
 rewrite !CommonSSR.map_map_equiv.
-rewrite CommonSSR.map_map_equiv map_length in Ha.
+rewrite CommonSSR.map_map_equiv length_map in Ha.
 suff Hs: map2 Rplus (List.map FT2R a)
          (u -v List.map FT2R a) = u.
 rewrite Hs vec_sumR_bounds => /= //.
@@ -81,32 +76,34 @@ fold (vec_sumR (List.map FT2R a) (u -v List.map FT2R a)).
 rewrite vec_sumR_comm. rewrite vec_sumR_opp => //.
 fold (@vec_sumR u (List.map Ropp (List.map FT2R a))).
 rewrite vec_sumR_assoc. rewrite vec_sumR_minus.
-rewrite /vec_sumR map_length -Ha. apply (vec_sum_zeroR) => //.
-1, 2, 3 : by rewrite !map_length => //.
-rewrite /vec_sum/map2 !map_length 
-  combine_length map_length Ha; lia. }
+rewrite /vec_sumR length_map -Ha. apply (vec_sum_zeroR) => //.
+1, 2, 3 : by rewrite !length_map => //.
+rewrite /vec_sum/map2 !length_map 
+  length_combine length_map Ha; lia. }
 { move =>  i j Hi Hj.
 rewrite !CommonSSR.map_map_equiv; rewrite /vec_sum/map2 /= in IH2.
 assert (i = 0)%nat by lia; subst.
 subst A'. rewrite /matrix_index => /=.
 rewrite nth_vec_sum => /= //; [|nra].
-have Hj' : (j < n)%coq_nat by lia.
+have Hj' : (j < n)%N by lia.
 destruct (Z1 j Hj') as (x & HB & HC); rewrite HB.
 have H1 : (FT2R (List.nth j a neg_zero) = List.nth j (List.map FT2R a) 0%R).
-rewrite -FT2R_neg_zero.
+rewrite - (@FT2R_neg_zero t).
 by rewrite (@map_nth (ftype t) R (FT2R) a neg_zero j). 
-rewrite H1; apply /RleP; field_simplify_Rabs.
+rewrite H1.
+Automate.field_simplify_Rabs.
 rewrite Rabs_mult Rmult_comm.
 by apply Rmult_le_compat_r => //; apply Rabs_pos => /= . }
-move => k /= [H | H] //. subst; apply /RleP => //. 
+move => k /= [H | H] //.
+subst; auto.
 rewrite !CommonSSR.map_map_equiv => /=.
 move => x y [Hx|Hx] [Hy|Hy]; subst => //.
-rewrite /vec_sum/map2 map_length combine_length Ha 
-  CommonSSR.map_map_equiv map_length; lia. }
+rewrite /vec_sum/map2 length_map length_combine Ha 
+  CommonSSR.map_map_equiv length_map; lia. }
 exists (vec_sum Rminus  u (map FT2R a) :: E) , 
   (ueta::eta); repeat split.
 {
-rewrite CommonSSR.map_map_equiv map_length in Ha.
+rewrite CommonSSR.map_map_equiv length_map in Ha.
  rewrite Y; clear Y => /=.
 rewrite !CommonSSR.map_map_equiv => /=.
 suff: map2 Rplus (List.map FT2R a) (u -v List.map FT2R a) =  u.
@@ -116,28 +113,30 @@ fold (vec_sumR (List.map FT2R a) (u -v List.map FT2R a)).
 rewrite vec_sumR_comm. rewrite vec_sumR_opp => //.
 fold (@vec_sumR u (List.map Ropp (List.map FT2R a))).
 rewrite vec_sumR_assoc. rewrite vec_sumR_minus.
-rewrite map_length -Ha /vec_sumR. apply vec_sum_zeroR => //.
-1, 2, 3: rewrite !map_length => //.
-rewrite /vec_sum/map2 !map_length 
-  combine_length map_length Ha; lia. }
-{ revert Ha. rewrite CommonSSR.map_map_equiv map_length. 
+rewrite length_map -Ha /vec_sumR. apply vec_sum_zeroR => //.
+1, 2, 3: rewrite !length_map => //.
+rewrite /vec_sum/map2 !length_map 
+  length_combine length_map Ha; lia. }
+{ revert Ha. rewrite CommonSSR.map_map_equiv length_map. 
 destruct u => /=. 
 { move => Ha i j Hi Hj; symmetry in Ha; rewrite length_zero_iff_nil in Ha; 
 subst => /=; rewrite /matrix_index => /=.
 destruct i; destruct j => /= //. 
-1, 2: rewrite Rabs_R0 -RmultE Rmult_0_r; apply /RleP; nra.
+1, 2: rewrite Rabs_R0; lra.
 1, 2: apply IH2; lia. }
 { move => Ha i j Hi Hj. revert Ha.
 rewrite vec_sumR_opp. destruct a => /= //.
 subst A' => /= Ha.
-have H1 : (j < n)%coq_nat by lia.
+have H1 : (j < n)%N by lia.
 destruct (Z1 j H1) as (d & Hd1 & Hd2).
 destruct i; rewrite /matrix_index; destruct j => /= //.
-revert Hd1 => /= Hd1; rewrite Hd1. 
-  apply /RleP; field_simplify_Rabs; rewrite Rabs_mult Rmult_comm.
+revert Hd1 => /= Hd1; rewrite Hd1.
+Automate.field_simplify_Rabs.
+rewrite Rabs_mult Rmult_comm.
   apply Rmult_le_compat; 
   [ apply Rabs_pos | apply Rabs_pos | | apply Req_le ] => //.
-{ fold (map2 Rplus u (List.map Ropp (List.map FT2R a))).
+{
+change (map (uncurry _) _) with (map2 Rplus u (List.map Ropp (List.map FT2R a))).
 fold (vec_sum Rplus u (List.map Ropp (List.map FT2R a))).
 fold (vec_sumR u (List.map Ropp (List.map FT2R a))).
 rewrite /vec_sumR -(vec_sumR_opp) => //.
@@ -145,24 +144,24 @@ rewrite -(vec_sumR_nth); revert Hd1 => /= Hd1.
     rewrite Hd1.
 have: (List.nth j (List.map FT2R a) 0%Re =
   List.nth j (List.map FT2R a) (FT2R neg_zero)).
-{ f_equal. by rewrite FT2R_neg_zero. } 
-move => Hs; rewrite Hs map_nth; apply /RleP; field_simplify_Rabs. 
+ reflexivity.
+move => Hs; rewrite Hs map_nth; Automate.field_simplify_Rabs. 
 rewrite Rabs_mult Rmult_comm; apply Rmult_le_compat; 
   [ apply Rabs_pos | apply Rabs_pos | apply Hd2 | apply Req_le; auto].
-all: rewrite map_length; simpl in Ha; lia. }
+all: rewrite length_map; simpl in Ha; lia. }
 1, 2 : by unfold matrix_index in IH2; apply IH2.
-rewrite X map_length. lia. } } 
+rewrite X length_map. lia. } } 
 move => k /=. move => [Hk | Hk]. 
-  subst. apply /RleP; apply Z2.
+  subst. apply Z2.
   apply IH3 => //.
 by rewrite CommonSSR.map_map_equiv /vec_sum /=;
   destruct IH4; lia.
 move => x y /=. 
   rewrite CommonSSR.map_map_equiv. move => [Hx | Hx] [Hy | Hy] /= .
-  subst; rewrite /vec_sum/map2 map_length combine_length.
-  rewrite CommonSSR.map_map_equiv in Ha. rewrite Ha map_length; lia.
-  subst; rewrite /vec_sum/map2 map_length combine_length.
-  rewrite CommonSSR.map_map_equiv in Ha. rewrite Ha map_length.
+  subst; rewrite /vec_sum/map2 length_map length_combine.
+  rewrite CommonSSR.map_map_equiv in Ha. rewrite Ha length_map; lia.
+  subst; rewrite /vec_sum/map2 length_map length_combine.
+  rewrite CommonSSR.map_map_equiv in Ha. rewrite Ha length_map.
   rewrite (Hin2 y) => //; rewrite Hlen' ; lia.
   destruct IH4. rewrite (Hlen y); [|left] => //.
 set (l0 := List.nth 0 l [neg_zero]).
@@ -186,7 +185,7 @@ Open Scope ring_scope.
 Delimit Scope ring_scope with Ri.
 Delimit Scope R_scope with Re.
 
-Context {NAN: Nans} {t : FPCore.type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -225,13 +224,13 @@ pose proof @vector_to_vc_plus' ((map_mat FT2R A +m E) *r map FT2R v) eta (m.+1) 
 f_equal.
 have Hlen2: length (map_mat FT2R A +m E) = length A.
   destruct H4.
-  rewrite /map_mat map_length combine_length H !map_length; lia.
+  rewrite /map_mat length_map length_combine H !length_map; lia.
 have Hin1 : 
 (forall x : seq.seq R,
       In x (map_mat FT2R A +m E) -> Datatypes.length x = Datatypes.length (List.map FT2R v)). 
 apply matrix_sum_preserves_length'.
 destruct H4. intros.
-rewrite map_length.
+rewrite length_map.
 set (y := List.nth 0 A []).
 have Hy : In y A. subst y; apply List.nth_In; lia.
 specialize (H0 x y H4 Hy); rewrite H0.
@@ -240,51 +239,51 @@ move => x Hx.
 apply list_in_map_inv in Hx.
 destruct Hx as (x0 & Hx0 & Hx0').
 subst.
-rewrite !map_length.
+rewrite !length_map.
 apply Hlen'; auto.
 have HlenA1 : m.+1 = length (map_mat FT2R A +m E) by (subst m; lia).
 have Hlen1 : n.+1 = length (map FT2R v) by 
-  (subst n; rewrite !map_length; lia).
+  (subst n; rewrite !length_map; lia).
 rewrite -Hlen1 in Hin1.
 pose proof vector_to_vc_mulmx_m (map_mat FT2R A +m E) (map FT2R v) m.+1 n.+1. 
 rewrite H => //. clear H.
 f_equal.
 have HlenA2 : m.+1 = Datatypes.length (map_mat FT2R A) by 
-  (subst m;rewrite !map_length; lia).
+  (subst m;rewrite !length_map; lia).
 pose proof @matrix_to_mx_plus (map_mat FT2R A) E (m.+1) (n.+1) HlenA2.
-unfold map_mat in H. rewrite map_length in H.
+unfold map_mat in H. rewrite length_map in H.
 rewrite H. clear H. f_equal.
 destruct H4; lia.
 move => a e Ha Hep; split. 
 apply list_in_map_inv in Ha.
 destruct Ha as (x0 & Hx0 & Hx0').
-subst. rewrite map_length. apply Hlen; auto.
+subst. rewrite length_map. apply Hlen; auto.
 destruct H4.
 apply list_in_map_inv in Ha.
 destruct Ha as (x0 & Hx0 & Hx0').
 subst. pose proof (H4 e x0 Hep Hx0').
 rewrite H6. apply Hlen; auto.
 destruct H4.
-rewrite /map_mat/mat_sumR/mat_sum/map2 !map_length combine_length
-  map_length; lia.
+rewrite /map_mat/mat_sumR/mat_sum/map2 !length_map length_combine
+  length_map; lia.
 have HA : (length A = m.+1) by (subst m; lia).
 have Hv : (length v = n.+1) by (subst m; lia).
 split.
 { move => [i Hi] [j Hj]. 
   rewrite !mxE /=.
   rewrite HA Hv in H2.
-  by apply H2. }
+  apply /RleP; by apply H2. }
 move => [i Hi].
 rewrite /vector_to_vc mxE /=.
 rewrite Hv in H3.
-apply H3. apply List.nth_In. lia.
+apply /RleP. apply H3. apply List.nth_In. lia.
 Qed.
 
 End MixedErrorMath.
 
 Section ForwardError.
 
-Context {NAN: Nans} {t : FPCore.type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).

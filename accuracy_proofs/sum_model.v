@@ -1,14 +1,10 @@
 (* This file contains floating point functional models for the summation of
   two lists, as well as theorems regarding their equivalence. *)
 
-Require Import vcfloat.VCFloat.
-From vcfloat Require Import IEEE754_extra.
-Require Import List.
-Import List ListNotations.
-Require Import mathcomp.ssreflect.ssreflect.
-From LAProof.accuracy_proofs Require Import common  
-                                            float_acc_lems
-                                            float_tactics.
+From LAProof.accuracy_proofs Require Import 
+        preamble common float_acc_lems.
+                                          (*  float_tactics.*)
+Import ListNotations.
 Require Import Sorting Permutation.
 Require Import Reals.
 Open Scope R.
@@ -274,20 +270,6 @@ specialize (IHx (l' ++ l'') H ).
 simpl. rewrite IHx sumR_app_cons; auto.
 Qed.
 
-
-Section WithNans.
-Context {NAN: Nans}.
-
-Lemma plus_zero  a:
-Binary.is_finite _ _ a = true -> 
-(a + -0)%F32 = a.
-Proof.
-destruct a; simpl; auto;
-intros; try discriminate; auto;
-destruct s;
-cbv; auto.
-Qed.
-
 Lemma sum_rel_bound'  :
   forall (t : type) (l : list (ftype t)) (rs a: R)
   (Hrs : sum_rel_R (map FT2R l) rs)
@@ -349,17 +331,13 @@ unfold sum; simpl. rewrite Rmult_plus_distr_l; apply sum_rel_cons.
 fold sum_rel_R. simpl in IHl; auto.
 Qed.
 
-End WithNans.
-
 Section WithSTD.
-Context {NAN: Nans} {t : type} {STD: is_standard t}.
-
-Notation neg_zero := (ftype_of_float (common.neg_zero)).
+Context {NAN: FPCore.Nans} {t : type}.
 
 Definition sum_rel_Ft := @sum_rel (ftype t) neg_zero (BPLUS ).
 
 Lemma sum_rel_Ft_single fs a:
-is_finite fs = true ->
+Binary.is_finite fs = true ->
 sum_rel_Ft [a] fs -> fs = a.
 Proof.
 move => FIN Hs.
@@ -367,11 +345,9 @@ move: FIN.
 inversion Hs; subst.
 inversion H2; subst.
 rewrite /sum/BPLUS/BINOP
-  /neg_zero is_finite_Binary
-  !float_of_ftype_of_float.
-rewrite -{3}(ftype_of_float_of_ftype STD STD a).
+  /neg_zero.
 move => FIN.
-destruct (float_of_ftype a); 
+destruct a; 
   try discriminate FIN => //;
 destruct s => //.
 Qed.
@@ -410,22 +386,21 @@ Lemma is_finite_in :
   let e  := @default_abs t in
   let d  := @default_rel t in 
   let ov := powerRZ 2 (femax t) in
-  is_finite fs = true ->
-  forall a, In a l -> is_finite a = true.
+  Binary.is_finite fs = true ->
+  forall a, In a l -> Binary.is_finite a = true.
 Proof.
 induction l => //=.
 move => fs H0 H1 s [Hs|Hs]; subst.
 inversion H0; subst.
-move : H1; rewrite /sum. 
-by subexpr_finite.
-inversion H0; subst.
+move : H1; rewrite /sum => H1. 
+destruct (BPLUS_correct _ _ H1) as [[? ?] ?]; auto.
+inversion H0; clear H0; subst.
 fold sum_rel_Ft in H4.
-apply (IHl s0) => //.
-move : H1; rewrite /sum. 
-by subexpr_finite.
+eapply IHl; try eassumption.
+destruct (BPLUS_correct _ _  H1) as [[? ?] ?]; auto.
 Qed.
 
-Definition sumF := fold_right BPLUS neg_zero.
+Definition sumF := fold_right (@BPLUS _ t) neg_zero.
 
 Lemma sum_rel_Ft_fold : forall l fs, 
    sum_rel_Ft l fs -> fs = sumF l.

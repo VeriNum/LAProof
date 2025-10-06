@@ -1,14 +1,8 @@
-Require Import vcfloat.VCFloat.
-Require Import List.
-Import ListNotations.
-Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
-From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
-From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas.
-From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp gemv_acc(* vec_op_acc*).
+From LAProof.accuracy_proofs Require Import preamble common 
+       dotprod_model sum_model dot_acc float_acc_lems list_lemmas
+         gem_defs mv_mathcomp gemv_acc.
 From mathcomp Require Import Rstruct.
-From mathcomp Require Import all_ssreflect ssralg ssrnum.
-From Coq Require Import ZArith Reals Psatz.
-From Coq Require Import Arith.Arith.
+
 Open Scope R_scope.
 Open Scope ring_scope.
 Delimit Scope ring_scope with Ri.
@@ -17,11 +11,11 @@ Set Warnings "notation-overridden,ambiguous-paths,overwriting-delimiting-key".
 
 Require Import LAProof.accuracy_proofs.vec_op_acc.
 
-Import Order.TTheory GRing.Theory Num.Def Num.Theory.
+Import Order.TTheory GRing.Theory ssrnum.Num.Def ssrnum.Num.Theory.
 
 Section MMERROR. 
 (* forward error matrix multiplication *)
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -113,7 +107,7 @@ End MMERROR.
 
 Section SCALE_M_ERROR.
 (* mixed error matrix scaling *)
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -148,7 +142,6 @@ rewrite Heq. clear Heq.
 destruct (scaleV_mixed_error a x) as 
   (e & eta1 & Heq & HE & HF).
 { move: Hfin. apply is_finite_mat_cons. } 
-rewrite !CommonSSR.map_map_equiv/= in Heq.
 rewrite Heq; clear Heq.
 have Ha : length a = n by apply Hp; left.
 destruct IH' as (IH1 & IH2).
@@ -160,8 +153,9 @@ destruct i => /=.
 destruct (HE j) as (del & Heq & HE').
 rewrite Ha. lia.
 rewrite Heq !CommonSSR.map_map_equiv.
-rewrite Rabs_mult Rmult_comm -Ha. 
-apply ler_pM => //; apply /RleP; try apply Rabs_pos.
+rewrite Rabs_mult Rmult_comm -Ha.
+apply /RleP. 
+apply ler_pM => //; apply /RleP; auto; apply Rabs_pos.
 apply IH1; lia.  } 
 { intros. rewrite /matrix_index.
 destruct i => /=.
@@ -212,7 +206,7 @@ End SCALE_M_ERROR.
 
 Section SMMERROR. 
 (* forward error matrix multiplication *)
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -279,7 +273,7 @@ End SMMERROR.
 Section MATADDERROR.
 
 (* mixed error matrix addition *)
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -333,7 +327,6 @@ have Hb : length b = n.
 { apply eq_size_cons in HA.
 destruct HA as (_ & HA').
 rewrite -HA'. apply Hn => /=. by left. }
-rewrite !CommonSSR.map_map_equiv in Heq.
 rewrite Heq. clear Heq.
 exists (e1 :: EA), (e2 :: EB);
   repeat split => //=.
@@ -404,7 +397,7 @@ End MATADDERROR.
 
 Section MATAXPBY.
 
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -519,7 +512,7 @@ Qed.
 End MATAXPBY.
 
 Section GEMM.
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).

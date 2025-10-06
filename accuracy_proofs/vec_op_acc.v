@@ -1,29 +1,20 @@
-Require Import vcfloat.VCFloat.
-Require Import List.
-Import ListNotations.
-Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
-From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
-From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas.
-From LAProof.accuracy_proofs Require Import gem_defs mv_mathcomp gemv_acc.
+From LAProof.accuracy_proofs Require Import preamble common
+      dotprod_model sum_model dot_acc float_acc_lems list_lemmas
+       gem_defs mv_mathcomp gemv_acc.
 From mathcomp Require Import Rstruct.
-From mathcomp Require Import all_ssreflect ssralg ssrnum.
-From Coq Require Import ZArith Reals Psatz.
-From Coq Require Import Arith.Arith.
 Delimit Scope ring_scope with Ri.
 Delimit Scope R_scope with Re.
 Set Warnings "notation-overridden,ambiguous-paths,overwriting-delimiting-key".
-
-Set Bullet Behavior "Strict Subproofs".
 
 Open Scope R_scope.
 Open Scope ring_scope.
 
 
-Import Order.TTheory GRing.Theory Num.Def Num.Theory.
+Import Order.TTheory GRing.Theory ssrnum.Num.Def ssrnum.Num.Theory.
 
 Section SCALE_V_ERROR.
 (* mixed error vector scaling *)
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -48,7 +39,7 @@ rewrite /vec_sumR/vec_sum/map2/=.
 by exists [], [].
 -
 move => v0 v IH a Hfinv. 
-have [HA HB]:  is_finite_vec (scaleVF a v) /\ is_finite (BMULT a v0).
+have [HA HB]:  is_finite_vec (scaleVF a v) /\ Binary.is_finite (BMULT a v0).
   by apply is_finite_vec_cons in Hfinv.
 destruct (IH a) as (e & eta & Heq & He & Heta) => //.
 clear IH. rewrite Heq. clear Heq.
@@ -63,28 +54,28 @@ exists (d :: e), (eps :: eta); repeat split; try (simpl; lia).
  rewrite Heqd.
   destruct i => /=.
   * exists del; split; [nra|].
-    apply /RleP. eapply Rle_trans.
+    eapply Rle_trans.
     apply HE => /=. 
     rewrite -Nat.add_1_r; auto with commonDB.
   * have Hi': (i < length v)%nat by lia.
     destruct (He i Hi') as (x & He' & Hx).
     rewrite He'.
     exists x; split => //=.
-    eapply le_trans; [apply Hx | ].
-    apply /RleP; auto with commonDB.
+    eapply Rle_trans; [apply Hx | ].
+    auto with commonDB.
 + move => e0 [Hin| Hin].
-  * rewrite -Hin. apply /RleP.
+  * rewrite -Hin.
     eapply Rle_trans; [apply HF|].
     apply e_le_g1; lia.
-  * eapply le_trans; [apply Heta => // | ].
-    apply /RleP. apply g1n_le_g1Sn'.
+  * eapply Rle_trans; [apply Heta => // | ].
+    apply g1n_le_g1Sn'.
 Qed.
 
 End SCALE_V_ERROR.
 
 Section VECSUMERROR.
 (* mixed error matrix addition *)
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type} .
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -120,7 +111,7 @@ case: v => //.
 move => v0 v. intros. 
 rewrite /vec_sumF vec_sum_cons.
 have Hfin:  is_finite_vec (vec_sum BPLUS u v) /\
-  (is_finite (BPLUS u0 v0) = true).
+  (Binary.is_finite (BPLUS u0 v0) = true).
 simpl in Hfinv. rewrite /vec_sumF vec_sum_cons in Hfinv.  
 apply is_finite_vec_cons in Hfinv.
 destruct Hfinv => //.
@@ -138,8 +129,7 @@ exists (((FT2R u0) * del) :: e1), (((FT2R v0) * del) :: e2);
 f_equal. 
 rewrite -!RmultE; nra. }
 { move => i Hi; destruct i => /=.
-exists del; split => //=.
-apply /RleP. by apply Hd. 
+exists del; auto.
 destruct H as (H & H1).
 elim: (H i). 
 clear H; move => d' Hd'.
@@ -148,8 +138,6 @@ exists d'; split => //=.
 unfold m in Hi. simpl in Hi. lia. } 
 { move => i Hi; destruct i => /=.
 exists del; split => //=.
-apply /RleP.
-by apply Hd.
 destruct H as (_ & H1 & _).
 elim: (H1 i). 
 clear H1; move => d' Hd'.
@@ -231,7 +219,7 @@ End VECSUMERROR.
 
 Section SCALEFMV. 
 (* mixed error bounds over lists *)
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -262,7 +250,7 @@ Lemma Smat_vec_mul_mixed_error:
         (List.nth i e 0 = List.nth i (A *fr v) 0 * d /\
            (Rabs d) <= g m))
     /\ (forall k : R,
-       (In k eta1) -> is_true ((Rabs k) <= (g1 n n))) 
+       (In k eta1) -> is_true (Rabs k <= g1 n n)%O) 
     /\ length eta1= m.
 Proof.
 (* proof follows from previous bounds for scaling
@@ -275,31 +263,40 @@ destruct (mat_vec_mul_mixed_error A v)
 { apply (is_finite_scaleV b) => //. } 
 { intros; by apply Hlen. } 
 rewrite !CommonSSR.map_map_equiv.
+change @map with @List.map in Heq1.
 rewrite Heq1. 
 rewrite !CommonSSR.map_map_equiv in H.
 rewrite Heq1 in H. clear Heq1.
-have Hlen1: (length (A *f v)) = m.
-by rewrite !map_length.
+have Hlen1: (length (A *f v)) = m  by rewrite !length_map.
 exists E, e, eta1, eta; repeat split => //.
+-
 destruct H1.  
 intros; apply H0 => //.
+-
 destruct H as (_ & H & _); intros.
 rewrite Hlen1 in H. by apply H.
+-
 destruct H1 as (_ & _ &H1 & _).
 destruct H1; lia.
+-
 destruct H1 as (_ & _ &H1 & _).
 destruct H1; intros. by apply H1.
+-
 destruct H as (_ & H).
 destruct H as ( _ & H ).
 destruct H;intros.
-by rewrite H0 !map_length.
+by rewrite H0 !length_map.
+-
+change @List.map with @map in H|-*.
 rewrite !CommonSSR.map_map_equiv in H.
 destruct H as (H & _); intros. 
 destruct (H i). by rewrite Hlen1.
 exists x; destruct H2; split => //.
 by rewrite Hlen1 in H3.
+-
 destruct H1 as (_ & H1 & _).
-intros; by apply H1.
+intros; apply /RleP; by apply H1.
+-
 destruct H1 as (_ & _ & H2).
 by apply H2.
 Qed.
@@ -308,7 +305,7 @@ End SCALEFMV.
 
 Section GEMV. 
 (* mixed error bounds over lists *)
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Context {NAN: FPCore.Nans} {t : type}.
 
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
@@ -365,8 +362,8 @@ destruct (mat_vec_mul_mixed_error A x)
 by apply is_finite_scaleV in H.
 all: rewrite !map_length; by rewrite Hleny. }
 { by intros; apply Hlen. }
+change @List.map with @map.
 rewrite Heq2. 
-rewrite !CommonSSR.map_map_equiv in H1.
 rewrite Heq2 in H1. rewrite Hleny in H1, H2.
 destruct H2 as (He1 & He2 & _).
 destruct H1 as (He3 & He4 & He5 & He6 & He7 & He8 & _).

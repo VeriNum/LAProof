@@ -1,9 +1,10 @@
 (* This file contains basic definitions and lemmas common to all other files in 
   the repository. *)
 
-Require Import vcfloat.VCFloat vcfloat.IEEE754_extra List.
-Set Warnings "--notation-overriden, -parsing".
-Require Import mathcomp.ssreflect.ssreflect.
+From LAProof.accuracy_proofs Require Import preamble.
+
+(* Set Warnings "--notation-overriden, -parsing". *)
+Arguments Binary.is_finite [prec] [emax] _.
 
 Definition rounded t r:=
 (Generic_fmt.round Zaux.radix2 (SpecFloat.fexp (fprec t) (femax t))
@@ -11,100 +12,141 @@ Definition rounded t r:=
 
 Definition neg_zero  {t: type} := Binary.B754_zero (fprec t) (femax t) true.
 Definition pos_zero  {t: type} := Binary.B754_zero (fprec t) (femax t) false.
-Definition Beq_dec_t {t: type} {STD: is_standard t} 
+Definition Beq_dec_t {t: type}
     (x y  : ftype t) : {x = y} + {x <> y}.
-    destruct (Beq_dec (fprec t) (femax t) 
-      (float_of_ftype x) (float_of_ftype y)).
-  { left. move : e. 
-    rewrite /float_of_ftype //=.
-    destruct t => //; destruct nonstd => //. } 
-    right; move : n; 
-    destruct t => //; destruct nonstd => //. 
+    apply (Beq_dec (fprec t) (femax t)  x y).
   Defined. 
 
 Create HintDb commonDB discriminated.
+
 Global Hint Resolve 
   bpow_gt_0 bpow_ge_0 pos_INR lt_0_INR pow_le: commonDB.
 
-Section NonZeros.
-Context {NAN: Nans} {t : type} {STD: is_standard t} .
+Delimit Scope R_scope with Re.
+Open Scope R_scope.
 
-Definition nnz (A : Type) 
-  (dec : forall x y : A, {x = y} + {x <> y}) 
-  (l : list A) (zero : A) := 
-    (length l - @count_occ A dec l zero)%nat.
-Definition nnzF l := nnz (ftype t) Beq_dec_t l (ftype_of_float pos_zero).
-Definition nnzR l := nnz R Req_EM_T l 0%R.
-
-Lemma nnz_zero A dec l zero :
-nnz A dec l zero = 0%nat ->
-(length l = @count_occ A dec l zero)%nat.
+Lemma rev_list_rev: @rev = @List.rev.
 Proof.
-unfold nnz. intros.
-assert (0 + @count_occ A dec l zero = @length A l)%nat.
-{ rewrite <- H.
-rewrite Nat.sub_add; try lia.
-apply count_occ_bound.
-} simpl in H0.
-simpl; auto.
+apply FunctionalExtensionality.functional_extensionality_dep; intro T.
+apply FunctionalExtensionality.functional_extensionality; intro al.
+unfold rev.
+change @catrev with rev_append.
+rewrite rev_append_rev app_nil_r //.
 Qed.
 
-Lemma nnz_lemma A dec l zero :
- nnz A dec l zero = 0%nat -> forall x, In x l -> x = zero.
-Proof.
-unfold nnz; 
-induction l;
-try contradiction.
-intros;
-destruct H0.
-{ subst. pose proof count_occ_unique dec zero (x::l).
-eapply (repeat_spec (length (x :: l))).
-match goal with |- context [In x ?a] =>
-replace a with (x::l)
-end; simpl; auto.
-apply H0. symmetry.
-apply nnz_zero. simpl; auto. }
-apply IHl; auto.
-assert (0 + count_occ dec (a :: l) zero  = length (a :: l))%nat.
-{
-rewrite <- H.
-rewrite Nat.sub_add; try lia.
-apply count_occ_bound.
-}
-assert ( a::l = repeat zero (length ((a::l)))).
-eapply (count_occ_unique dec).
-simpl in H1.
-simpl; auto.
-simpl in H2.
-rewrite count_occ_cons_eq in H; auto.
-inversion H2. auto.
+Section WithType.
+Context {NAN: FPCore.Nans} {t : type}.
+
+Definition feqb: rel (ftype t) := 
+ fun x y =>
+match x with
+| Binary.B754_zero _ _ _ =>
+    match y with
+    | Binary.B754_zero _ _ _ => true
+    | _ => false
+    end
+| Binary.B754_finite _ _ b1 m1 e1 _ =>
+    match y with
+    | Binary.B754_finite _ _ b2 m2 e2 _ => eqb b1 b2 &&  Pos.eqb m1 m2 && Z.eqb e1 e2
+    | _ => false
+    end
+| _ =>
+    match y with
+    | Binary.B754_infinity _ _ _ | Binary.B754_nan _ _ _ _ _ => true
+    | _ => false
+    end
+end.
+
+Lemma feqb_spec:   forall x y, reflect (feq x y) (feqb x y).
+intros.
+unfold feq, feqb.
+destruct x,y; try constructor; auto.
+destruct (eqbP s s0).
+destruct (Pos.eqb_spec m m0).
+destruct (Z.eqb_spec e e1).
+constructor; auto.
+constructor. intros [? [? ?]]; contradiction.
+constructor; intros [? [? ?]]; contradiction.
+constructor; intros [? [? ?]]; contradiction.
 Qed.
 
-Lemma nnz_is_zero_cons A a l dec zero : 
-  nnz A dec (a::l) zero = 0%nat -> nnz A dec l zero = 0%nat.
+Lemma feq_eqR: forall (x y: ftype t), feq x y -> FT2R x = FT2R y.
 Proof.
-intros H.
-apply nnz_zero in H; symmetry in H.
-pose proof  (@count_occ_unique A dec) zero (a::l) H.
-unfold nnz. 
-simpl in H0.
-inversion H0.
-rewrite <- H3 at 1. 
-rewrite count_occ_repeat_eq; auto.
-lia.
+intros.
+destruct x,y; try contradiction; try reflexivity.
+red in H.
+destruct H as [? [? ?]]; subst.
+auto.
 Qed.
 
-Lemma nnz_cons A l dec zero : 
-  nnz A dec (zero::l) zero = nnz A dec l zero.
+Lemma feqb_eqR: forall (x y: ftype t), feqb x y ->  Req_bool (FT2R x) (FT2R y).
 Proof.
-unfold nnz;  
-rewrite (count_occ_cons_eq dec l (eq_refl zero)); simpl; auto.
+intros.
+destruct (feqb_spec x y); try discriminate.
+apply Req_bool_true.
+apply feq_eqR; auto.
 Qed.
 
-End NonZeros.
+(** Number of nonzeros *)
 
-Section DefaultRels.
-Context {NAN: Nans} {t: type}.
+Definition nnzF:  seq (ftype t) -> nat :=
+    count (fun x => negb (feqb pos_zero x)).
+
+Definition nnzR:  seq R -> nat :=
+    count (fun x => negb (Req_bool R0 x)).
+
+Lemma nnzF_zero l: nnzF l == 0%nat <-> size l == count (feqb pos_zero) l.
+Proof.
+unfold nnzF.
+rewrite (eq_sym (size l)).
+rewrite -all_count.
+induction l; split; auto; destruct a; simpl in *; lia.
+Qed.
+
+Lemma nnzR_zero l: nnzR l == 0%nat <-> size l == count (Req_bool R0) l.
+Proof.
+unfold nnzR.
+rewrite (eq_sym (size l)).
+rewrite -all_count.
+induction l; split; auto;
+simpl;
+destruct (Req_bool R0 a); simpl; lia.
+Qed.
+
+Lemma nnzF_lemma l:  nnzF l == 0%nat <-> all (feqb pos_zero) l.
+Proof.
+rewrite nnzF_zero.
+rewrite all_count.
+rewrite eq_sym.
+split; auto.
+Qed.
+
+Lemma nnzR_lemma l:  nnzR l == 0%nat <-> all (Req_bool R0) l.
+Proof.
+rewrite nnzR_zero.
+rewrite all_count.
+rewrite eq_sym.
+split; auto.
+Qed.
+
+Lemma nnzF_is_zero_cons a l: nnzF (a::l) == 0%nat -> nnzF l == 0%nat.
+Proof.
+rewrite !nnzF_lemma (all_cat _ [:: a] l).
+move /andP => [H H'] //.
+Qed.
+
+Lemma nnzR_is_zero_cons a l: nnzR (a::l) == 0%nat -> nnzR l == 0%nat.
+Proof.
+rewrite !nnzR_lemma (all_cat _ [:: a] l).
+move /andP => [H H'] //.
+Qed.
+
+Lemma nnzR_cons l : 
+  nnzR (0%Re :: l) = nnzR l.
+Proof.
+simpl.
+destruct (Req_bool_spec R0 0); try lra. auto.
+Qed.
 
 Definition default_rel : R :=
   / 2 * Raux.bpow Zaux.radix2 (- fprec t + 1).
@@ -113,11 +155,11 @@ Definition default_abs : R :=
   / 2 * Raux.bpow Zaux.radix2 (3 - femax t - fprec t).
 
 Lemma default_rel_sep_0 : 
-  default_rel <> 0.
+  default_rel <> R0.
 Proof.
 apply Rabs_lt_pos;
-rewrite Rabs_pos_eq; [apply Rmult_lt_0_compat; try nra | 
-  apply Rmult_le_pos; try nra]; auto with commonDB.
+rewrite Rabs_pos_eq; [apply Rmult_lt_0_compat; try Lra.nra | 
+  apply Rmult_le_pos; try Lra.nra]; auto with commonDB.
 Qed.
 Hint Resolve default_rel_sep_0 : commonDB.
 
@@ -129,12 +171,12 @@ Qed.
 Hint Resolve default_rel_gt_0 : commonDB.
  
 Lemma default_rel_ge_0 : 
-  0 <= default_rel .
+  0 <= default_rel.
 Proof. apply Rlt_le; auto with commonDB. Qed.
 Hint Resolve default_rel_ge_0 : commonDB.
 
 Lemma default_rel_plus_1_ge_1:
-1 <= 1 + default_rel .
+ 1 <= 1 + default_rel.
 Proof. 
 rewrite Rplus_comm. 
 apply Rcomplements.Rle_minus_l; field_simplify. 
@@ -143,12 +185,12 @@ Qed.
 Hint Resolve default_rel_plus_1_ge_1 : commonDB.
 
 Lemma default_rel_plus_0_ge_1:
-0 <= 1 + default_rel .
+ 0 <= 1 + default_rel.
 Proof. suff: 1 <= 1 + default_rel; try nra; auto with commonDB. Qed. 
 Hint Resolve default_rel_plus_0_ge_1 : commonDB.
 
 Lemma default_rel_plus_1_gt_1:
-1 < 1 + default_rel .
+ 1 < 1 + default_rel.
 Proof.
 rewrite Rplus_comm; apply Rcomplements.Rlt_minus_l;
   field_simplify; auto with commonDB.
@@ -156,7 +198,7 @@ Qed.
 Hint Resolve default_rel_plus_1_gt_1 : commonDB.
 
 Lemma default_rel_plus_1_gt_0 :
-0 < 1 + default_rel.
+ 0 < 1 + default_rel.
 Proof. 
 eapply Rlt_trans with 1; [nra | ].
 auto with commonDB.
@@ -164,7 +206,7 @@ Qed.
 Hint Resolve default_rel_plus_1_gt_0 : commonDB.
 
 Lemma default_rel_plus_1_ge_1' n:
-1 <= (1 + default_rel) ^ n.
+ 1 <= (1 + default_rel) ^ n.
 Proof. 
 induction n; simpl; auto; try nra.
 eapply Rle_trans with (1 * 1); try nra.
@@ -193,7 +235,7 @@ apply: Rmult_le_compat; try nra; auto with commonDB.
 apply: bpow_le => //; pose proof fprec_gt_one t; pose proof fprec_lt_femax t; lia.
 Qed.
 
-End DefaultRels.
+End WithType.
 
 Global Hint Resolve 
   default_rel_sep_0
@@ -209,8 +251,8 @@ Global Hint Resolve
   default_rel_plus_0_ge_1
 : commonDB.
 
-Section ErrorRels.
-Context {NAN: Nans} {t: type}.
+Section WithType.
+Context {NAN: FPCore.Nans} {t: type}.
 
 Notation D := (@default_rel t).
 Notation E := (@default_abs t).
@@ -248,10 +290,11 @@ D <= g  (n + 1).
 Proof. unfold g. induction n; simpl; field_simplify; try nra.
 eapply Rle_trans; [apply IHn|].
 apply Rplus_le_compat_r.
-replace (D  * (1 + D ) ^ (n + 1) + (1 + D ) ^ (n + 1))
+replace (D  * (1 + D ) ^ (n + 1)%coq_nat + (1 + D ) ^ (n + 1)%coq_nat)
 with 
-((1 + D ) ^ (n + 1) * (D   + 1)) by nra.
+((1 + D ) ^ (n + 1)%coq_nat * (D   + 1)) by nra.
 eapply Rle_trans with ((1 + D ) ^ (n + 1) * 1); try nra.
+change Init.Nat.add with addn.
 eapply Rmult_le_compat; try nra.
 { apply pow_le. apply Fourier_util.Rle_zero_pos_plus1 ; auto with commonDB. }
 apply Rcomplements.Rle_minus_l. field_simplify; auto with commonDB. 
@@ -300,8 +343,7 @@ unfold g1, g; field_simplify.
 symmetry. replace n with (S (n-1)) at 2.
 rewrite <- tech_pow_Rmult.
 field_simplify; nra.
-rewrite <- Nat.sub_succ_l; auto.
-simpl; lia.
+rewrite <- Nat.sub_succ_l; auto; lia.
 Qed.
 Hint Resolve g1_pos : commonDB.
 
@@ -325,7 +367,7 @@ intros; unfold g1. eapply Rle_trans with (1 * E * 1); try nra.
 apply: Rmult_le_compat; first (field_simplify; auto with commonDB); try nra.
 apply: Rmult_le_compat => //; auto with commonDB; try nra.
 replace 1 with (INR 1) by (simpl; nra).
-apply le_INR; auto with commonDB.
+apply le_INR; auto with commonDB; lia.
 rewrite Rplus_comm -Rcomplements.Rle_minus_l; field_simplify;
 auto with commonDB.
 Qed.
@@ -352,7 +394,7 @@ apply: Rminus_plus_le_minus.
 rewrite Rplus_comm.
 suff H1: (1 + D)^1  <= (1 + D) ^ m; try nra.
 apply: Rle_pow; auto with commonDB.
-rewrite Nat.add_comm. 
+lia.
 rewrite plus_INR; simpl; nra.
 Qed.
 Hint Resolve plus_d_e_g1_le' : commonDB.
@@ -366,9 +408,9 @@ intros; replace (S n) with (n + 1)%nat by lia.
 replace (S m) with (m + 1)%nat by lia.
 unfold g1, g; field_simplify.
 replace (INR (n + 1)) with (INR n + 1) by 
-  (rewrite Nat.add_comm; rewrite plus_INR; simpl; nra).
+  (rewrite plus_INR; simpl; nra).
 replace (INR (m + 1)) with (INR m + 1) by
-  (rewrite Nat.add_comm; rewrite plus_INR; simpl; nra).
+  (rewrite plus_INR; simpl; nra).
 rewrite !Rmult_plus_distr_l !Rmult_1_r. replace
 (INR n * E * (1 + D) ^ m * D +
 INR n * E * (1 + D) ^ m) with
@@ -409,7 +451,6 @@ suff : E + 0 * 0 <= E + E * g n; first by nra.
 apply: Rplus_le_compat_l. 
 apply: Rmult_le_compat; try nra;
 auto with commonDB.
-rewrite Nat.add_comm. 
 rewrite plus_INR; simpl; nra. 
 Qed.
 Hint Resolve plus_e_g1_le : commonDB.
@@ -427,7 +468,6 @@ rewrite /g; field_simplify; apply pow_le;
 auto with commonDB.
 apply: Rmult_le_compat; try nra; auto with commonDB.
 apply: Rplus_le_compat_l; auto with commonDB.
-rewrite Nat.add_comm. 
 rewrite plus_INR; simpl; nra. 
 Qed.
 Hint Resolve g1n_le_g1Sn : commonDB.
@@ -444,7 +484,8 @@ rewrite /g; field_simplify; apply pow_le;
 auto with commonDB.
 apply: Rmult_le_compat; try nra; auto with commonDB.
 apply: Rplus_le_compat_l; auto with commonDB.
-rewrite Nat.add_comm; auto with commonDB. 
+rewrite addnC.
+auto with commonDB. 
 rewrite plus_INR; simpl; nra.
 Qed.
 Hint Resolve g1n_le_g1Sn' : commonDB.
@@ -468,30 +509,24 @@ apply: Rmult_le_pos; auto with commonDB.
 rewrite /g; field_simplify; apply pow_le;
 auto with commonDB.
 apply: Rmult_le_lt_compat; try nra; auto with commonDB.
+apply lt_0_INR; lia.
 suff : INR n < INR n + 1 ; simpl; try nra. 
 move => H.
-rewrite Nat.add_comm. 
 rewrite plus_INR; simpl; nra. 
 rewrite /g; field_simplify. 
 apply: Rlt_pow; auto with commonDB.
 suff : 0 < D; try nra; auto with commonDB.
 Qed.
 
-End ErrorRels.
-
-Section Format.
-Context {NAN : Nans} {t :  type} {STD : is_standard t}. 
-
 Lemma round_FT2R a :
   (Generic_fmt.round Zaux.radix2 (SpecFloat.fexp (fprec t) (femax t))
      (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE) (FT2R a)) = @FT2R t a.
 Proof. 
-rewrite -B2R_float_of_ftype 
-  Generic_fmt.round_generic => //.
+rewrite Generic_fmt.round_generic //.
 apply Binary.generic_format_B2R.
 Qed.
 
-End Format. 
+End WithType. 
 
 Global Hint Resolve 
   g_pos
