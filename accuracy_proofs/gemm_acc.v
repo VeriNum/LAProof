@@ -89,7 +89,7 @@ apply nth_In;
 apply Heta' => //. }
 { move => x [|] Hx. 
 rewrite -Hx. 
-by rewrite !map_length.
+by rewrite !length_map.
 by apply H3. } 
 { move => x [|] Hx. 
 by rewrite -Hx. 
@@ -98,7 +98,7 @@ move => a b0 Ha Hb0.
 destruct H1.
 apply in_map_iff in Ha. 
 destruct Ha as (x & Hx &Hx').
-rewrite -Hx map_length.
+rewrite -Hx length_map.
 symmetry; apply  (H0 b0 x Hb0 Hx').
 Qed.
 
@@ -263,7 +263,7 @@ split =>  //.
 split =>  //.
 apply Heta1 => //.
 split =>  //.
-rewrite !map_length in HE.
+rewrite !length_map in HE.
 rewrite Heq1 in HE.
 apply HE => //. 
 Qed.
@@ -452,7 +452,7 @@ destruct (mat_sum_error (scaleMF x A) (scaleMF y B) n)
   as (ea & eb & HEQ & H1 & H2 & H3 & H4) => //.
 { apply scaleM_length => //. } 
 { rewrite /eq_size; split. 
-rewrite !map_length. by destruct HA.
+rewrite !length_map. by destruct HA.
 destruct HA; intros.
 rewrite (scaleM_length x A n BMULT) => //.
 symmetry. pose proof (scaleM_length y B n BMULT) => //.
@@ -473,11 +473,11 @@ exists EA, EB, ea, eb, eta1, eta2;
   split => //. 
 { intros; apply H12 => //; lia. }
   split => //.
-{ rewrite !map_length in H1.
+{ rewrite !length_map in H1.
 intros. destruct (H1 i j) => //.
 exists x0. apply H16. } 
   split => //. 
-{ rewrite !map_length in H2.
+{ rewrite !length_map in H2.
 intros. destruct (H2 i j) => //.
 exists x0. apply H16. } 
   split => //.
@@ -580,7 +580,7 @@ have Hleny : forall a : seq (ftype t), In a Y -> length a = m.
 by apply H0. } 
 have Hlen2 :  eq_size (MMCF A B) Y.
 { move : HY. rewrite /size_col /eq_size; move => HY1; destruct HY1;
-  split. by rewrite H !map_length.
+  split. by rewrite H !length_map.
 intros. symmetry; rewrite H0 => //. by symmetry; apply Hlen1. }
 have Hsz : eq_size (scaleMF s1 (MMCF A B)) (scaleMF s2 Y).
 { apply (eq_size_trans (scaleMF s1 (MMCF A B)) (MMCF A B) (scaleMF s2 Y)).
@@ -596,7 +596,7 @@ destruct (MMC_error A B n)
 by apply is_finite_scaleM in H => //. } 
 (* invoke errors *)
 rewrite Heq2 in H1. rewrite Heq1 Heq2.
-rewrite !map_length in H1.
+rewrite !length_map in H1.
 clear Heq1 Heq2.
 exists ab1, ab2, ab3, ab4, ab5, y1, y2, y3; split => //.
 destruct H2 as (Hab1 & Hab2 & _).

@@ -571,7 +571,7 @@ Lemma length_mvR_mvF {NANS : FPCore.Nans} {t : type} :
 Proof.
   intros. 
   unfold mvR, mvF, MV, map_mat.
-rewrite !map_length; auto.
+rewrite !length_map; auto.
 Qed.
 
 Lemma nth_vec_sum op : forall u1 u2 
@@ -630,7 +630,7 @@ Lemma eq_size_scaleM {T} mul (x : T) A n :
 Proof.
 elim : A => //.
 intros; destruct H1. 
-rewrite -H1 -(H0 a). by rewrite !map_length.
+rewrite -H1 -(H0 a). by rewrite !length_map.
 simpl; by left.
 apply H => //. 
 intros; apply H0; simpl; by right.
@@ -797,7 +797,7 @@ move => a A /=. intros.
 rewrite IH; try lia. 
 rewrite mat_sumR_cons.
 rewrite -scaleVR_dist => //.
-rewrite !map_length; lia.
+rewrite !length_map; lia.
 Qed.
 
 Lemma mat_sumR_assoc A B C: 
@@ -870,12 +870,12 @@ rewrite IH; try lia. rewrite scaleMR_cons mat_sumR_cons.
 rewrite !(vec_sumR_assoc). 
 f_equal. f_equal. 
 by rewrite -scaleVR_dist.
-rewrite !map_length;
+rewrite !length_map;
 symmetry. by apply H; left. 
-rewrite !map_length. 
+rewrite !length_map. 
 destruct H1;
 by symmetry ;apply H2 => /=; left.
-rewrite !map_length combine_length !map_length.
+rewrite !length_map combine_length !length_map.
 have HB : length B = length C by lia.
 have HC : length C = length D .
 destruct H1; simpl in H1. lia.
@@ -901,9 +901,9 @@ suff Ha : length a = n%nat.
 rewrite Ha => //=.
 destruct n => //=.
 apply H1 => /=. by left.
-by rewrite !map_length.
+by rewrite !length_map.
 intros; apply H1 => /=; by right.
-by rewrite !map_length.
+by rewrite !length_map.
 Qed.
 
 
@@ -989,7 +989,7 @@ case: v => //=[|a l].
 by rewrite zero_vector_length.
 specialize (IH l). 
 remember (rowM d (vec_sum sum) mul m l B) as u.
-rewrite /vec_sum/scaleV map_length combine_length map_length.
+rewrite /vec_sum/scaleV length_map combine_length length_map.
 rewrite H/=; [ | by left].
 rewrite IH; [lia | ]. 
 move => b0 Hb0. apply H => /=. by right.
@@ -1002,7 +1002,7 @@ Proof.
 elim: A => //.
 move => a A. intros.
 destruct H1. 
-rewrite -H1 !map_length.
+rewrite -H1 !length_map.
 apply H0 => /=; by left.
 apply H => //. 
 intros; apply H0 =>/=; by right.
@@ -1022,7 +1022,7 @@ move => b0 b IH A a HA.
 rewrite /mul' /=. move => H.
 apply in_map_iff in H. elim H => x H1.
   elim H1 => /= H2 H3. rewrite -H2 /=.
-rewrite map_length //.
+rewrite length_map //.
 Qed.
 
 Lemma in_MM_length {T : Type} (A B: list (list T)) 
@@ -1048,7 +1048,7 @@ Proof.
 move: A m . 
 elim: B => // . 
 move => b B IH A m H2 v/= [|]Hv.
-rewrite -Hv !map_length => //. 
+rewrite -Hv !length_map => //. 
 apply (IH A m) => //. 
 Qed.
 
@@ -1198,7 +1198,7 @@ rewrite /is_finite_vec Forall_forall //=.
  move => Ha. by apply Ha.
 intros; apply (IH B) => //.
 move => b0 Hb0. apply H1 => /=. by right. 
-rewrite map_length rowM_length.
+rewrite length_map rowM_length.
 apply H1 => /=. by left.
 move => b0 Hb0. apply H1 => /=. by right.
 Qed.
@@ -1335,7 +1335,7 @@ Lemma eq_size_scale {T} (x : T) A mul n:
  eq_size (scaleM mul x A) A.
 Proof.
 rewrite /eq_size; split.
-by rewrite !map_length.
+by rewrite !length_map.
 intros. apply (eq_size_scaleM mul x A) => //.
 intros. rewrite H => //.
 symmetry; by apply H.
@@ -1352,7 +1352,7 @@ Proof.
 move => Ha Hin. 
 apply in_map_iff in Hin.
 destruct Hin. destruct H.
-rewrite -H  map_length.
+rewrite -H  length_map.
 by apply Ha.
 Qed.
 

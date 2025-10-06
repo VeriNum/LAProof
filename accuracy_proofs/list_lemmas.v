@@ -70,7 +70,7 @@ specialize (IHl2 l1 Hlen).
 simpl. rewrite <- IHl2.
 simpl.
 rewrite <- combine_app; auto.
-rewrite !rev_length; auto.
+rewrite !length_rev; auto.
 Qed.
 
 Lemma combine_single A v1 v2 (a : A * A) : 

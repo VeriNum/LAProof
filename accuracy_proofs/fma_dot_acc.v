@@ -50,7 +50,7 @@ pose proof dotprodR_rel u (map FT2R (List.rev v2)).
 assert (dotprodR (List.rev u) (map FT2R v2) = FT2R (fma_dotprod v1 v2) - eta).
 eapply R_dot_prod_rel_eq; eauto.
 rewrite <- dotprodR_rev, <- List.map_rev. auto.
-rewrite length_rev in H2; rewrite map_length; auto; lia. 
+rewrite length_rev in H2; rewrite length_map; auto; lia. 
 nra.
 -
 rewrite !length_rev in H4. 

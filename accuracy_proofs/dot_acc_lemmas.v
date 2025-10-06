@@ -393,9 +393,9 @@ destruct IHl as (u & eta & Hlenu & Hurel & Hun & Heta).
 exists (FT2R f * (1+d) * (1 + d') :: map (Rmult (1+d')) u), 
   (e * (1 + d') + eta * (1 + d')).
 repeat split.
-{ simpl. rewrite map_length; auto. }
+{ simpl. rewrite length_map; auto. }
 { pose proof dot_prod_combine_map_Rmult (1+d') u (map FT2R l) (FT2R s - eta).
-rewrite map_length in H0. specialize (H0 Hlenu Hurel); simpl.
+rewrite length_map in H0. specialize (H0 Hlenu Hurel); simpl.
 replace
  ((FT2R f * FT2R a * (1 + d) + e + FT2R s) * (1 + d') -
    (e * (1 + d') + eta * (1 + d')))
@@ -537,9 +537,9 @@ destruct Hacc as (d & e & Hz & Hd & He & Hacc).
 unfold fst, snd; rewrite Hacc.
 exists (FT2R f * (1+d) :: map (Rmult (1+d)) u), (e + eta * (1 + d)).
 repeat split.
-{ simpl. rewrite map_length; auto. }
+{ simpl. rewrite length_map; auto. }
 { pose proof dot_prod_combine_map_Rmult (1+d) u (map FT2R l) (FT2R s - eta).
-rewrite map_length in H0. 
+rewrite length_map in H0. 
 rewrite Hlen1 in Hlenu.
 specialize (H0 Hlenu A); simpl.
 replace  ((FT2R f * FT2R a + FT2R s) * (1 + d) + e - (e + eta * (1 + d))) with

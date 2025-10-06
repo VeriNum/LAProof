@@ -192,7 +192,7 @@ rewrite !List.map_rev !List.rev_involutive.
 simpl; auto.
 rewrite -combine_rev. 
   rewrite rev_involutive; auto.
-rewrite rev_length; auto.
+rewrite length_rev; auto.
 Qed.
 
 Lemma R_dot_prod_rel_fold_right t :

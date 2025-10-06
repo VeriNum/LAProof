@@ -1,5 +1,4 @@
 -Q . LAProof
--arg "-async-proofs-j 8"
 
 mathcomp_compat/CommonSSR.v
 

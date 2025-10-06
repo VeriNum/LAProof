@@ -3,7 +3,7 @@
    importing this preamble.   For that reason, we don't put other things in here
    that clients might need (such as the definitions in common.v). *)
 
-From vcfloat Require Export (*FPCore*) FPStdLib IEEE754_extra RAux Float_lemmas.
+From vcfloat Require Export FPStdLib IEEE754_extra RAux Float_lemmas.
 Export Lra.
 
 Export List ListNotations.

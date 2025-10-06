@@ -79,7 +79,7 @@ pose proof in_combine_r _ _ _ _ H2.
 pose proof in_combine_l _ _ _ _ H2.
 specialize (H l0 H3). specialize (H0 l H4).
 simpl. unfold map2. 
-rewrite map_length combine_length; lia.
+rewrite length_map length_combine; lia.
 Qed.
 
 Lemma nth_zero_matrix  m n i j:
@@ -197,7 +197,7 @@ by rewrite !mxE /scaleV/=
 apply eq_big =>  k // _ /[!mxE].
 by rewrite /=. lia.
 move => b0 Hb0. by apply Hm; right.
-rewrite /scaleV rowM_length. rewrite map_length.
+rewrite /scaleV rowM_length. rewrite length_map.
 rewrite Hm //; by left.
 move => b0 Hb0. by apply Hm; right. 
 Qed.

@@ -24,8 +24,8 @@ clean-top: _CoqProject
 clean: clean-top
 	$(RM) _CoqProject	
 
-_CoqProject: _CoqProject.acc
-	cp _CoqProject.acc _CoqProject
+# _CoqProject: _CoqProject.acc
+# 	cp _CoqProject.acc _CoqProject
 
 INSTALLFILES1 ?= $(shell awk '/accuracy_proofs/{print $$NF"o"}' _CoqProject)
 

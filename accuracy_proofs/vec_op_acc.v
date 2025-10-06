@@ -186,7 +186,7 @@ intros.
 have Hu : (length u = m) by lia.
 destruct (vec_sumF_mixed_error (scaleVF a u) (scaleVF b v)) as
   (Du & Dv & Heq & HD) => //.
-by rewrite !map_length.
+by rewrite !length_map.
 apply is_finite_vec_sum in Hfinv; destruct Hfinv.
 destruct (scaleV_mixed_error u a) as 
   (ae & aeta & Heqa & Hea & Haeta & HA1 & HA2) => //.
@@ -201,17 +201,17 @@ exists ae, aeta ,Du, be, beta, Dv; repeat split => //; try lia.
 rewrite Hu; lia.
 exists x; rewrite Hu in H2; apply H2. }
 { intros; destruct (HDu i) .
-rewrite !map_length. fold m; lia.
+rewrite !length_map. fold m; lia.
 fold m in H2; exists x; apply H2. }
 { intros; destruct (HDv i) .
-rewrite !map_length. fold m; lia.
+rewrite !length_map. fold m; lia.
 rewrite !CommonSSR.map_map_equiv in H2.
 fold m in H2; exists x. apply H2. }
 rewrite -Hu.
 by apply Haeta. 
-rewrite !map_length in HD1; lia.
-rewrite !map_length in HD2; lia.
-all: by rewrite !map_length.
+rewrite !length_map in HD1; lia.
+rewrite !length_map in HD2; lia.
+all: by rewrite !length_map.
 Qed. 
 
 End VECSUMERROR.
@@ -353,14 +353,14 @@ Proof.
 (* proof follows from previous bounds for axpby and mul *)
 destruct (Svec_sumF_mixed_error (A *f x) y s1 s2)
   as (e3 & e4 & e5 & e6 & e7 & e8 & Heq1 & H1) => //.
-{ by symmetry; rewrite !map_length.  }
+{ by symmetry; rewrite !length_map.  }
 rewrite Heq1.
 rewrite !CommonSSR.map_map_equiv.
 destruct (mat_vec_mul_mixed_error A x)
   as (e1 & e2 & Heq2 & H2).
 { apply is_finite_vec_sum in Hfin; destruct Hfin.
 by apply is_finite_scaleV in H.
-all: rewrite !map_length; by rewrite Hleny. }
+all: rewrite !length_map; by rewrite Hleny. }
 { by intros; apply Hlen. }
 change @List.map with @map.
 rewrite Heq2. 
