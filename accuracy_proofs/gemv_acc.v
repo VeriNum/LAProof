@@ -2,20 +2,8 @@ From LAProof.accuracy_proofs Require Import preamble common
                                                  dotprod_model sum_model
                                                 dot_acc float_acc_lems list_lemmas
                                                               gem_defs mv_mathcomp.
-From mathcomp Require Import Rstruct.
-Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
-
-Open Scope R_scope.
-Open Scope ring_scope.
-
-Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with Re.
-
-Import Order.TTheory GRing.Theory ssrnum.Num.Def ssrnum.Num.Theory.
 
 From mathcomp.algebra_tactics Require Import ring.
-Set Bullet Behavior "Strict Subproofs".
-
 
 Section MixedErrorList. 
 (* mixed error bounds over lists *)
@@ -66,8 +54,8 @@ have : (length l = 0)%nat \/ (0 < length l)%nat by lia. move => [Hl | Hl].
 {  apply length_zero_iff_nil in Hl; subst => /=.
 exists (vec_sum Rminus u (map FT2R a) :: []) , ([ueta]); repeat split.
 { rewrite Y => /=. 
-rewrite !CommonSSR.map_map_equiv.
-rewrite CommonSSR.map_map_equiv length_map in Ha.
+change @map with @List.map in Ha|-*.
+rewrite length_map in Ha.
 suff Hs: map2 Rplus (List.map FT2R a)
          (u -v List.map FT2R a) = u.
 rewrite Hs vec_sumR_bounds => /= //.
@@ -81,31 +69,35 @@ rewrite /vec_sumR length_map -Ha. apply (vec_sum_zeroR) => //.
 rewrite /vec_sum/map2 !length_map 
   length_combine length_map Ha; lia. }
 { move =>  i j Hi Hj.
-rewrite !CommonSSR.map_map_equiv; rewrite /vec_sum/map2 /= in IH2.
+change @map with @List.map.
+rewrite /vec_sum/map2 /= in IH2.
 assert (i = 0)%nat by lia; subst.
 subst A'. rewrite /matrix_index => /=.
 rewrite nth_vec_sum => /= //; [|nra].
 have Hj' : (j < n)%N by lia.
 destruct (Z1 j Hj') as (x & HB & HC); rewrite HB.
-have H1 : (FT2R (List.nth j a neg_zero) = List.nth j (List.map FT2R a) 0%R).
+have H1 : (FT2R (List.nth j a neg_zero) = List.nth j (List.map FT2R a) 0%Re).
 rewrite - (@FT2R_neg_zero t).
 by rewrite (@map_nth (ftype t) R (FT2R) a neg_zero j). 
 rewrite H1.
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 rewrite Rabs_mult Rmult_comm.
 by apply Rmult_le_compat_r => //; apply Rabs_pos => /= . }
 move => k /= [H | H] //.
 subst; auto.
-rewrite !CommonSSR.map_map_equiv => /=.
-move => x y [Hx|Hx] [Hy|Hy]; subst => //.
-rewrite /vec_sum/map2 length_map length_combine Ha 
-  CommonSSR.map_map_equiv length_map; lia. }
+change @map with @List.map.
+move => /= x y [Hx|Hx] [Hy|Hy]; subst => //.
+rewrite /vec_sum/map2 length_map length_combine Ha.
+change @map with @List.map. 
+  rewrite length_map; lia. }
 exists (vec_sum Rminus  u (map FT2R a) :: E) , 
   (ueta::eta); repeat split.
 {
-rewrite CommonSSR.map_map_equiv length_map in Ha.
+change @map with @List.map in Ha.
+rewrite length_map in Ha.
  rewrite Y; clear Y => /=.
-rewrite !CommonSSR.map_map_equiv => /=.
+change @map with @List.map.
+move => /=.
 suff: map2 Rplus (List.map FT2R a) (u -v List.map FT2R a) =  u.
 move => Hs. rewrite Hs vec_sumR_bounds => //.
 fold (@vec_sum R Rplus (List.map FT2R a) (u -v List.map FT2R a)).
@@ -117,7 +109,9 @@ rewrite length_map -Ha /vec_sumR. apply vec_sum_zeroR => //.
 1, 2, 3: rewrite !length_map => //.
 rewrite /vec_sum/map2 !length_map 
   length_combine length_map Ha; lia. }
-{ revert Ha. rewrite CommonSSR.map_map_equiv length_map. 
+{ revert Ha. 
+ change @map with @List.map.
+rewrite length_map. 
 destruct u => /=. 
 { move => Ha i j Hi Hj; symmetry in Ha; rewrite length_zero_iff_nil in Ha; 
 subst => /=; rewrite /matrix_index => /=.
@@ -131,7 +125,7 @@ have H1 : (j < n)%N by lia.
 destruct (Z1 j H1) as (d & Hd1 & Hd2).
 destruct i; rewrite /matrix_index; destruct j => /= //.
 revert Hd1 => /= Hd1; rewrite Hd1.
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 rewrite Rabs_mult Rmult_comm.
   apply Rmult_le_compat; 
   [ apply Rabs_pos | apply Rabs_pos | | apply Req_le ] => //.
@@ -145,7 +139,7 @@ rewrite -(vec_sumR_nth); revert Hd1 => /= Hd1.
 have: (List.nth j (List.map FT2R a) 0%Re =
   List.nth j (List.map FT2R a) (FT2R neg_zero)).
  reflexivity.
-move => Hs; rewrite Hs map_nth; Automate.field_simplify_Rabs. 
+move => Hs; rewrite Hs map_nth; field_simplify_Rabs. 
 rewrite Rabs_mult Rmult_comm; apply Rmult_le_compat; 
   [ apply Rabs_pos | apply Rabs_pos | apply Hd2 | apply Req_le; auto].
 all: rewrite length_map; simpl in Ha; lia. }
@@ -154,14 +148,16 @@ rewrite X length_map. lia. } }
 move => k /=. move => [Hk | Hk]. 
   subst. apply Z2.
   apply IH3 => //.
-by rewrite CommonSSR.map_map_equiv /vec_sum /=;
+ change @map with @List.map.
+by rewrite /vec_sum /=;
   destruct IH4; lia.
-move => x y /=. 
-  rewrite CommonSSR.map_map_equiv. move => [Hx | Hx] [Hy | Hy] /= .
+move => x y /=.
+ change @map with @List.map. move => [Hx | Hx] [Hy | Hy] /= .
   subst; rewrite /vec_sum/map2 length_map length_combine.
-  rewrite CommonSSR.map_map_equiv in Ha. rewrite Ha length_map; lia.
+change @map with @List.map in Ha.
+  rewrite Ha length_map; lia.
   subst; rewrite /vec_sum/map2 length_map length_combine.
-  rewrite CommonSSR.map_map_equiv in Ha. rewrite Ha length_map.
+change @map with @List.map in Ha. rewrite Ha length_map.
   rewrite (Hin2 y) => //; rewrite Hlen' ; lia.
   destruct IH4. rewrite (Hlen y); [|left] => //.
 set (l0 := List.nth 0 l [neg_zero]).

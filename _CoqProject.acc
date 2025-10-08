@@ -1,7 +1,5 @@
 -Q . LAProof
 COQEXTRAFLAGS = "-w -notation-overridden,-ambiguous-paths,-overwriting-delimiting-key"
-mathcomp_compat/CommonSSR.v
-
 accuracy_proofs/preamble.v
 accuracy_proofs/common.v
 accuracy_proofs/float_acc_lems.v

@@ -8,9 +8,6 @@ From LAProof.accuracy_proofs Require Import preamble common
                                             float_acc_lems 
                                             list_lemmas.
 
-Require Import Reals.
-Open Scope R.
-
 Section ForwardErrorRel1.
 (* forward error bound for non-fma dot product using inductive rels *) 
 Context {NAN: FPCore.Nans} {t : type}.
@@ -66,8 +63,9 @@ unfold g1, g; simpl.
 inversion Hra. inversion H4; subst.
 rewrite {}B.
 rewrite Rmult_1_r. rewrite !Rplus_0_r.
-replace (1 + D - 1) with (D) by nra. field_simplify;
-Automate.field_simplify_Rabs.  unfold FR2. destruct a; simpl.
+replace (1 + D - 1) with (D) by nra.
+field_simplify.
+field_simplify_Rabs.  unfold FR2. destruct a; simpl.
 eapply Rle_trans. apply Rabs_triang.
 rewrite Rabs_mult.
 eapply Rle_trans.
@@ -94,7 +92,7 @@ destruct a; cbv [ FR2 Rabsp fst snd].
 simpl.
 set (n:= length l) in *.
 set (F:= FT2R f * FT2R f0).
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 replace (F * d * d' + F * d + F * d' + e * d' + e + FT2R s * d' + FT2R s - s0) with
 ((F * d * d' + F * d + F * d' + FT2R s * d') + (FT2R s - s0) + (1 + d') * e) by nra.
 eapply Rle_trans;
@@ -205,7 +203,7 @@ inversion Hfp;
 inversion Hra;
 subst.
 unfold g, g1; simpl.
-rewrite Rminus_diag Rabs_R0;
+rewrite !Rminus_diag Rabs_R0;
 field_simplify; try apply default_rel_sep_0;
   try apply Stdlib.Rdiv_pos_compat; try nra;
 apply default_rel_gt_0.
@@ -228,7 +226,7 @@ inversion Hra; inversion H3; subst.
 unfold g1, g; simpl.
 rewrite Rmult_1_r. rewrite !Rplus_0_r.
 replace (1 + @default_rel t - 1) with (@default_rel t) by nra.
-Automate.field_simplify_Rabs. destruct a; simpl.
+field_simplify_Rabs. destruct a; simpl.
 rewrite Rminus_diag Rplus_0_r Rmult_1_r Rmult_1_l.
 eapply Rle_trans. apply Rabs_triang.
 apply Rplus_le_compat; try nra.
@@ -252,7 +250,7 @@ destruct Hplus as (d' & e'& Hz & Hd'& He'& Hplus); rewrite Hplus;
 destruct a; cbv [ FR2 Rabsp fst snd].
 simpl.
 set (n:= length l).
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 replace (FT2R f * FT2R f0 * d' + FT2R s * d' + FT2R s + e' - s0) with
    (d' * (FT2R f * FT2R f0) + d' * FT2R s + (FT2R s - s0) + e') by nra.
 eapply Rle_trans;
@@ -405,7 +403,7 @@ apply R_dot_prod_rel_cons; rewrite Rmult_comm; auto. }
 { intros. destruct n. simpl.
 { simpl. exists ((1 + d) * (1 + d') -1); split.
   { field_simplify; nra. } 
-  { Automate.field_simplify_Rabs. eapply Rle_trans; [apply Rabs_triang|].
+  { field_simplify_Rabs. eapply Rle_trans; [apply Rabs_triang|].
     eapply Rle_trans; [apply Rplus_le_compat; [apply Rabs_triang | apply Hd' ] |].
     eapply Rle_trans; [apply Rplus_le_compat_r; apply Rplus_le_compat; [|apply Hd] |  ].
     rewrite Rabs_mult. apply Rmult_le_compat; 
@@ -426,7 +424,7 @@ replace 0 with (Rmult  (1+d') 0) by nra. rewrite map_nth.
 rewrite Hun.
 exists ( (1+d') * (1+delta) -1).
 split; [nra | ].
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 eapply Rle_trans; [apply Rabs_triang | ].
 eapply Rle_trans; [apply Rplus_le_compat; [ apply Rabs_triang | apply Hdelta] | ].
 eapply Rle_trans; [apply Rplus_le_compat_r; [rewrite Rabs_mult] | ].
@@ -553,7 +551,7 @@ replace 0 with (Rmult (1 + d) 0) by nra. rewrite map_nth.
 rewrite B.
 exists ( (1+d) * (1+delta) -1).
 split; [nra | ].
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 eapply Rle_trans; [apply Rabs_triang | ].
 eapply Rle_trans; [apply Rplus_le_compat; [ apply Rabs_triang | apply HB] | ].
 eapply Rle_trans; [apply Rplus_le_compat_r; [rewrite Rabs_mult] | ].
@@ -587,7 +585,7 @@ apply le_INR; lia.
 apply Req_le; f_equal; auto; lia.
 set (n:= length l).
 replace (INR (S n)) with (INR n + 1)%R. 
-apply Req_le; nra.
+apply Req_le. unfold GRing.one, GRing.add; simpl. nra.
 apply transitivity with (INR (n + 1)).
 rewrite plus_INR; simpl; auto. f_equal; simpl; lia.
 Qed.
@@ -623,8 +621,8 @@ revert Hlen Hfp Hfin Hrp Hra.
 revert rp rp_abs fp v2.
 induction v1; intros.
 { simpl in Hlen; symmetry in Hlen; apply length_zero_iff_nil in Hlen; subst. 
-inversion Hfp; inversion Hrp; subst; simpl; Automate.field_simplify_Rabs. 
-  rewrite Rabs_R0. 
+inversion Hfp; inversion Hrp; subst; simpl; field_simplify_Rabs.
+ rewrite Rabs_Ropp Rabs_R0. 
   apply Rplus_le_le_0_compat; auto with commonDB.
   apply Rmult_le_pos;  auto with commonDB.
  rewrite <- (R_dot_prod_rel_Rabs_eq [] rp_abs); auto;
@@ -640,9 +638,11 @@ simpl fst. simpl snd.
 (* reason by cases on the head of the list *) 
 destruct (Req_EM_T (FT2R a) 0%R). 
 (* start  head of list is zero *)
-{ simpl map. rewrite e. rewrite nnzR_cons.
+{ simpl map. rewrite e.
+  move :(nnzR_cons  [seq FT2R i | i <- l]) => /eqP H8. rewrite {}H8.
 replace (FT2R (BPLUS (BMULT a f) s0)) with (FT2R s0).
-Automate.field_simplify_Rabs. 
+change GRing.zero with R0.
+field_simplify_Rabs. 
 eapply Rle_trans; [apply IHl|].
 apply Req_le; f_equal; try nra. unfold n2, common.nnzR.
 rewrite Rabs_R0 Rmult_0_l Rplus_0_l.
@@ -655,15 +655,16 @@ by rewrite FT2R_pos_zero Rplus_0_l round_FT2R.
  } (* end head of list is zero *) 
 (* start head of list is non-zero *)
 unfold common.nnzR.
-simpl count. destruct (Req_bool_spec R0 (FT2R a)); try lra.
+simpl count.
+replace (0 != FT2R a) with true by (symmetry; apply /eqP; auto).
 simpl.
 set (l1:= (map FT2R l)) in *.
 change (count _ _) with n2.
 (* start case on nnz = case on nnz in tail *)
-assert (H7: (n2 = 0)%nat \/ (1<=n2)%nat) by lia; destruct H7 as [H7|H7]. 
+assert (H7: (n2 = 0)%nat \/ (1<=n2)%nat) by lia; destruct H7 as [H7|H7].
 (* tail all zeros *)
 { rewrite H7. 
-  assert (eq_op n2 0%N) by lia. 
+  assert (H0: eq_op n2 0%N) by lia. 
  pose proof R_dot_prod_rel_nnzR l l0 Hlen1 s H2 H0; subst.
 pose proof dot_prod_rel_nnzR l l0 Hlen1 s0 H6 Hs0 H0.
 pose proof R_dot_prod_rel_nnzR_abs l l0 Hlen1 s1 H10 H0; subst.
@@ -672,8 +673,8 @@ destruct (BMULT_accurate' a f Haf)
   as (d' & e' & Hed' & Hd' & He' & Hacc).
 rewrite Hacc; clear Hacc.
 unfold g1, g.
-simpl; field_simplify; 
-Automate.field_simplify_Rabs. 
+simpl.
+field_simplify; field_simplify_Rabs. 
 eapply  Rle_trans; [apply Rabs_triang | ].
 apply Rplus_le_compat.
 rewrite Rabs_mult.
@@ -691,7 +692,7 @@ destruct (BMULT_accurate' a f Haf)
   as (d & e & Hed & Hd & He & Hacc).
 rewrite Hacc; clear Hacc. 
 set (F:= FT2R a * FT2R f ).
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 replace (F * d * d' + F * d + F * d' + e * d' + e + FT2R s0 * d' + FT2R s0 - s) with
 ((F * d * d' + F * d + F * d' + FT2R s0 * d') + (FT2R s0 - s) + (1 + d') * e) by nra.
 eapply Rle_trans;
@@ -768,7 +769,7 @@ apply Rmult_le_compat_r; unfold E; auto with commonDB.
 assert (Rabs (1 + d') <= 1 + D).
 eapply Rle_trans; [apply Rabs_triang| rewrite Rabs_R1].
 apply Rplus_le_compat_l; apply Hd'.
-apply H0.
+apply H.
 eapply Rle_trans; [apply plus_d_e_g1_le; auto| apply Req_le; f_equal;lia].
 Qed.
 
@@ -806,8 +807,8 @@ revert Hlen Hfp Hfin Hrp Hra.
 revert rp rp_abs fp v2.
 induction v1; intros.
 { simpl in Hlen; symmetry in Hlen; apply length_zero_iff_nil in Hlen; subst. 
-inversion Hfp; inversion Hrp; subst; simpl; Automate.field_simplify_Rabs. 
-  rewrite Rabs_R0. 
+inversion Hfp; inversion Hrp; subst; simpl; field_simplify_Rabs. 
+  rewrite Rabs_Ropp Rabs_R0. 
   apply Rplus_le_le_0_compat; auto with commonDB.
   apply Rmult_le_pos;  auto with commonDB.
  rewrite <- (R_dot_prod_rel_Rabs_eq [] rp_abs); auto;
@@ -822,35 +823,36 @@ specialize (IHl s s1 s0 l0 Hlen1 H6 Hs0 H2 H10).
 (* reason by cases on the head of the list *) 
 destruct (Req_EM_T (FT2R a) 0%R). 
 (* start  head of list is zero *)
-{ simpl map. rewrite e. rewrite nnzR_cons.
+{ simpl map. rewrite e.
+ move :(nnzR_cons [seq FT2R i | i <- l]) => /eqP H.
+ rewrite {}H.
 replace (FT2R (BFMA a f s0)) with (FT2R s0).
-Automate.field_simplify_Rabs. 
+change GRing.zero with R0.
+field_simplify_Rabs. 
 eapply Rle_trans; [apply IHl|]. 
 apply Req_le; f_equal; try nra. unfold n2, common.nnzR. 
-rewrite Rabs_R0 Rmult_0_l  Rplus_0_l; nra.
+rewrite Rabs_R0 Rmult_0_l  Rplus_0_l //.
 pose proof Bfma_mult_0R a f s0 Hfin as A; destruct A; auto; rewrite A.
  } (* end head of list is zero *) 
 (* start head of list is non-zero *)
 unfold common.nnzR.
-simpl.
-destruct (Req_bool_spec R0 (FT2R a)); [ nra | ].
-simpl.
+move :n => /eqP. rewrite eq_sym => n.
+rewrite /= n /=. 
 set (l1:= (map FT2R l)) in *.
 change (count _ l1) with n2.
 (* start case on nnz = case on nnz in tail *)
 assert (A: (n2 = O)%nat \/ (1<=n2)%nat) by lia; destruct A. 
 (* tail all zeros *)
-{ rewrite H0.
+{ rewrite H.
  assert (n2 == 0)%N by lia.
-pose proof R_dot_prod_rel_nnzR l l0 Hlen1 s H2 H1; subst.
-pose proof fma_dot_prod_rel_nnzR l l0 Hlen1 s0 H6 Hs0 H1.
-pose proof R_dot_prod_rel_nnzR_abs l l0 Hlen1 s1 H10 H1; subst.
+pose proof R_dot_prod_rel_nnzR l l0 Hlen1 s H2 H0; subst.
+pose proof fma_dot_prod_rel_nnzR l l0 Hlen1 s0 H6 Hs0 H0.
+pose proof R_dot_prod_rel_nnzR_abs l l0 Hlen1 s1 H10 H0; subst.
 destruct (fma_accurate' a f s0 Hfin) as (e & d & ed & He & Hd & Hacc).
 rewrite Hacc; clear Hacc.
-rewrite H3.
+rewrite H1.
 unfold g1, g.
-simpl; field_simplify; 
-Automate.field_simplify_Rabs. 
+simpl; field_simplify; field_simplify_Rabs. 
 eapply  Rle_trans; [apply Rabs_triang | ].
 apply Rplus_le_compat.
 rewrite Rabs_mult.
@@ -864,7 +866,7 @@ pose proof (fma_accurate' a f s0 Hfin) as Hplus.
 destruct Hplus as (d' & e'& Hz & Hd'& He'& Hplus); rewrite Hplus;
   clear Hplus.
 (* algebra *)
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 replace (FT2R a * FT2R f * d' + FT2R s0 * d' + FT2R s0 + e' - s) with
    (d' * (FT2R a * FT2R f) + d' * FT2R s0 + (FT2R s0 - s) + e') by nra.
 eapply Rle_trans;

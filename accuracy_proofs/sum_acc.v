@@ -6,12 +6,8 @@ From LAProof.accuracy_proofs Require Import preamble common
                                             sum_model
                                             float_acc_lems 
                                             list_lemmas.
-Require vcfloat.Automate.
 
-Require Import Reals.
-Open Scope R.
-
-Require Import Sorting Permutation.
+Require Import Permutation.
 
 Section BackwardError. 
 Context {NAN: FPCore.Nans} {t: type}.
@@ -19,9 +15,7 @@ Notation g := (@g t).
 Notation D := (@default_rel t).
 
 Variable (x : list (ftype t)).
-Notation xR := (map FT2R x).
 Hypothesis (Hfin: Binary.is_finite (sumF x) = true).
-
 
 Notation neg_zero := (@common.neg_zero t). 
 
@@ -34,13 +28,7 @@ Theorem bSUM :
 Proof.
 have H0 := @FT2R_neg_zero t.
 induction x.
-{ intros; exists []; repeat split; auto => //=.
-
-(*  intros. simpl in H; assert (n = 0)%nat by lia; subst.
-  exists 0; split; [simpl; try nra | 
-                      unfold g; rewrite Rabs_R0; simpl; nra].
-*)
-}
+ intros; exists []; repeat split; auto => //=. 
 (* case a::l *)
 intros.
 assert (Hl: l = [] \/ l <> []).
@@ -82,7 +70,7 @@ specialize (Hdel n Hlen2).
 destruct Hdel as (d & Hd1 & Hd2).
 exists ( (1+d') * (1+d) -1). simpl; split.
 { replace 0 with (Rmult (1 + d') 0) by nra. rewrite map_nth; rewrite Hd1; nra. }
-rewrite length_map. vcfloat.Automate.field_simplify_Rabs. 
+rewrite length_map. field_simplify_Rabs. 
   eapply Rle_trans; [apply Rabs_triang | eapply Rle_trans; [apply Rplus_le_compat_r; apply Rabs_triang | ]  ].
 rewrite Rabs_mult.
 replace (Rabs d' * Rabs d + Rabs d' + Rabs d ) with
@@ -107,13 +95,12 @@ Notation g1 := (@g1 t).
 Notation D := (@default_rel t).
 
 Variable (x : list (ftype t)).
-Notation xR := (map FT2R x). 
 Notation n := (length x).
 
 Hypothesis (Hfin: Binary.is_finite (sumF x) = true).
 
 Theorem fSUM :
-    Rabs ((sumR xR) - FT2R (sumF x)) <=  g n * (sumR (map Rabs xR)).
+    Rabs ((sumR (map FT2R x)) - FT2R (sumF x)) <=  g n * (sumR (map Rabs (map FT2R x))).
 Proof.
 induction x.
 { intros; unfold g; subst; simpl.
@@ -129,7 +116,7 @@ destruct Hl.
 { subst. unfold g; simpl; subst.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
 rewrite Bplus_0R; auto.
-Automate.field_simplify_Rabs; field_simplify; rewrite Rabs_R0. 
+field_simplify_Rabs; field_simplify; rewrite Rabs_R0. 
 apply Rmult_le_pos; auto with commonDB; apply Rabs_pos. }
 (* case non-empty l *)
 simpl in *.
@@ -140,7 +127,7 @@ specialize (IHl B).
 destruct (BPLUS_accurate'  a (sumF l) Hfin) as (d' & Hd'& Hplus).
 rewrite Hplus. 
 (* algebra *)
-Automate.field_simplify_Rabs.
+field_simplify_Rabs.
 set (s0 := sumR (map FT2R l)). 
 set (s :=  (sumF l)).
 replace (- FT2R a * d' + s0 - FT2R s * d' - FT2R s) with
@@ -182,11 +169,8 @@ Context {NAN: FPCore.Nans} {t: type}.
 
 Notation g := (@g t).
 Notation g1 := (@g1 t).
-Notation D := (@default_rel t).
 
 Variable (x x0: list (ftype t)).
-Notation xR := (map FT2R x). 
-Notation xR0 := (map FT2R x0). 
 Notation n := (length x).
 
 Hypothesis (Hfin: Binary.is_finite (sumF x) = true).
@@ -194,7 +178,7 @@ Hypothesis (Hfin0: Binary.is_finite (sumF x0) = true).
 Hypothesis (Hper: Permutation x x0).
 
 Lemma sum_forward_error_permute' :
-    Rabs ((sumR xR0) - FT2R (sumF x0)) <=  g n * (sumR (map Rabs xR0)).
+    Rabs ((sumR (map FT2R x0)) - FT2R (sumF x0)) <=  g n * (sumR (map Rabs (map FT2R x0))).
 Proof.
 eapply Rle_trans.
 apply (fSUM x0 Hfin0).
@@ -203,14 +187,15 @@ rewrite (Permutation_length Hper); auto.
 Qed.
 
 Theorem sum_forward_error_permute :
-    Rabs ((sumR xR) - FT2R (sumF x0)) <=  g n * (sumR (map Rabs xR)).
+    Rabs ((sumR (map FT2R x)) - FT2R (sumF x0)) <=  g n * (sumR (map Rabs (map FT2R x))).
 Proof.
-rewrite (sumR_permute xR xR0); [|apply Permutation_map; auto].
+rewrite (sumR_permute (map FT2R x) (map FT2R x0)); [|apply Permutation_map; auto].
 eapply Rle_trans.
 apply sum_forward_error_permute'.
-apply Req_le; f_equal. 
-rewrite (sumR_permute (map Rabs xR) (map Rabs xR0)); auto.
-repeat (apply Permutation_map); auto.
+apply Req_le; f_equal.
+symmetry. 
+apply sumR_permute.
+repeat apply Permutation_map; auto.
 Qed.
 
 End SumPermute.

@@ -3,12 +3,8 @@
 
 From LAProof.accuracy_proofs Require Import 
         preamble common float_acc_lems.
-                                          (*  float_tactics.*)
-Import ListNotations.
-Require Import Sorting Permutation.
-Require Import Reals.
-Open Scope R.
 
+Require Import Permutation.
 
 Definition sum {A: Type} (sum_op : A -> A -> A) (a b : A) : A := sum_op a b.
 
@@ -20,13 +16,52 @@ Inductive sum_rel {A : Type} (default: A) (sum_op : A -> A -> A) : list A -> A -
 
 Definition sum_rel_R := @sum_rel R 0%R Rplus.
 
-Inductive sum_rel_any {A : Type} (default: A) (sum_op : A -> A -> A) : list A -> A -> Prop :=
-| sum_rel_0  : sum_rel_any default sum_op [] default
-| sum_rel_1 : forall a, sum_rel_any default sum_op (a::nil) a
-| sum_rel_app: forall a1 a2 s1 s2,
-     sum_rel_any default sum_op a1 s1 ->
-     sum_rel_any default sum_op a2 s2 ->
-     sum_rel_any default sum_op (a1++a2) (sum sum_op s1 s2).
+Inductive sum_any' {NAN: FPCore.Nans} {t}: forall (h: nat) (v: list (ftype t)) (s: ftype t), Prop :=
+| Sum_Any_1: forall x, sum_any' O [x] x
+| Sum_Any_split: forall n1 n2 al bl a b, 
+      sum_any' n1 al a -> sum_any' n2 bl b -> sum_any' (S (Nat.max n1 n2)) (al++bl) (BPLUS a b)
+| Sum_Any_perm: forall n al bl s, Permutation al bl -> sum_any' n al s -> sum_any' n bl s.
+
+Inductive sum_any {NAN: FPCore.Nans} {t}: forall (h: nat) (v: list (ftype t)) (s: ftype t), Prop :=
+| Sum_Any_None: sum_any O nil pos_zero
+| Sum_Any_Some: forall n v s, sum_any' n v s -> sum_any n v s.
+
+Lemma sum_rel_sum_any: forall {NAN: FPCore.Nans} {t} z (v: list (ftype t)) s (Hz: iszero z),
+  sum_rel z BPLUS v s -> 
+  exists s', feq s s' /\ sum_any (Nat.pred (length v)) v s'.
+Proof.
+destruct v; intros.
+-
+destruct z; try discriminate; clear Hz;
+inversion H; clear H; subst; (eexists; split; [ | constructor]; reflexivity).
+-
+revert f s z Hz H; induction v; simpl; intros.
++
+inversion H; clear H; subst.
+inversion H3; clear H3; subst.
+destruct s0; try discriminate.
+destruct s;
+(eexists; split; [ | constructor; constructor];
+destruct f; try reflexivity;
+destruct s; reflexivity).
++
+inversion H; clear H; subst.
+specialize (IHv a s0 z Hz H3).
+change (cons f (cons a v)) with ([f] ++ cons a v).
+replace (S (length v)) with (S (Nat.max O (length v))) by lia.
+destruct IHv as [s1 [? ?]].
+eexists.
+inversion H0; clear H0; subst.
+simpl in H1.
+split.
+2:{ constructor 2.
+eapply Sum_Any_split; auto.
+apply Sum_Any_1.
+eassumption.
+}
+clear z Hz H3 H1.
+rewrite H; auto.
+Qed.
 
 Lemma sum_rel_R_abs :
 forall l s1 s2,
@@ -58,7 +93,7 @@ Proof.
 induction  l.
 -
 intros.
-inversion H; nra.
+inversion H; compute; nra.
 -
 intros.
 inversion H; subst; clear H.
@@ -77,8 +112,7 @@ induction  l.
 -
 intros.
 inversion H.
-rewrite Rabs_R0.
-nra.
+apply Rabs_R0.
 -
 intros.
 inversion H; subst; clear H.
@@ -143,7 +177,7 @@ Proof.
 intros.
 inversion H; auto.
 inversion H3. subst.
-unfold sum; nra.
+apply Rplus_0_r.
 Qed.
 
 Lemma sum_rel_R_single' :
@@ -294,7 +328,7 @@ Lemma sum_rel_bound''  :
   rs_abs <= INR (length l) * a.
 Proof.
 induction l; intros.
-{ inversion Hrs; subst; simpl; nra. }
+{ inversion Hrs; subst; simpl. compute. nra. }
   inversion Hrs; subst.
   unfold sum. fold sum_rel_R in H2.
   eapply Rle_trans; [apply Rplus_le_compat;
@@ -414,5 +448,172 @@ subst; simpl.
 unfold sum; auto.
 Qed.
 
+
+(** subtract_loop is a variant on summation used in some implementations of Cholesky decomposition,
+  among other things.  We should be able to prove an equivalence, of sorts, with sum_rel,
+  so that the accuracy theorem for sum_rel can apply here as well. *)
+Definition subtract_loop (c: ftype t) (al: list (ftype t)) : ftype t :=
+  fold_left BMINUS al c.
+
+Lemma BMINUS_neg_zero: forall (c: ftype t), feq (BMINUS neg_zero (BOPP c)) c.
+Proof. destruct c; try destruct s; reflexivity. Qed.
+
+Lemma subtract_loop_congr1: forall  (u v: ftype t) al, 
+  feq u v -> feq (subtract_loop u al) (subtract_loop v al).
+Proof.
+intros.
+revert u v H; induction al; simpl; intros; auto.
+apply IHal. rewrite H; auto.
+Qed.
+
+(* Don't seem to need this yet.  . . .
+Definition loose_feq (x y: ftype t) : Prop :=
+ match x,y with
+ | Binary.B754_zero _ _ _, Binary.B754_zero _ _ _ => true
+ | Binary.B754_zero _ _ _, _ => false
+ | _, Binary.B754_zero _ _ _ => false
+ | Binary.B754_finite _ _ b1 m1 e1 _, Binary.B754_finite _ _ b2 m2 e2 _ => 
+      and (eq b1 b2) (and (eq m1 m2) (eq e1 e2))
+ | Binary.B754_finite _ _ _ _ _ _, _ => false
+ | _, Binary.B754_finite _ _ _ _ _ _ => false
+ | _, _ => true
+ end.  
+
+Lemma loose_feq_refl : Relation_Definitions.reflexive _ loose_feq.
+Proof.
+intro x; destruct x; simpl; auto.
+Qed.
+
+Lemma loose_feq_sym : Relation_Definitions.symmetric (ftype t) loose_feq.
+Proof.
+intros x y; destruct x,y; simpl; auto.
+intros [? [? ?]].
+subst. auto.
+Qed.
+
+Lemma loose_feq_trans: Relation_Definitions.transitive (ftype t) loose_feq.
+Proof.
+intros x y z.
+destruct x,y,z; simpl; intros; auto; try contradiction; try discriminate.
+destruct H as [? [? ?]]; destruct H0 as [? [? ?]]; subst; auto.
+Qed.
+
+Add Parametric Relation : (ftype t) loose_feq
+  reflexivity proved by loose_feq_refl
+  symmetry proved by loose_feq_sym
+  transitivity proved by loose_feq_trans
+   as loose_feq_rel.
+
+Add Parametric Morphism: (@BPLUS NAN t)
+ with signature loose_feq ==> loose_feq ==> loose_feq
+ as loose_BPLUS_mor.
+Proof.
+intros.
+destruct x,y; inversion H; clear H; subst; destruct x0,y0; inversion H0; clear H0; subst; 
+repeat match goal with s: bool |- _ => destruct s end; simpl in *;
+repeat match goal with H: _ /\ _ |- _ => destruct H end;
+subst;
+repeat proof_irr; 
+try constructor; auto; try reflexivity.
+Qed.
+
+Lemma feq_loose_feq: forall x y, feq x y -> loose_feq x y.
+Proof.
+intros.
+destruct x, y; try destruct s; try destruct s0; simpl in *; auto.
+Qed.
+
+*)
+
+Lemma BPLUS_neg_zero: forall (c: ftype t), feq (BPLUS c neg_zero) c.
+Proof. destruct c; try destruct s; reflexivity. Qed.
+
+Lemma BPLUS_comm: forall (x y: ftype t),  feq (BPLUS x y) (BPLUS y x).
+Proof.
+destruct x, y; try destruct s; try destruct s0; try reflexivity;
+unfold BPLUS, BINOP, feq, Binary.Bplus, Binary.BSN2B, BinarySingleNaN.SF2B; simpl;
+rewrite (Z.min_comm e1 e);
+rewrite ?(Pos.add_comm (fst (SpecFloat.shl_align m0 e1 (Z.min e e1)))).
+-
+set (u := BinarySingleNaN.SF2B _ _).
+clearbody u.
+destruct u; simpl; auto.
+-
+set (u := BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _).
+clearbody u.
+destruct u; simpl; auto.
+-
+set (u := BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _).
+clearbody u.
+destruct u; simpl; auto.
+-
+set (u := BinarySingleNaN.SF2B _ _).
+clearbody u.
+destruct u; simpl; auto.
+Qed.
+
+Lemma MINUS_PLUS_BOPP: forall x y: ftype t, feq (BMINUS x y) (BPLUS x (BOPP y)).
+Proof.
+destruct x, y; try destruct s; try destruct s0; try reflexivity;
+unfold BMINUS, BPLUS, BINOP, BOPP, UNOP, feq, Binary.Bplus, Binary.Bminus, 
+   Binary.BSN2B, BinarySingleNaN.SF2B, Binary.build_nan; simpl.
+- destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); auto.
+- destruct (BinarySingleNaN.SF2B _ _); auto.
+- destruct (BinarySingleNaN.SF2B _ _); auto.
+- destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); auto.
+Qed.
+
+Lemma subtract_loop_sumR: forall (c: ftype t) (al: list (ftype t)),
+  feq (subtract_loop c al) (sumF (List.rev (c :: map BOPP al))).
+Proof.
+intros.
+revert c; induction al; simpl; intros.
+destruct c; try destruct s; try reflexivity; simpl; auto.
+specialize (IHal (BMINUS c a)).
+rewrite {}IHal.
+simpl.
+fold (ftype t).
+set (bl := List.rev _). clearbody bl.
+induction bl; simpl.
+-
+rewrite !BPLUS_neg_zero BPLUS_comm;
+apply MINUS_PLUS_BOPP.
+-
+apply BPLUS_mor; auto.
+Qed.
+
+Lemma sum_rel_Ft_exists: forall (l: list (ftype t)), exists s, sum_rel_Ft l s.
+Proof.
+unfold sum_rel_Ft.
+induction l; simpl.
+eexists; constructor.
+destruct IHl as [s ?].
+eexists; constructor; eauto.
+Qed.
+
+Lemma subtract_loop_sum_any:  forall  (c: ftype t) (al: list (ftype t)),
+   exists s, feq (subtract_loop c al) s /\ sum_any (length al) (List.rev (c::map BOPP al)) s.
+Proof.
+intros.
+assert (exists s: ftype t, sum_rel neg_zero BPLUS (List.rev (c::map BOPP al)) s /\ feq (subtract_loop c al) s).
+-
+destruct (sum_rel_Ft_exists (List.rev (cons c (map BOPP al)))) as [s ?].
+exists s; split; auto.
+apply sum_rel_Ft_fold in H.
+subst s.
+apply subtract_loop_sumR.
+-
+destruct H as [s [? ?]].
+apply sum_rel_sum_any in H.
+destruct H as [s' [? ?]].
+exists s'.
+split. rewrite <- H; auto.
+rewrite length_app length_rev length_map in H1.
+simpl in H1.
+fold (ftype t) in *. 
+replace (Nat.pred (Init.Nat.add (length al) (S O))) with (length al) in H1 by lia.
+simpl. auto.
+reflexivity.
+Qed.
 
 End WithSTD.

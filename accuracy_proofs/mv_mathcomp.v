@@ -1,41 +1,25 @@
 (* This file contains theorems connecting MathComp operations on 
   matrices and vectors to operations on lists. *)
 
-Require Import vcfloat.VCFloat.
-Require Import List.
-From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
-From LAProof.accuracy_proofs Require Import dot_acc float_acc_lems list_lemmas gem_defs.
-Import ListNotations.
-From LAProof Require Import  mathcomp_compat.CommonSSR.
+
+From LAProof.accuracy_proofs Require Import preamble common 
+    dotprod_model sum_model dot_acc float_acc_lems list_lemmas gem_defs.
 
 From Coq Require Import ZArith Reals Psatz Arith.Arith.
 From mathcomp Require Import Rstruct.
-Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
-From mathcomp Require Import matrix all_ssreflect all_algebra ssrnum bigop.
+From mathcomp Require Import (*matrix*) all_ssreflect all_algebra (* ssrnum *) bigop.
 
-Open Scope R_scope.
 Open Scope ring_scope.
-
-Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with R.
-
-Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
 From mathcomp.algebra_tactics Require Import ring.
 
 Import Coq.Lists.List.
-
-Section MVtoMC_Defs.
 
 Definition vector_to_vc (m' : nat) (v: @vector R) : 'cV[R]_m' :=
   \matrix_(i < m', j < 1) (List.nth i v 0%R).
 
 Definition matrix_to_mx (m' n': nat) (mx: @gem_defs.matrix R) : 'M[R]_(m',n') := 
 \matrix_(i < m', j < n') (matrix_index 0%R mx i j).
-
-End MVtoMC_Defs.
-
-Section MVtoMC_Lems.
 
 Lemma matrix_to_mx_nil m n': 
 matrix_to_mx m n' [] = 0.
@@ -82,16 +66,26 @@ simpl. unfold map2.
 rewrite length_map length_combine; lia.
 Qed.
 
+Lemma nth_List_nth: forall {A: Type} (d: A) (l: seq.seq A) (n: nat),
+  seq.nth d l n = List.nth n l d.
+Proof.
+  move => A d l. elim : l => [//= n | //= h t IH n].
+  - by case : n.
+  - case: n. by []. move => n. by rewrite /= IH.
+Qed.
+
+
 Lemma nth_zero_matrix  m n i j:
-(nth j (nth i (zero_matrix m n 0%R) [::]) 0%R) = 0.
+(nth j (nth i (zero_matrix m n 0%Re) [::]) 0%R) = 0.
 Proof.
 move : i j n. 
  elim : m => //.
 rewrite /zero_matrix.
-move => i j _. by rewrite -!nth_nth !nth_nil.
+move => i j _.
+ by rewrite -!nth_List_nth !nth_nil.
 intros. simpl. 
 destruct n0.
-by rewrite -!nth_nth !nth_nil.
+by rewrite -!nth_List_nth !nth_nil.
 simpl. destruct i.
 have H0: 
 ((0%R) :: (zero_vector n0 0%R) =
@@ -101,7 +95,7 @@ by rewrite H.
 Qed.
 
 Lemma in_zero_matrix_length m n a: 
-In a (zero_matrix m n 0%R) -> length a = n.
+In a (zero_matrix m n 0%Re) -> length a = n.
 Proof. move : a . elim: m => //=.
 move => m IH a. destruct n => //= . move => [H|H].
 rewrite -H //=. by rewrite zero_vector_length.
@@ -114,10 +108,6 @@ Proof.
 apply/matrixP=> i j; rewrite !mxE.
 apply nth_zero_matrix.
 Qed.
-
-End MVtoMC_Lems.
-
-Section MVtoMC_opLems.
 
 Lemma vec_sum_nth_plus : forall u1 u2 
   (Hlen: length u2 = length u1) i,
@@ -321,6 +311,58 @@ Proof.
 by rewrite !mxE ; destruct i; destruct m.
 Qed.
 
+Lemma pred_lt: forall [n: nat], (0 < n -> n.-1 < n)%nat.
+Proof.
+  move => n Hn. by rewrite ltn_predL.
+Qed.
+
+Definition pred_ord [n: nat] (Hn: (0 < n)%nat) : 'I_n := Ordinal (pred_lt Hn).
+
+Lemma ordinal_enum_size: forall n: nat,
+  size (Finite.enum (ordinal n)) = n.
+Proof.
+  move => n. have: size ([seq val i | i <- enum 'I_n]) = n. rewrite val_enum_ord. by apply: size_iota.
+  rewrite size_map. unfold enum. rewrite size_map //.
+Qed.
+
+Lemma size_ord_enum: forall n, size (ord_enum n) = n.
+Proof.
+  move => n. 
+  have : size (ord_enum n) = size ([seq val i | i <- ord_enum n]) by rewrite size_map.
+  by rewrite val_ord_enum size_iota.
+Qed.
+
+Lemma nth_index_enum: forall {n: nat} (x: 'I_n) y,
+  seq.nth y (index_enum (ordinal n)) x = x.
+Proof.
+  move => n x y.
+ have nth_ord := (@nth_ord_enum n y x). unfold enum in nth_ord. move: nth_ord.
+  rewrite (@nth_map _ y) //. by rewrite ordinal_enum_size.
+Qed. 
+
+Lemma nth_ord_enum': forall n (i: 'I_n) x, seq.nth x (ord_enum n) i = i.
+Proof.
+  move => n i x. have Hv := val_ord_enum n.  have Hmap :=  @nth_map 'I_n x nat x val i (ord_enum n).
+  move : Hmap. rewrite Hv size_ord_enum nth_iota =>[//=|//]. rewrite add0n. move => H.
+  (*some annoying stuff about equality of ordinals vs nats*)
+  have : nat_of_ord ( seq.nth x (ord_enum n) i) == nat_of_ord i.
+ rewrite {2}H. by []. by [].
+  move => Hnatord. have : seq.nth x (ord_enum n) i == i by []. 
+  by move => /eqP Heq.
+Qed.
+
+
+Lemma index_ord_enum: forall (n: nat), (index_enum (ordinal n)) = ord_enum n.
+Proof.
+  move => n. have: (0 <= n)%nat by []. rewrite leq_eqVlt => /orP[/eqP Hn0 | Hnpos].
+  - subst. rewrite /ord_enum /= /index_enum /=. apply size0nil. apply ordinal_enum_size.
+  - apply (eq_from_nth (x0:=pred_ord Hnpos)).
+    + rewrite ordinal_enum_size size_ord_enum //.
+    + move => i. rewrite ordinal_enum_size => Hi.
+      have->: i = nat_of_ord (Ordinal Hi) by [].
+     rewrite nth_index_enum nth_ord_enum' //.
+Qed.
+
 Lemma vector_to_vc_mulmxp: forall v1 v2,
   length v1 = length v2 -> 
   vector_to_vc 1 (dotprodR v1 v2 :: []) = 
@@ -342,7 +384,7 @@ apply length_zero_iff_nil in Hv2.
 apply /matrixP => i j; do ![rewrite mxE ].
 rewrite (@big_nth R _ Rplus _ i) ordinal_enum_size index_ord_enum
   (@big_nat_recl R 0 Rplus) => //. 
-  rewrite ((@CommonSSR.nth_ord_enum 1) 0).
+  rewrite ((@nth_ord_enum' 1) 0).
 destruct i; destruct m => /= //.
 rewrite Rplus_comm !mxE /=. 
 f_equal => //.
@@ -363,7 +405,7 @@ rewrite (@big_nth _ 0 Rplus _ (Ordinal Hord))
 rewrite (@big_addn R 0 Rplus 0).
 replace (nat_of_ord i) with 0%nat  => /= .
 rewrite  !mxE. f_equal => /= //.
-rewrite (@ordinal_enum (Datatypes.length l).+1
+rewrite (@nth_index_enum (Datatypes.length l).+1
   (Ordinal Hord)) /= //.
 assert (((Datatypes.length l).+1 - 1)%nat =
   Datatypes.length l) by lia. 
@@ -377,8 +419,8 @@ apply: eq_big => k //.
 move => Hk'.
 have Hk : (k < Datatypes.length l)%nat by lia.
 have Hkp : (k + 1 < (Datatypes.length l).+1)%nat by lia.
-rewrite (@ordinal_enum (Datatypes.length l).+1 (Ordinal Hkp)  (Ordinal Hord)).
-rewrite (@ordinal_enum (Datatypes.length l)    (Ordinal Hk)   (Ordinal Hord1)).
+rewrite (@nth_index_enum (Datatypes.length l).+1 (Ordinal Hkp)  (Ordinal Hord)).
+rewrite (@nth_index_enum (Datatypes.length l)    (Ordinal Hk)   (Ordinal Hord1)).
 rewrite /= !mxE.
 destruct k => /= // ; repeat f_equal => /= //; lia.
 destruct i; destruct m => /= //.
@@ -510,10 +552,6 @@ rewrite Hord in IH. rewrite IH.
 apply: eq_bigr => k _. rewrite !mxE /matrix_index => //=.
 Qed.
 
-End MVtoMC_opLems.
-
-Section Norms.
-
 Definition sum_abs {m n} (A: 'M[R]_(m,n)) i : R:= \sum_j (Rabs (A i j)).
 Definition normv   {m} (v: 'cV[R]_m)  : R:= \big[maxr/0]_(i < m) Rabs (v i 0).
 Definition normM   {m n} (A: 'M[R]_(m,n))   : R:= \big[maxr/0]_i (sum_abs A i).
@@ -618,5 +656,3 @@ apply Rleb_norm_add. apply lerD;
 apply: le_bigmax => [ | i _]. 
 Qed.
 
-
-End Norms. 

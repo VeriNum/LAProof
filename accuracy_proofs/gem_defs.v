@@ -138,7 +138,7 @@ Fixpoint MMT {A: Type} (d : A) (dotprod : @vector A -> @vector A -> A)
 
 Example checkMMT : let A:= trans 0%Re 2 ([[:: 1;1];[:: 1;1]])%Re in
   MMT 0%Re dotprodR [::[::1;2];[::3;4]] A = [::[::3;3];[::7;7]].
-simpl. unfold dotprodR. simpl. repeat f_equal ;field_simplify; nra. Qed.
+simpl. unfold dotprodR. simpl. repeat f_equal ;field_simplify; compute; nra. Qed.
 
 (* floating-point matrix matrix multiplication. *)
 Definition MMTF {NAN : FPCore.Nans}  {t: type} : matrix -> matrix -> matrix  := 
@@ -215,7 +215,7 @@ Definition MMC {T} (dot : vector -> vector -> T) A B : matrix :=
 
 Example checkMMC: let A:= trans 0%Re 2 [::[::1;1];[::1;1]] in
   MMC dotprodR [::[::1;2];[::3;4]] A = trans 0%Re 2 [::[::3;3];[::7;7]].
-simpl. unfold dotprodR. simpl. repeat f_equal ;field_simplify; nra. Qed. 
+simpl. unfold dotprodR. simpl. repeat f_equal ;field_simplify; compute; nra. Qed. 
 
 Definition MMCR := MMC dotprodR.
 Definition MMCF {NAN : FPCore.Nans} {t}  := MMC (@dotprodF NAN t).

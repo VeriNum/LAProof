@@ -1,17 +1,6 @@
 From LAProof.accuracy_proofs Require Import preamble common 
        dotprod_model sum_model dot_acc float_acc_lems list_lemmas
-         gem_defs mv_mathcomp gemv_acc.
-From mathcomp Require Import Rstruct.
-
-Open Scope R_scope.
-Open Scope ring_scope.
-Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with Re.
-Set Warnings "notation-overridden,ambiguous-paths,overwriting-delimiting-key".
-
-Require Import LAProof.accuracy_proofs.vec_op_acc.
-
-Import Order.TTheory GRing.Theory ssrnum.Num.Def ssrnum.Num.Theory.
+         gem_defs mv_mathcomp gemv_acc vec_op_acc.
 
 Section MMERROR. 
 (* forward error matrix multiplication *)
@@ -57,7 +46,7 @@ destruct (mat_vec_mul_mixed_error A b) as
 { move => row Hr. rewrite Hn => //=.
 by rewrite Hp => //=; left. }
 rewrite Heq1.
-rewrite CommonSSR.map_map_equiv.
+change @map with @List.map.
 rewrite MVR_dist. 
 destruct (IH A n) as 
   (E' & eta' & Heq & HE' & Heta' & H3 & H4).
@@ -152,7 +141,8 @@ exists (e :: E), (eta1 :: eta);
 destruct i => /=.
 destruct (HE j) as (del & Heq & HE').
 rewrite Ha. lia.
-rewrite Heq !CommonSSR.map_map_equiv.
+rewrite Heq.
+change @map with @List.map.
 rewrite Rabs_mult Rmult_comm -Ha.
 apply /RleP. 
 apply ler_pM => //; apply /RleP; auto; apply Rabs_pos.
@@ -334,14 +324,16 @@ exists (e1 :: EA), (e2 :: EB);
 destruct i => /=.
 destruct (He1 j) as (del & Heq & HE').
 rewrite Hb. lia.
-rewrite Heq !CommonSSR.map_map_equiv.
+rewrite Heq.
+change @map with @List.map.
 by exists del; split. 
 apply IH1; lia.  } 
 {  intros. rewrite /matrix_index.
 destruct i => /=.
 destruct (He2 j) as (del & Heq & HE').
 rewrite Hb. lia.
-rewrite Heq !CommonSSR.map_map_equiv.
+rewrite Heq.
+change @map with @List.map.
 exists del => //.
 apply IH2; lia. }
 (* remaining is reasoning about lengths *)

@@ -2,9 +2,6 @@ From LAProof.accuracy_proofs Require Import preamble common dotprod_model sum_mo
                                             float_acc_lems list_lemmas
                                             dot_acc_lemmas sum_acc.
 
-Require Import Reals.
-Open Scope R.
-
 Section NAN.
 Context {NAN: FPCore.Nans} {t : type}.
 

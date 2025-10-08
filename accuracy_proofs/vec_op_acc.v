@@ -1,16 +1,6 @@
 From LAProof.accuracy_proofs Require Import preamble common
       dotprod_model sum_model dot_acc float_acc_lems list_lemmas
        gem_defs mv_mathcomp gemv_acc.
-From mathcomp Require Import Rstruct.
-Delimit Scope ring_scope with Ri.
-Delimit Scope R_scope with Re.
-Set Warnings "notation-overridden,ambiguous-paths,overwriting-delimiting-key".
-
-Open Scope R_scope.
-Open Scope ring_scope.
-
-
-Import Order.TTheory GRing.Theory ssrnum.Num.Def ssrnum.Num.Theory.
 
 Section SCALE_V_ERROR.
 (* mixed error vector scaling *)
@@ -122,7 +112,7 @@ simpl in Hlen; lia.
 simpl; rewrite Heq.
 destruct (BPLUS_accurate' u0 v0) as (del & Hd & H1) => //.
 rewrite H1; clear H1.
-rewrite !CommonSSR.map_map_equiv/=.
+change @map with @List.map. rewrite /=.
 exists (((FT2R u0) * del) :: e1), (((FT2R v0) * del) :: e2);
   repeat split. 
 { rewrite /ur/vr/=/vec_sumR !vec_sum_cons.
@@ -195,7 +185,7 @@ destruct (scaleV_mixed_error v b) as
 rewrite Heq. rewrite Heqb Heqa.
 rewrite Heqa Heqb in HD. clear Heq Heqa Heqb.
 destruct HD as (HDu & HDv & HD1 & HD2).
-rewrite !CommonSSR.map_map_equiv.
+ change @map with @List.map.
 exists ae, aeta ,Du, be, beta, Dv; repeat split => //; try lia.
 { intros; destruct (Hea i) . 
 rewrite Hu; lia.
@@ -205,7 +195,7 @@ rewrite !length_map. fold m; lia.
 fold m in H2; exists x; apply H2. }
 { intros; destruct (HDv i) .
 rewrite !length_map. fold m; lia.
-rewrite !CommonSSR.map_map_equiv in H2.
+change @map with @List.map in H2.
 fold m in H2; exists x. apply H2. }
 rewrite -Hu.
 by apply Haeta. 
@@ -262,10 +252,10 @@ destruct (mat_vec_mul_mixed_error A v)
   as (E & eta1 & Heq1 & H1).
 { apply (is_finite_scaleV b) => //. } 
 { intros; by apply Hlen. } 
-rewrite !CommonSSR.map_map_equiv.
+change @map with @List.map.
 change @map with @List.map in Heq1.
 rewrite Heq1. 
-rewrite !CommonSSR.map_map_equiv in H.
+change @map with @List.map in H.
 rewrite Heq1 in H. clear Heq1.
 have Hlen1: (length (A *f v)) = m  by rewrite !length_map.
 exists E, e, eta1, eta; repeat split => //.
@@ -288,7 +278,7 @@ destruct H;intros.
 by rewrite H0 !length_map.
 -
 change @List.map with @map in H|-*.
-rewrite !CommonSSR.map_map_equiv in H.
+change @map with @List.map in H.
 destruct H as (H & _); intros. 
 destruct (H i). by rewrite Hlen1.
 exists x; destruct H2; split => //.
@@ -355,7 +345,7 @@ destruct (Svec_sumF_mixed_error (A *f x) y s1 s2)
   as (e3 & e4 & e5 & e6 & e7 & e8 & Heq1 & H1) => //.
 { by symmetry; rewrite !length_map.  }
 rewrite Heq1.
-rewrite !CommonSSR.map_map_equiv.
+change @map with @List.map.
 destruct (mat_vec_mul_mixed_error A x)
   as (e1 & e2 & Heq2 & H2).
 { apply is_finite_vec_sum in Hfin; destruct Hfin.

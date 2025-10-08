@@ -7,9 +7,6 @@ From LAProof.accuracy_proofs Require Import preamble common
                                             float_acc_lems 
                                             list_lemmas dot_acc_lemmas.
 
-Require Import Reals.
-Open Scope R.
-
 Section MixedError. 
 Context {NAN: FPCore.Nans} {t : type}.
 

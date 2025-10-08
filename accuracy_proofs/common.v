@@ -3,9 +3,6 @@
 
 From LAProof.accuracy_proofs Require Import preamble.
 
-(* Set Warnings "--notation-overriden, -parsing". *)
-Arguments Binary.is_finite [prec] [emax] _.
-
 Definition rounded t r:=
 (Generic_fmt.round Zaux.radix2 (SpecFloat.fexp (fprec t) (femax t))
      (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE) r).
@@ -37,115 +34,55 @@ Qed.
 Section WithType.
 Context {NAN: FPCore.Nans} {t : type}.
 
-Definition feqb: rel (ftype t) := 
- fun x y =>
-match x with
-| Binary.B754_zero _ _ _ =>
-    match y with
-    | Binary.B754_zero _ _ _ => true
-    | _ => false
-    end
-| Binary.B754_finite _ _ b1 m1 e1 _ =>
-    match y with
-    | Binary.B754_finite _ _ b2 m2 e2 _ => eqb b1 b2 &&  Pos.eqb m1 m2 && Z.eqb e1 e2
-    | _ => false
-    end
-| _ =>
-    match y with
-    | Binary.B754_infinity _ _ _ | Binary.B754_nan _ _ _ _ _ => true
-    | _ => false
-    end
-end.
-
-Lemma feqb_spec:   forall x y, reflect (feq x y) (feqb x y).
-intros.
-unfold feq, feqb.
-destruct x,y; try constructor; auto.
-destruct (eqbP s s0).
-destruct (Pos.eqb_spec m m0).
-destruct (Z.eqb_spec e e1).
-constructor; auto.
-constructor. intros [? [? ?]]; contradiction.
-constructor; intros [? [? ?]]; contradiction.
-constructor; intros [? [? ?]]; contradiction.
-Qed.
-
-Lemma feq_eqR: forall (x y: ftype t), feq x y -> FT2R x = FT2R y.
-Proof.
-intros.
-destruct x,y; try contradiction; try reflexivity.
-red in H.
-destruct H as [? [? ?]]; subst.
-auto.
-Qed.
-
-Lemma feqb_eqR: forall (x y: ftype t), feqb x y ->  Req_bool (FT2R x) (FT2R y).
-Proof.
-intros.
-destruct (feqb_spec x y); try discriminate.
-apply Req_bool_true.
-apply feq_eqR; auto.
-Qed.
+Definition iszero {t} (x: ftype t) : bool := 
+  match x with Binary.B754_zero _ _ _ => true | _ => false end.
 
 (** Number of nonzeros *)
 
 Definition nnzF:  seq (ftype t) -> nat :=
-    count (fun x => negb (feqb pos_zero x)).
+    count (fun x => negb (iszero x)).
 
 Definition nnzR:  seq R -> nat :=
-    count (fun x => negb (Req_bool R0 x)).
+    count (fun x => negb (0 == x)).
 
-Lemma nnzF_zero l: nnzF l == 0%nat <-> size l == count (feqb pos_zero) l.
+Lemma nnzF_zero l: (nnzF l == 0%nat) = (size l == count iszero l).
 Proof.
-unfold nnzF.
-rewrite (eq_sym (size l)).
-rewrite -all_count.
-induction l; split; auto; destruct a; simpl in *; lia.
+rewrite /nnzF (eq_sym (size l)) -all_count.
+elim l => // a l' IH.
+case :a => //.
 Qed.
 
-Lemma nnzR_zero l: nnzR l == 0%nat <-> size l == count (Req_bool R0) l.
+Lemma nnzR_zero l: (nnzR l == 0%nat) = (size l == count (eq_op 0) l).
 Proof.
-unfold nnzR.
-rewrite (eq_sym (size l)).
-rewrite -all_count.
-induction l; split; auto;
-simpl;
-destruct (Req_bool R0 a); simpl; lia.
+rewrite /nnzR (eq_sym (size l)) -all_count.
+elim l => // a l' IH /=.
+rewrite -{}IH /=; case (0 == a); lia.
 Qed.
 
-Lemma nnzF_lemma l:  nnzF l == 0%nat <-> all (feqb pos_zero) l.
+Lemma nnzF_lemma l:  (nnzF l == 0%nat) = all iszero l.
 Proof.
-rewrite nnzF_zero.
-rewrite all_count.
-rewrite eq_sym.
-split; auto.
+rewrite !nnzF_zero all_count (eq_sym (size _)) //.
 Qed.
 
-Lemma nnzR_lemma l:  nnzR l == 0%nat <-> all (Req_bool R0) l.
+Lemma nnzR_lemma l:  (nnzR l == 0%nat) = (all (eq_op R0) l).
 Proof.
-rewrite nnzR_zero.
-rewrite all_count.
-rewrite eq_sym.
-split; auto.
+rewrite !nnzR_zero all_count (eq_sym (size _)) //.
 Qed.
 
 Lemma nnzF_is_zero_cons a l: nnzF (a::l) == 0%nat -> nnzF l == 0%nat.
 Proof.
-rewrite !nnzF_lemma (all_cat _ [:: a] l).
-move /andP => [H H'] //.
+rewrite !nnzF_lemma (all_cat _ [:: a] l) => /andP [H H'] //.
 Qed.
 
 Lemma nnzR_is_zero_cons a l: nnzR (a::l) == 0%nat -> nnzR l == 0%nat.
 Proof.
-rewrite !nnzR_lemma (all_cat _ [:: a] l).
-move /andP => [H H'] //.
+rewrite !nnzR_lemma (all_cat _ [:: a] l) => /andP [H H'] //.
 Qed.
 
 Lemma nnzR_cons l : 
-  nnzR (0%Re :: l) = nnzR l.
+  nnzR (0%Re :: l) == nnzR l.
 Proof.
-simpl.
-destruct (Req_bool_spec R0 0); try lra. auto.
+rewrite /= eq_refl //.
 Qed.
 
 Definition default_rel : R :=
@@ -545,3 +482,14 @@ Global Hint Resolve
   Rmult_le_lt_compat
   g1n_lt_g1Sn
 : commonDB.
+
+Ltac field_simplify_Rabs :=
+match goal with 
+|- Rabs ?a <= _ =>
+field_simplify a;
+(repeat split; 
+try match goal with |-?z <> 0 =>
+field_simplify z (*; Interval.Tactic.interval *)
+end)
+end.
+
