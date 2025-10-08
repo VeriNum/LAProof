@@ -37,6 +37,24 @@ Context {NAN: FPCore.Nans} {t : type}.
 Definition iszero {t} (x: ftype t) : bool := 
   match x with Binary.B754_zero _ _ _ => true | _ => false end.
 
+Lemma iszeroR_iszeroF: forall x: ftype t,  Binary.is_finite x -> FT2R x = R0 -> iszero x.
+Proof.
+destruct x; intros; auto.
+exfalso; clear - H0.
+rewrite /FT2R /= /Defs.F2R /= in H0.
+destruct s; simpl in H0.
+-
+assert  (IZR (Z.neg m) * bpow Zaux.radix2 e < 0)%Re; [clear | lra]; rewrite /IZR.
+apply Rmult_neg_pos.
+move :(IPR_gt_0 m); lra.
+move :(bpow_gt_0 Zaux.radix2 e); lra.
+-
+assert  (0 < IZR (Z.pos m) * bpow Zaux.radix2 e)%Re; [clear | lra]; rewrite /IZR.
+apply Rmult_pos_pos.
+apply IPR_gt_0.
+apply bpow_gt_0.
+Qed.
+
 (** Number of nonzeros *)
 
 Definition nnzF:  seq (ftype t) -> nat :=

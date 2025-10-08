@@ -1,8 +1,7 @@
 (* This file contains floating point functional models for the summation of
-  two lists, as well as theorems regarding their equivalence. *)
+     lists, as well as theorems regarding their equivalence. *)
 
-From LAProof.accuracy_proofs Require Import 
-        preamble common float_acc_lems.
+From LAProof.accuracy_proofs Require Import  preamble common.
 
 Require Import Permutation.
 
@@ -427,11 +426,11 @@ induction l => //=.
 move => fs H0 H1 s [Hs|Hs]; subst.
 inversion H0; subst.
 move : H1; rewrite /sum => H1. 
-destruct (BPLUS_correct _ _ H1) as [[? ?] ?]; auto.
+clear - H1; destruct s,s0; try destruct s; try destruct s0; try discriminate H1; reflexivity.
 inversion H0; clear H0; subst.
 fold sum_rel_Ft in H4.
 eapply IHl; try eassumption.
-destruct (BPLUS_correct _ _  H1) as [[? ?] ?]; auto.
+clear - H1; destruct a,s0; try destruct s; try destruct s0; try discriminate H1; reflexivity.
 Qed.
 
 Definition sumF := fold_right (@BPLUS _ t) neg_zero.
