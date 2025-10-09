@@ -9,7 +9,7 @@ Import ListNotations.
 From LAProof Require Import  mathcomp_compat.CommonSSR.
 
 From Coq Require Import ZArith Reals Psatz Arith.Arith.
-From mathcomp Require Import Rstruct.
+From mathcomp.reals_stdlib Require Import Rstruct.
 Set Warnings "-notation-overridden,-ambiguous-paths,-overwriting-delimiting-key".
 From mathcomp Require Import matrix all_ssreflect all_algebra ssrnum bigop.
 
