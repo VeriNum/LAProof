@@ -7,16 +7,16 @@ Set Bullet Behavior "Strict Subproofs".
 Definition matrix t := list (list (ftype t)).
 Definition vector t := list (ftype t).
 
-Definition dotprod {NAN: Nans} {t: type} (v1 v2: list (ftype t)) : ftype t :=
+Definition dotprod {NAN: FPCore.Nans} {t: type} (v1 v2: list (ftype t)) : ftype t :=
   fold_left (fun s x12 => BFMA (fst x12) (snd x12) s) 
                 (List.combine v1 v2)  (Zconst t 0).
 
-Definition norm2 {NAN: Nans} {t} (v: vector t) := dotprod v v.
+Definition norm2 {NAN: FPCore.Nans} {t} (v: vector t) := dotprod v v.
 
-Definition matrix_vector_mult {NAN: Nans}{t: type} (m: matrix t) (v: vector t) : vector t :=
+Definition matrix_vector_mult {NAN: FPCore.Nans}{t: type} (m: matrix t) (v: vector t) : vector t :=
       map (fun row => dotprod row v) m.
 
-Definition matrix_matrix_mult {NAN: Nans}{t: type} (m1 m2: matrix t) : matrix t :=
+Definition matrix_matrix_mult {NAN: FPCore.Nans}{t: type} (m1 m2: matrix t) : matrix t :=
   map (matrix_vector_mult m1) m2.
 
 Definition matrix_cols {t} (m: matrix t) cols :=
@@ -27,16 +27,16 @@ Definition matrix_rows {t} (m: matrix t) : Z := Zlength m.
 Definition map2 {A B C: Type} (f: A -> B -> C) al bl :=
   map (uncurry f) (List.combine al bl).
 
-Definition opp_matrix {NAN: Nans}{t:type} (m: matrix t) : matrix t :=
+Definition opp_matrix {NAN: FPCore.Nans}{t:type} (m: matrix t) : matrix t :=
   map (map (@BOPP NAN t)) m.
 
-Definition matrix_add {NAN: Nans}{t} : matrix t -> matrix t -> matrix t :=
+Definition matrix_add {NAN: FPCore.Nans}{t} : matrix t -> matrix t -> matrix t :=
   map2 (map2 (@BPLUS _ t)).
 
-Definition vector_add {NAN: Nans}{t:type} (v1 v2 : vector t) :=
+Definition vector_add {NAN: FPCore.Nans}{t:type} (v1 v2 : vector t) :=
   map2 (@BPLUS _ t) v1 v2.
 
-Definition vector_sub {NAN: Nans}{t:type} (v1 v2 : vector t) :=
+Definition vector_sub {NAN: FPCore.Nans}{t:type} (v1 v2 : vector t) :=
   map2 (@BMINUS _ t) v1 v2.
 
 Definition matrix_index {t} (m: matrix t) (i j: nat) :=
@@ -57,7 +57,7 @@ Lemma matrix_by_index_rows:
 Proof.
 intros.
 unfold matrix_by_index, matrix_rows_nat.
-rewrite map_length. rewrite seq_length. auto.
+rewrite length_map. rewrite length_seq. auto.
 Qed.
 
 Local Open Scope nat.
@@ -71,7 +71,7 @@ unfold matrix_by_index, matrix_cols_nat.
 pose (k := 0). change (seq 0 rows) with (seq k rows).
 clearbody k. revert k; induction rows;
    intros; constructor; auto.
-rewrite map_length, seq_length. auto.
+rewrite length_map, length_seq. auto.
 Qed.
 
 Lemma nth_map_seq:
@@ -188,7 +188,7 @@ Qed.
 #[export] Instance zerof {t} : Inhabitant (ftype t) := (Zconst t 0).
 
 Lemma norm2_snoc:
-  forall  {NAN: Nans}{t} (al: vector t) (x: ftype t),
+  forall  {NAN: FPCore.Nans}{t} (al: vector t) (x: ftype t),
    norm2 (al ++ [x]) = BFMA x x (norm2 al).
  Proof.
   intros. unfold norm2, dotprod.
@@ -196,7 +196,7 @@ Lemma norm2_snoc:
  rewrite fold_left_app. reflexivity.
  Qed.
 
-Lemma dotprod_congr  {NAN: Nans}{t} (x x' y y' : vector t):
+Lemma dotprod_congr  {NAN: FPCore.Nans}{t} (x x' y y' : vector t):
  Forall2 strict_feq x x' ->
  Forall2 strict_feq y y' ->
  length x = length y ->
@@ -217,7 +217,7 @@ Proof.
 Qed.
 
 Lemma norm2_congr: 
-  forall {NAN: Nans} {t} (x x': vector t), 
+  forall {NAN: FPCore.Nans} {t} (x x': vector t), 
            Forall2 feq x x' -> 
            feq (norm2 x) (norm2 x').
 Proof.
@@ -252,7 +252,7 @@ Qed.
 Local Open Scope Z.
 
 Lemma Znth_vector_sub:
- forall  {NAN: Nans}{t} i (x y: vector t) , Zlength x = Zlength y ->
+ forall  {NAN: FPCore.Nans}{t} i (x y: vector t) , Zlength x = Zlength y ->
    0 <= i < Zlength x ->
    Znth i (vector_sub x y) = BMINUS (Znth i x) (Znth i y).
 Proof.
@@ -263,7 +263,7 @@ rewrite Znth_combine ; try lia.
 reflexivity.
 Qed.
 
-Lemma vector_sub_congr: forall {NAN: Nans} {t} (x x' y y': vector t),
+Lemma vector_sub_congr: forall {NAN: FPCore.Nans} {t} (x x' y y': vector t),
   Forall2 feq x x' -> Forall2 feq y y' ->
   Forall2 feq (vector_sub x y) (vector_sub x' y').
 Proof.
@@ -277,7 +277,7 @@ apply BMINUS_congr; auto.
 Qed.
 
 Lemma norm2_loose_congr: 
- forall {NAN: Nans}{t} (x x': vector t),  Forall2 feq x x' -> feq (norm2 x) (norm2 x').
+ forall {NAN: FPCore.Nans}{t} (x x': vector t),  Forall2 feq x x' -> feq (norm2 x) (norm2 x').
 Proof.
 intros.
 unfold norm2.
@@ -306,7 +306,7 @@ apply IHal; auto. lia.
 apply IHal; auto. lia.
 Qed.
 
-Lemma finite_dotprod_e: forall {NAN: Nans}{t} (x y: vector t),
+Lemma finite_dotprod_e: forall {NAN: FPCore.Nans}{t} (x y: vector t),
   Zlength x = Zlength y ->
   finite (dotprod x y) -> Forall finite x /\ Forall finite y.
 Proof.
@@ -315,7 +315,7 @@ rewrite !Zlength_correct in H. apply Nat2Z.inj in H.
 unfold dotprod in H0.
 rewrite <- fold_left_rev_right in H0.
 rewrite rev_combine in H0 ; auto.
-rewrite <- (rev_length x), <- (rev_length y) in H.
+rewrite <- (length_rev x), <- (length_rev y) in H.
 assert (Forall finite (rev x) /\ Forall finite (rev y)).
 2:rewrite <- (rev_involutive x), <- (rev_involutive y);
    destruct H1; split; apply Forall_rev; auto.
@@ -335,7 +335,7 @@ destruct s,s0,s1; inv H1.
 Qed.
 
 
-Lemma finite_norm2_e: forall {NAN: Nans}{t} (x: vector t),
+Lemma finite_norm2_e: forall {NAN: FPCore.Nans}{t} (x: vector t),
   finite (norm2 x) -> Forall finite x.
 Proof.
 intros.
@@ -352,10 +352,10 @@ Proof.
 intros.
 unfold matrix_by_index.
 apply Forall_nth; intros.
-rewrite map_length, seq_length in H1.
+rewrite length_map, length_seq in H1.
 rewrite nth_map_seq ; auto.
 apply Forall_nth; intros.
-rewrite map_length, seq_length in H2.
+rewrite length_map, length_seq in H2.
 rewrite nth_map_seq ; auto.
 Qed.
 
@@ -374,7 +374,7 @@ Qed.
 
 Lemma Zlength_seq: forall lo n, Zlength (seq lo n) = Z.of_nat n.
 Proof.
-intros. rewrite Zlength_correct. f_equal. apply seq_length.
+intros. rewrite Zlength_correct. f_equal. apply length_seq.
 Qed.
 #[export] Hint Rewrite Zlength_seq : sublist rep_lia.
 
@@ -384,14 +384,14 @@ unfold matrix_rows.
 induction m; simpl; auto. list_solve.
 Qed.
 
-Add Parametric Morphism {NAN: Nans}{t: type}: (@norm2 _ t)
+Add Parametric Morphism {NAN: FPCore.Nans}{t: type}: (@norm2 _ t)
   with signature Forall2 feq ==> feq
  as norm2_mor.
 Proof.
 exact norm2_congr.
 Qed.
 
-Add Parametric Morphism {NAN: Nans}{t: type}: (@vector_sub _ t)
+Add Parametric Morphism {NAN: FPCore.Nans}{t: type}: (@vector_sub _ t)
   with signature Forall2 feq ==> Forall2 feq ==> Forall2 feq
   as vector_sub_mor.
 Proof.
@@ -406,7 +406,7 @@ induction 1; auto.
 rewrite !Zlength_cons; f_equal; auto.
 Qed.
 
-Add Parametric Morphism {NAN: Nans}{t}: (@dotprod _ t)
+Add Parametric Morphism {NAN: FPCore.Nans}{t}: (@dotprod _ t)
  with signature Forall2 feq ==> Forall2 feq ==> feq
  as dotprod_mor.
 Proof.
@@ -423,7 +423,7 @@ eapply IHForall2; eauto.
 apply BFMA_mor; auto.
 Qed.
 
-Add Parametric Morphism {NAN: Nans} {t}: (@matrix_vector_mult _ t)
+Add Parametric Morphism {NAN: FPCore.Nans} {t}: (@matrix_vector_mult _ t)
  with signature Forall2 (Forall2 feq) ==> Forall2 feq ==> Forall2 feq
  as matrix_vector_mult_mor.
 Proof.

@@ -1,0 +1,5 @@
+C/sparse.v: C/src/sparse.c C/include/sparse.h
+	    clightgen -normalize -IC/include $< -o $@
+
+C/cholesky.v: C/src/cholesky.c C/include/sparse.h
+	    clightgen -normalize -IC/include $< -o $@

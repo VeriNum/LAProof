@@ -34,7 +34,7 @@ Definition crs_matrix_rows_spec :=
     RETURN (Vint (Int.repr (matrix_rows mval)))
     SEP (crs_rep sh mval m).
 
-Definition crs_row_vector_multiply_spec {NAN : Nans} :=
+Definition crs_row_vector_multiply_spec {NAN : FPCore.Nans} :=
  DECLARE _crs_row_vector_multiply
  WITH sh1: share, sh2: share, sh3: share,
       m: val, mval: matrix Tdouble, v: val, vval: vector Tdouble, i: Z
@@ -56,7 +56,7 @@ Definition crs_row_vector_multiply_spec {NAN : Nans} :=
     SEP (crs_rep sh1 mval m;
           data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v).
 
-Definition crs_matrix_vector_multiply_byrows_spec {NAN : Nans} :=
+Definition crs_matrix_vector_multiply_byrows_spec {NAN : FPCore.Nans} :=
  DECLARE _crs_matrix_vector_multiply_byrows
  WITH sh1: share, sh2: share, sh3: share,
       m: val, mval: matrix Tdouble, v: val, vval: vector Tdouble, p: val
@@ -80,7 +80,7 @@ Definition crs_matrix_vector_multiply_byrows_spec {NAN : Nans} :=
           data_at sh3 (tarray tdouble (matrix_rows mval)) 
              (map Vfloat result) p).
 
-Definition crs_matrix_vector_multiply_spec {NAN : Nans} :=
+Definition crs_matrix_vector_multiply_spec {NAN : FPCore.Nans} :=
  DECLARE _crs_matrix_vector_multiply
  WITH sh1: share, sh2: share, sh3: share,
       m: val, mval: matrix Tdouble, v: val, vval: vector Tdouble, p: val
@@ -112,15 +112,15 @@ Definition SparseASI : funspecs := [
    crs_matrix_vector_multiply_spec ].
 
 Definition SubsetMathASI := [fma_spec].
-Definition Gprog : funspecs := SparseASI ++ SubsetMathASI.
+Definition Gprog : funspecs := SubsetMathASI ++ SparseASI.
 
 Lemma BFMA_eq:
-   forall H H0 (x y z : Binary.binary_float (fprec Tdouble) (femax Tdouble)),
+   forall H H' H0 (x y z : Binary.binary_float (fprec Tdouble) (femax Tdouble)),
   Binary.Bfma (fprec Tdouble) (femax Tdouble) H H0
-    (fma_nan Tdouble) BinarySingleNaN.mode_NE x y z = 
+    (FPCore.fma_nan (fprec Tdouble) (femax Tdouble) H') BinarySingleNaN.mode_NE x y z = 
   BFMA x y z.
 Proof.
 intros.
- unfold BFMA.
- f_equal; try apply proof_irr.
+ unfold BFMA. simpl.
+ repeat f_equal; apply proof_irr.
 Qed.

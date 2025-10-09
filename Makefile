@@ -20,6 +20,7 @@ Makefile.coq: _CoqProject
 clean-top: _CoqProject
 	if [ -e Makefile.coq ]; then $(MAKE) -f Makefile.coq cleanall; fi 
 	$(RM) Makefile.coq Makefile.coq.conf
+	$(RM) C/sparse.v C/cholesky.v
 
 clean: clean-top
 	$(RM) _CoqProject	

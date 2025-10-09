@@ -16,7 +16,7 @@ Set Bullet Behavior "Strict Subproofs".
 Open Scope logic.
 
 Section WithSTD.
-Context {NAN: Nans} {t : type} {STD: is_standard t}.
+Context {NAN: FPCore.Nans} {t : type} {STD: is_standard t}.
 
 Definition neg_zero := ftype_of_float (Binary.B754_zero (fprec t) (femax t) true).
 
@@ -210,7 +210,7 @@ rewrite Znth_map by (rewrite Zlength_iota; lia).
 rewrite Znth_i_iota by lia.
 simpl.
 rewrite upd_Znth_eq by (rewrite Zlength_map, Zlength_iota; lia).
-rewrite map_length, length_iota.
+rewrite length_map, length_iota.
 rewrite upto_iota.
 rewrite map_map.
 apply map_ext_in.
@@ -222,7 +222,7 @@ if_tac.
 - subst i.
 unfold list_of_fun.
 rewrite upd_Znth_eq by (rewrite Zlength_map, Zlength_iota; lia).
-rewrite map_length.
+rewrite length_map.
 rewrite length_iota.
 rewrite upto_iota, map_map.
 apply map_ext_in.
