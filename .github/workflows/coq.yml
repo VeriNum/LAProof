@@ -40,7 +40,7 @@ jobs:
             opam repo add coq-released https://coq.inria.fr/opam/released
             opam update
             opam install -y -v \
-              coq-elpi.2.2.2 \
+              coq-elpi.2.3.0 \
               coq-mathcomp-ssreflect.2.4.0 \
               coq-mathcomp-algebra.2.4.0 \
               coq-mathcomp-analysis.1.12.0 \
