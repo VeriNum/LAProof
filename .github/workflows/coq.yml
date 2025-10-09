@@ -46,7 +46,7 @@ jobs:
             coq-hierarchy-builder.1.9.1 \
             coq-mathcomp-ssreflect.2.4.0 \
             coq-mathcomp-algebra.2.4.0 \
-            coq-mathcomp-algebra-tactics.1.2.7 \     
+            coq-mathcomp-algebra-tactics.1.2.7 \
             coq-mathcomp-fingroup.2.4.0 \
             coq-mathcomp-finmap.2.2.1 \
             coq-mathcomp-classical.1.13.0 \
