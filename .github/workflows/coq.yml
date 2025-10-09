@@ -43,7 +43,7 @@ jobs:
 
             # Pins compatible with MathComp-Analysis 1.13 on Coq 8.20 + MC 2.4
             opam install -y -v \
-              coq-elpi.2.2.0 \
+              coq-elpi.2.4.0 \
               coq-hierarchy-builder.1.8.1 \
               coq-mathcomp-ssreflect.2.4.0 \
               coq-mathcomp-algebra.2.4.0 \
