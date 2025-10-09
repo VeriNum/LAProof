@@ -56,7 +56,6 @@ jobs:
             coq-interval.4.11.1 \
             coq-coquelicot.3.4.4 \
             coq-vcfloat.2.3 \
-            coq-compcert.3.16 \
             coq-vst.2.15 \
             coq-vst-lib.2.15.1
             echo '::endgroup::'
