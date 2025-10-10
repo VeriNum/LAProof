@@ -42,12 +42,7 @@ jobs:
             opam update
 
             opam install -y -v \
-            coq-elpi.2.3.0 \
-            coq-hierarchy-builder.1.8.0 \
-            coq-mathcomp-ssreflect.2.3.0 \
-            coq-mathcomp-algebra.2.3.0 \
             coq-mathcomp-algebra-tactics.1.2.3 \
-            coq-mathcomp-fingroup.2.3.0 \
             coq-mathcomp-finmap.2.1.0 \
             coq-mathcomp-classical.1.8.0 \
             coq-mathcomp-reals.1.8.0 \
