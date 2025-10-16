@@ -4,8 +4,7 @@
 
 From LAProof.accuracy_proofs Require Import preamble common 
                                             sum_model
-                                            float_acc_lems 
-                                            list_lemmas.
+                                            float_acc_lems.
 
 Require Import Permutation.
 
@@ -51,8 +50,7 @@ destruct Hl.
 simpl in *.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
 (* IHl *)
-pose proof (length_not_empty_nat l H) as Hlen1.
-change @length with @size in Hlen1.
+pose proof (size_not_empty_nat l H) as Hlen1.
 specialize (IHl B).
 destruct IHl as (l' & Hlen' & Hsum & Hdel); auto.
 (* construct l'0 *)
@@ -154,7 +152,7 @@ apply sumR_le_sumRabs.
 rewrite sumRabs_Rabs.
 rewrite one_plus_d_mul_g. 
 rewrite Rplus_comm.
-apply length_not_empty in H; auto.
+apply size_not_empty_nat in H.
 apply Rplus_le_compat.
 apply Rmult_le_compat; try apply Rabs_pos; 
   try apply default_rel_ge_0; try nra.

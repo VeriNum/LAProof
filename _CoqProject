@@ -4,7 +4,6 @@ COQEXTRAFLAGS = "-w -notation-overridden,-ambiguous-paths,-overwriting-delimitin
 accuracy_proofs/preamble.v
 accuracy_proofs/common.v
 accuracy_proofs/float_acc_lems.v
-accuracy_proofs/list_lemmas.v
 accuracy_proofs/dotprod_model.v
 accuracy_proofs/sum_model.v
 accuracy_proofs/sum_acc.v

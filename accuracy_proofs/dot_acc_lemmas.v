@@ -5,8 +5,7 @@
 
 From LAProof.accuracy_proofs Require Import preamble common 
                                             dotprod_model 
-                                            float_acc_lems 
-                                            list_lemmas.
+                                            float_acc_lems.
 
 Section ForwardErrorRel1.
 (* forward error bound for non-fma dot product using inductive rels *) 
@@ -72,7 +71,7 @@ rewrite Hplus; clear Hplus.
 destruct (BMULT_accurate'  (fst a) (snd a) A) as (d & e & Hed & Hd& He& Hmul); 
 rewrite Hmul; clear Hmul.
 (* algebra *)
-apply length_not_empty_nat in H; change @length with @size in H.
+apply size_not_empty_nat in H.
 destruct a; cbv [ FR2 Rabsp fst snd].
 simpl.
 set (n:= size l) in *.
@@ -355,7 +354,7 @@ eapply Rle_trans; [apply He|]. apply e_le_g1; simpl in *; auto.
 } 
 (* case cons lists*)
 (* apply IH *)
-pose proof (length_not_empty l H) as Hlen3. change @length with @size in Hlen3.
+move :(size_not_empty_nat l H) => Hlen3.
 inversion Hfp;  subst.
 unfold fst, snd in Hfin, Hfp; unfold fst, snd.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
@@ -502,7 +501,7 @@ eapply Rle_trans; [apply Hd| apply d_le_g_1; simpl; auto].
 eapply Rle_trans; [apply He|]. unfold g1, g; simpl; nra.
 }
  (* apply IH *)
-pose proof (length_not_empty l H) as Hlen3. change @length with @size in Hlen3. 
+pose proof (size_not_empty_nat l H) as Hlen3. 
 inversion Hfp; subst.
 (destruct (BFMA_finite_e _ _ _ Hfin) as (A' & B' & C')).
 specialize (IHl s l0).

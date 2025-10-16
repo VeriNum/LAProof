@@ -31,6 +31,13 @@ change @catrev with rev_append.
 rewrite rev_append_rev app_nil_r //.
 Qed.
 
+Lemma size_not_empty_nat {A} (l: seq A) :  l <> [] ->  Nat.le 1 (size l).
+Proof.
+intros.
+destruct l; try congruence; compute; lia.
+Qed.
+
+
 Section WithType.
 Context {NAN: FPCore.Nans} {t : type}.
 

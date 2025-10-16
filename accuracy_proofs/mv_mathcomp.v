@@ -3,7 +3,7 @@
 
 
 From LAProof.accuracy_proofs Require Import preamble common 
-    dotprod_model sum_model dot_acc float_acc_lems list_lemmas (*gem_defs*).
+    dotprod_model sum_model dot_acc float_acc_lems.
 
 From mathcomp.algebra_tactics Require Import ring.
 

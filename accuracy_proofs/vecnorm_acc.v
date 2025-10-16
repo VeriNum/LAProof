@@ -1,7 +1,6 @@
 From LAProof.accuracy_proofs Require Import preamble common 
                                             dotprod_model sum_model
-                                            float_acc_lems 
-                                            list_lemmas dot_acc sum_acc.
+                                            float_acc_lems dot_acc sum_acc.
 
 Section TwoNorm. 
 Context {NAN: FPCore.Nans} {t : type}.

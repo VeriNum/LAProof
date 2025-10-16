@@ -1,6 +1,4 @@
-From LAProof.accuracy_proofs Require Import preamble common 
-                                           list_lemmas
-                                            float_acc_lems.
+From LAProof.accuracy_proofs Require Import preamble common float_acc_lems.
 Require Import FunctionalExtensionality.
 
 Section DotProdGeneric.

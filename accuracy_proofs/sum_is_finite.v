@@ -1,27 +1,22 @@
-Require Import vcfloat.VCFloat.
-Require Import List.
-Import ListNotations.
-From LAProof.accuracy_proofs Require Import common op_defs dotprod_model sum_model.
-From LAProof.accuracy_proofs Require Import float_acc_lems list_lemmas.
-From LAProof.accuracy_proofs Require Import fma_dot_acc sum_acc.
-
-Require Import Reals.
-Open Scope R.
+From LAProof.accuracy_proofs Require Import preamble
+         common op_defs dotprod_model sum_model float_acc_lems
+          fma_dot_acc sum_acc.
 
 Section NAN.
-Variable NAN: Nans.
+Variable NAN: FPCore.Nans.
 
 Definition fmax (t: type) := bpow Zaux.radix2 (femax t).
 
 Lemma is_finite_sum_no_overflow' (t : type) :
-  forall x y
-  (Hfinx: Binary.is_finite (fprec t) (femax t) x = true)
-  (Hfiny: Binary.is_finite (fprec t) (femax t) y = true)
-  (Hov :   Bplus_no_overflow t (FT2R x) (FT2R y)),
- Binary.is_finite (fprec t) (femax t) (BPLUS t x y ) = true.
+  forall (x y: ftype t)
+  (Hfinx: Binary.is_finite x = true)
+  (Hfiny: Binary.is_finite y = true)
+  (Hov :   @Bplus_no_overflow t (FT2R x) (FT2R y)),
+ Binary.is_finite (BPLUS x y ) = true.
 Proof.
 intros.
-pose proof (Binary.Bplus_correct  (fprec t) (femax t)  (fprec_gt_0 t) (fprec_lt_femax t) (plus_nan t)
+pose proof (Binary.Bplus_correct  (fprec t) (femax t)  (fprec_gt_0 t) (fprec_lt_femax t) 
+                    (FPCore.plus_nan (fprec t) (femax t) (fprec_gt_one t))
                       BinarySingleNaN.mode_NE x y Hfinx Hfiny ).
 unfold Bplus_no_overflow, FT2R in Hov.
 apply Rlt_bool_true in Hov.
@@ -29,7 +24,7 @@ rewrite Hov in H; simpl in H; destruct H as (_ & B & _); simpl; auto.
 Qed.
 
 Definition fun_bnd (t : type) (n : nat) :=
-fmax t / (1 + default_rel t) * 1 / (1 + INR n * (g t (n - 1) + 1)) .
+fmax t / (1 + @default_rel t) * 1 / (1 + INR n * (@g t (n - 1) + 1)) .
 
 Lemma rdiv_lt (a b: R) :
   0 < b -> 0 < a -> b < a -> / a < / b. 
@@ -87,22 +82,22 @@ Qed.
 Lemma finite_sum_from_bounded : 
   forall (t: type) (l: list (ftype t))
   (fs : ftype t) 
-  (Hfs: sum_rel_Ft t l fs),
+  (Hfs: sum_rel_Ft l fs),
   (forall x, In x l -> 
-    Binary.is_finite _ _ x = true /\ Rabs (FT2R x) < fun_bnd t (length l)) -> 
-  Binary.is_finite _ _ fs = true. 
+    Binary.is_finite x = true /\ Rabs (FT2R x) < fun_bnd t (length l)) -> 
+  Binary.is_finite fs = true. 
 Proof.
 intros ?.
 induction l.
 { intros; inversion Hfs; subst; simpl; auto. }
 { intros. inversion Hfs; subst.
 assert (Hin: forall x : ftype t,
-       In x l -> Binary.is_finite _ _ x = true /\
+       In x l -> Binary.is_finite x = true /\
        Rabs (FT2R x) < fun_bnd t (length l)).
   { intros. split; [apply H; simpl; auto | ]. 
     eapply Rlt_le_trans; [apply H; simpl; auto | ].
     apply fun_bnd_le. }  
-assert (Hfina : Binary.is_finite (fprec t) (femax t) a = true) by
+assert (Hfina : Binary.is_finite a = true) by
   (apply H; simpl; auto).
 unfold sum.
 fold (@sum_rel_Ft NAN t) in H3.
@@ -117,7 +112,7 @@ assert (B: Generic_fmt.generic_format Zaux.radix2
        (FT2R s) ) by (apply Binary.generic_format_B2R).
 destruct (Plus_error.FLT_plus_error_N_ex   Zaux.radix2 (SpecFloat.emin (fprec t) (femax t))
  (fprec t) (fun x0 : Z => negb (Z.even x0)) (FT2R a) (FT2R s) A B) as (d & Hd & Hd').
-unfold Relative.u_ro in Hd. fold (default_rel t) in Hd.
+unfold Relative.u_ro in Hd. fold (@default_rel t) in Hd.
 assert ( H1: Generic_fmt.round Zaux.radix2 (SpecFloat.fexp (fprec t) (femax t))
     (BinarySingleNaN.round_mode BinarySingleNaN.mode_NE)
     (FT2R a + FT2R s)  =  Generic_fmt.round Zaux.radix2
@@ -125,8 +120,8 @@ assert ( H1: Generic_fmt.round Zaux.radix2 (SpecFloat.fexp (fprec t) (femax t))
         (Generic_fmt.Znearest (fun x0 : Z => negb (Z.even x0)))
         (FT2R a + FT2R s)) by auto.
 rewrite <- H1 in Hd'; clear H1; rewrite Hd'; clear Hd'.
-destruct (sum_rel_R_exists t l s H3) as (rs & Hrs).
-destruct (sum_rel_R_abs_exists t l s H3) as (rs_abs & Habs).
+destruct (sum_rel_R_exists l s H3) as (rs & Hrs).
+destruct (sum_rel_R_abs_exists l s H3) as (rs_abs & Habs).
 pose proof sum_forward_error NAN t l s rs rs_abs H3 Hrs Habs IHl as H1.
 pose proof sum_rel_bound' as C.
 pose proof sum_rel_bound'' as D.

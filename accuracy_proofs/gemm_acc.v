@@ -1,6 +1,5 @@
 From LAProof.accuracy_proofs Require Import preamble common 
-       dotprod_model sum_model dot_acc float_acc_lems list_lemmas
-         (*gem_defs*) mv_mathcomp gemv_acc vec_op_acc.
+       dotprod_model sum_model dot_acc float_acc_lems mv_mathcomp gemv_acc vec_op_acc.
 
 Section MMERROR. 
 (* forward error matrix multiplication *)

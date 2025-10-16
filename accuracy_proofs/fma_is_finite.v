@@ -1,6 +1,5 @@
 From LAProof.accuracy_proofs Require Import preamble common dotprod_model sum_model
-                                            float_acc_lems list_lemmas
-                                            dot_acc_lemmas sum_acc.
+                                            float_acc_lems dot_acc_lemmas sum_acc.
 
 Section NAN.
 Context {NAN: FPCore.Nans} {t : type}.
@@ -382,8 +381,9 @@ right.
 eapply hd_error_some_nil; simpl; auto.
 destruct Hl. subst.
 simpl. unfold g1, g; field_simplify; simpl. field_simplify; apply default_abs_gt_0.
-apply length_not_empty_nat in H4.
-replace (S (length l) - 1)%nat with (S (length l - 1))%nat by lia.
+apply size_not_empty_nat in H4.
+change @length with @size in *.
+replace (S (size l) - 1)%nat with (S (size l - 1))%nat by lia.
 apply g1n_lt_g1Sn; auto. lia.
 subst n; auto.
 apply Rcomplements.Rlt_div_r.

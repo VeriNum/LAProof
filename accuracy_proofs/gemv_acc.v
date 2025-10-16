@@ -1,7 +1,6 @@
 From LAProof.accuracy_proofs Require Import preamble common 
                                                  dotprod_model sum_model
-                                                dot_acc float_acc_lems (*list_lemmas
-                                                              gem_defs*) mv_mathcomp.
+                                                dot_acc float_acc_lems mv_mathcomp.
 
 From mathcomp.algebra_tactics Require Import ring.
 
