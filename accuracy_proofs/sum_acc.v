@@ -21,10 +21,10 @@ Notation neg_zero := (@common.neg_zero t).
 
 Theorem bSUM :
     exists (x': list R), 
-    length x' = length x /\
+    size x' = size x /\
     FT2R (sumF x) = sumR x' /\
-    (forall n, (n < length x')%nat -> exists delta, 
-        List.nth n x' 0 = FT2R (List.nth n x neg_zero) * (1 + delta) /\ Rabs delta <= g (length x' - 1)).
+    (forall n, (n < size x')%nat -> exists delta, 
+        nth 0 x' n = FT2R (nth neg_zero x n) * (1 + delta) /\ Rabs delta <= g (size x' - 1)).
 Proof.
 have H0 := @FT2R_neg_zero t.
 induction x.
@@ -52,25 +52,26 @@ simpl in *.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
 (* IHl *)
 pose proof (length_not_empty_nat l H) as Hlen1.
+change @length with @size in Hlen1.
 specialize (IHl B).
 destruct IHl as (l' & Hlen' & Hsum & Hdel); auto.
 (* construct l'0 *)
 pose proof (BPLUS_accurate' a (sumF l) Hfin) as Hplus.
 destruct Hplus as (d' & Hd'& Hplus).
 exists (FT2R a * (1+d') :: map (Rmult (1+d')) l'); repeat split.
-{ simpl; auto. rewrite length_map; auto. }
+{ simpl; auto. rewrite size_map; auto. }
 { simpl; rewrite Hplus Rmult_plus_distr_r Hsum -sumR_mult; auto. } 
 intros n H1. destruct n. 
 { simpl. exists d'; split; auto.
-  eapply Rle_trans; [apply Hd'| ]. apply d_le_g_1. rewrite length_map; auto.
+  eapply Rle_trans; [apply Hd'| ]. apply d_le_g_1. rewrite size_map; auto.
   rewrite Hlen'. lia. }
-simpl in H1. rewrite length_map in H1; rewrite Hlen' in H1.
-assert (Hlen2: (n < length l')%nat) by lia.
+simpl in H1. rewrite size_map in H1; rewrite Hlen' in H1.
+assert (Hlen2: (n < size l')%nat) by lia.
 specialize (Hdel n Hlen2).
 destruct Hdel as (d & Hd1 & Hd2).
 exists ( (1+d') * (1+d) -1). simpl; split.
-{ replace 0 with (Rmult (1 + d') 0) by nra. rewrite map_nth; rewrite Hd1; nra. }
-rewrite length_map. field_simplify_Rabs. 
+{ replace 0 with (Rmult (1 + d') 0) by nra. rewrite (nth_map R0).  2: lia. rewrite Hd1; nra. }
+rewrite size_map. field_simplify_Rabs. 
   eapply Rle_trans; [apply Rabs_triang | eapply Rle_trans; [apply Rplus_le_compat_r; apply Rabs_triang | ]  ].
 rewrite Rabs_mult.
 replace (Rabs d' * Rabs d + Rabs d' + Rabs d ) with
@@ -80,8 +81,8 @@ apply Rmult_le_compat; try apply Rabs_pos.
 apply Fourier_util.Rle_zero_pos_plus1; try apply Rabs_pos.
 apply Rplus_le_compat_l; apply Hd'.
 apply Hd2. apply Hd'.
-replace ((1 + D) * g (length l' - 1) + D) with
-((1 + D) * g (length l' - 1) * 1 + D * 1) by nra.
+replace ((1 + D) * g (size l' - 1) + D) with
+((1 + D) * g (size l' - 1) * 1 + D * 1) by nra.
 rewrite one_plus_d_mul_g; apply Req_le; rewrite Rmult_1_r. f_equal; lia.
 Qed.
 
@@ -95,7 +96,7 @@ Notation g1 := (@g1 t).
 Notation D := (@default_rel t).
 
 Variable (x : list (ftype t)).
-Notation n := (length x).
+Notation n := (size x).
 
 Hypothesis (Hfin: Binary.is_finite (sumF x) = true).
 
@@ -144,8 +145,8 @@ eapply Rle_trans;
   rewrite Rabs_minus_sym in IHl; apply Rabs_le_minus in IHl. apply IHl.
 rewrite !Rmult_plus_distr_l; rewrite <- !Rplus_assoc.
 set (s1 := sumR (map Rabs (map FT2R l))).
-replace (g (length l ) * s1 + D * (g (length l ) * s1)) with
-  ((1+ D) * g (length l) * s1) by nra.
+replace (g (size l ) * s1 + D * (g (size l ) * s1)) with
+  ((1+ D) * g (size l) * s1) by nra.
 eapply Rle_trans; [apply Rplus_le_compat_r; 
   apply Rplus_le_compat_l; apply Rmult_le_compat_l; try apply Rabs_pos|].
 apply default_rel_ge_0.
@@ -171,7 +172,7 @@ Notation g := (@g t).
 Notation g1 := (@g1 t).
 
 Variable (x x0: list (ftype t)).
-Notation n := (length x).
+Notation n := (size x).
 
 Hypothesis (Hfin: Binary.is_finite (sumF x) = true).
 Hypothesis (Hfin0: Binary.is_finite (sumF x0) = true).
@@ -182,7 +183,8 @@ Lemma sum_forward_error_permute' :
 Proof.
 eapply Rle_trans.
 apply (fSUM x0 Hfin0).
-apply Req_le; f_equal. 
+apply Req_le; f_equal.
+change @size with @length. 
 rewrite (Permutation_length Hper); auto.
 Qed.
 

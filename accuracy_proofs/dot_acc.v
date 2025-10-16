@@ -20,59 +20,55 @@ Notation E := (@default_abs t).
 Notation neg_zero := (@common.neg_zero t).
 
 Variables (v1 v2: list (ftype t)).
-Hypothesis Hlen: length v1 = length v2.
+Hypothesis Hlen: size v1 = size v2.
 Hypothesis Hfin: Binary.is_finite (dotprodF v1 v2) = true.
 
 Lemma dotprod_mixed_error:
   exists (u : list R) (eta : R),
-    length u = length v2 /\
+    size u = size v2 /\
     FT2R (dotprodF v1 v2) = dotprodR u (map FT2R v2) + eta /\
-    (forall n, (n < length v2)%nat -> exists delta,
-      List.nth n u 0 = FT2R (List.nth n v1 neg_zero) * (1 + delta) /\ Rabs delta <= g (length v2))  /\
-    Rabs eta <= g1 (length v2) (length v2).
+    (forall n, (n < size v2)%nat -> exists delta,
+      nth 0 u n = FT2R (nth neg_zero v1 n) * (1 + delta) /\ Rabs delta <= g (size v2))  /\
+    Rabs eta <= g1 (size v2) (size v2).
 Proof.
 intros.
-assert (Datatypes.length (combine v1 v2) = length v1) by
- (rewrite length_combine; lia).
-assert (Hlenr : length (List.rev v1) = length (List.rev v2)) by (rewrite !length_rev; auto).
-rewrite <- length_rev in Hlen.
+assert (size (zip v1 v2) = size v1) by
+ (rewrite size_zip; lia).
+assert (Hlenr : size (rev v1) = size (rev v2)) by (rewrite !size_rev; auto).
+rewrite <- size_rev in Hlen.
 pose proof dotprodF_rel_fold_right v1 v2 as H1.
-rewrite <- combine_rev in H1 by (revert Hlen; rewrite length_rev; auto).
-revert Hlen; rewrite length_rev; intro.
-pose proof (dotprod_mixed_error_rel (List.rev v1) (List.rev v2) Hlenr (dotprodF v1 v2) H1 Hfin) as 
+move :Hlen; rewrite size_rev => Hlen'.
+rewrite rev_zip in H1; auto.
+pose proof (dotprod_mixed_error_rel (rev v1) (rev v2) Hlenr (dotprodF v1 v2) H1 Hfin) as 
   (u & eta & H2 & H3 & H4 & H5).
-exists (List.rev u), eta; repeat split; auto.
+exists (rev u), eta; repeat split; auto.
 -
-rewrite length_rev in H2; rewrite <- length_rev in H2; auto.
+move :H2; rewrite !size_rev //.
 -
-pose proof dotprodR_rel u (map FT2R (List.rev v2)). 
-assert (dotprodR (List.rev u) (map FT2R v2) = FT2R (dotprodF v1 v2) - eta).
+pose proof dotprodR_rel u (map FT2R (rev v2)). 
+assert (dotprodR (rev u) (map FT2R v2) = FT2R (dotprodF v1 v2) - eta).
 eapply R_dot_prod_rel_eq; eauto.
-change @map with @List.map.
-rewrite -dotprodR_rev; [ | rewrite length_map; rewrite length_rev in H2; auto].
-rewrite -List.map_rev; auto.
+rewrite -dotprodR_rev; [ | rewrite size_map; rewrite size_rev in H2; auto].
+rewrite -map_rev; auto.
 nra.
 -
-rewrite !length_rev in H4. 
+rewrite !size_rev in H4, H2, H5. 
 intros. 
-assert ((length u - S n < length v2)%nat)
-  by (rewrite length_rev in H2; lia). 
-specialize (H4 (length u - S n)%nat H6).
-rewrite rev_nth in H4.
-rewrite rev_nth.
+assert ((size u - S n < size v2)%nat) by lia.
+specialize (H4 (size u - S n)%nat H6).
+rewrite nth_rev in H4; [ | rewrite Hlen' // ].
+rewrite nth_rev; [ | lia].
 destruct H4 as (delta & Hn & HD).
 exists delta; split.
 rewrite Hn; repeat f_equal.
-rewrite length_rev in H2. 
-rewrite Hlen.
+rewrite Hlen'.
 rewrite H2. 
 rewrite <- Nat.sub_succ_l.
 simpl. lia.
 lia.
 apply HD.
-rewrite length_rev in H2. lia. lia.
-- 
-rewrite !length_rev in H5; auto.
+-
+rewrite !size_rev in H5; auto.
 Qed.
 
 End MixedError.
@@ -85,12 +81,12 @@ Notation v1R  := (map FT2R v1).
 Notation v2R  := (map FT2R v2).
 Notation v1R' := (map Rabs v1R).
 Notation v2R' := (map Rabs v2R).
-Notation n    := (length v2).
+Notation n    := (size v2).
 
 Notation g := (@g t).
 Notation g1 := (@g1 t).
 
-Hypothesis Hlen: length v1 = length v2.
+Hypothesis Hlen: size v1 = size v2.
 Hypothesis Hfin: Binary.is_finite (dotprodF v1 v2) = true.
 
 Lemma dotprod_forward_error:
@@ -98,14 +94,13 @@ Lemma dotprod_forward_error:
         <= g n * dotprodR v1R' v2R' + g1 n (n - 1).
 Proof.
 intros.  
-pose proof R_dot_prod_rel_fold_right' t v1 v2 as HB.
-pose proof R_dot_prod_rel_fold_right_Rabs' t v1 v2 as HC.
-  simpl in HB, HC. rewrite <- List.map_rev in HC, HB.
-  rewrite <- List.map_rev in HC.
-pose proof dotprod_forward_error_rel (List.rev (combine v1 v2)) 
+pose proof R_dot_prod_rel_fold_right' t v1 v2 Hlen as HB.
+pose proof R_dot_prod_rel_fold_right_Rabs' t v1 v2 Hlen as HC.
+  simpl in HB, HC. rewrite <- map_rev in HC, HB. rewrite <- map_rev in HC.
+pose proof dotprod_forward_error_rel (rev (zip v1 v2)) 
   (dotprodF v1 v2) (dotprodF_rel_fold_right _ _ ) Hfin
   (dotprodR v1R v2R) (dotprodR v1R' v2R') HB HC.
-rewrite length_rev length_combine Hlen Nat.min_id in H;
+rewrite size_rev size_zip Hlen minnn in H.
 auto.
 Qed.
 
@@ -117,18 +112,17 @@ Lemma sparse_dotprod_forward_error:
 Proof. 
 intros.  
 pose proof dotprodF_rel_fold_right v1 v2 as HA.
-pose proof R_dot_prod_rel_fold_right' t v1 v2 as HB.
-pose proof R_dot_prod_rel_fold_right_Rabs' t v1 v2 as HC.
-  simpl in HB, HC. rewrite <- List.map_rev in HC, HB.
-  rewrite <- List.map_rev in HC.
-pose proof sparse_dotprod_forward_error_rel (List.rev v1) (List.rev v2).
-  rewrite !length_rev  combine_rev in H; auto.
+pose proof R_dot_prod_rel_fold_right' t v1 v2 Hlen as HB.
+pose proof R_dot_prod_rel_fold_right_Rabs' t v1 v2 Hlen as HC.
+  simpl in HB, HC. rewrite <- map_rev in HC, HB.
+  rewrite <- map_rev in HC.
+pose proof sparse_dotprod_forward_error_rel (rev v1) (rev v2).
+  rewrite !size_rev  -rev_zip in H; auto.
 specialize (H Hlen (dotprodF v1 v2) HA Hfin (dotprodR v1R v2R)
   (dotprodR v1R' v2R') HB HC). 
-change @map with @List.map in H. 
-rewrite List.map_rev in H.
+rewrite map_rev in H.
 unfold common.nnzR, nnzR in H.
-rewrite -rev_list_rev !count_rev in H.
+rewrite !count_rev in H.
 auto.
 Qed.
 

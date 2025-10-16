@@ -11,7 +11,7 @@ Definition two_normR (x: list R) : R := sqrt (dotprodR x x).
 
 Variable (x : list (ftype t)).
 Notation xR := (map FT2R x).
-Notation n:= (length x). 
+Notation n:= (size x). 
 Hypothesis Hfin: Binary.is_finite (dotprodF x x) = true.
 
 Notation g := (@g t).
@@ -23,7 +23,7 @@ Lemma bfVNRM2:
   exists (x' : list R) (eta : R),
    two_normF x = sqrt (dotprodR x' xR + eta) /\
     (forall m, (m < n)%nat -> exists delta,
-      List.nth m x' 0 = FT2R (List.nth m x neg_zero) * (1 + delta) /\ Rabs delta <= g n)  /\
+      nth 0 x' m  = FT2R (nth neg_zero x m) * (1 + delta) /\ Rabs delta <= g n)  /\
     Rabs eta <= g1 n n.
 Proof.
 destruct (dotprod_mixed_error x x Logic.eq_refl Hfin) 
@@ -45,7 +45,7 @@ Variables (x : list (ftype t)).
 Hypothesis Hfin: Binary.is_finite (sumF x) = true. 
 
 Notation xR := (map FT2R x).
-Notation n:= (length x). 
+Notation n:= (size x). 
 Notation g := (@g t).
 Notation neg_zero := (@common.neg_zero t).
 
@@ -54,7 +54,7 @@ Lemma bfVNRM1:
     exists (x': list R), 
     one_normF x = one_normR x' /\
     (forall m, (m < n)%nat -> exists delta, 
-        List.nth m x' 0 = FT2R (List.nth m x neg_zero) * (1 + delta) /\ Rabs delta <= g (n - 1)).
+        nth 0 x' m = FT2R (nth neg_zero x m) * (1 + delta) /\ Rabs delta <= g (n - 1)).
 Proof.
 destruct (bSUM x Hfin) as (x' & Hlen & Hrel & Hn). 
   rewrite Hlen in Hn.
