@@ -122,7 +122,10 @@ assert ( H1: Generic_fmt.round Zaux.radix2 (SpecFloat.fexp (fprec t) (femax t))
 rewrite <- H1 in Hd'; clear H1; rewrite Hd'; clear Hd'.
 destruct (sum_rel_R_exists l s H3) as (rs & Hrs).
 destruct (sum_rel_R_abs_exists l s H3) as (rs_abs & Habs).
-pose proof sum_forward_error NAN t l s rs rs_abs H3 Hrs Habs IHl as H1.
+Search sum_rel_Ft sumF.
+assert (H3': s = sumF l) by (apply sum_rel_Ft_fold; auto).
+assert (IHl': Binary.is_finite (sumF l)) by (rewrite -H3'; auto).
+pose proof @fSUM NAN t l IHl' as H1. rewrite <- H3' in H1.
 pose proof sum_rel_bound' as C.
 pose proof sum_rel_bound'' as D.
 rewrite Rabs_minus_sym in H1.
@@ -132,7 +135,7 @@ rewrite Rabs_mult.
 apply Rmult_le_compat; try apply Rabs_pos.
 eapply Rle_trans; [apply Rabs_triang | apply Rplus_le_compat ].
 apply Rlt_le; apply H; simpl; auto.
-assert (Rabs (FT2R s) <= (g t (length l - 1) + 1) * rs_abs).
+assert (Rabs (FT2R s) <= (@g t (length l - 1) + 1) * rs_abs).
 { eapply Rle_trans; [apply H1| field_simplify; apply Rplus_le_compat_l].
   eapply Rle_trans; [ eapply sum_rel_R_Rabs; [apply Hrs | apply Habs] |] . 
   eapply Req_le; eapply sum_rel_R_Rabs_eq; apply Habs. }

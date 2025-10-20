@@ -8,68 +8,82 @@ From LAProof.accuracy_proofs Require Import preamble common
 
 Require Import Permutation.
 
-Section BackwardError. 
+Section WithNan . 
 Context {NAN: FPCore.Nans} {t: type}.
 Notation g := (@g t).
-Notation D := (@default_rel t).
 
-Variable (x : list (ftype t)).
-Hypothesis (Hfin: Binary.is_finite (sumF x) = true).
+Notation D := (@default_rel t).
 
 Notation neg_zero := (@common.neg_zero t). 
 
+Lemma sumR_rev: forall l, sumR (rev l) = sumR l.
+Proof.
+move => l.
+apply sumR_permute.
+rewrite rev_list_rev.
+apply Permutation_sym.
+apply Permutation_rev.
+Qed.
+
+
 Theorem bSUM :
+  forall (x: list (ftype t)) (Hfin: Binary.is_finite (sumF x)),
     exists (x': list R), 
     size x' = size x /\
     FT2R (sumF x) = sumR x' /\
     (forall n, (n < size x')%nat -> exists delta, 
         nth 0 x' n = FT2R (nth neg_zero x n) * (1 + delta) /\ Rabs delta <= g (size x' - 1)).
 Proof.
-have H0 := @FT2R_neg_zero t.
-induction x.
- intros; exists []; repeat split; auto => //=. 
-(* case a::l *)
-intros.
-assert (Hl: l = [] \/ l <> []).
-destruct l; auto.
-right.
-eapply hd_error_some_nil; simpl; auto.
+move => x.
+rewrite /sumF -(revK x) foldl_rev size_rev.
+induction (rev x) as [ | a l] => Hfin; clear x.
+-
+exists []; repeat split; auto => //=.
+- (* case a::l *)
+have Hl: l = [] \/ l <> []. {
+ destruct l; auto. right; congruence.
+}
 destruct Hl.
-(* case empty l *)
-{ subst; simpl in *;
++ (* case empty l *)
+  subst; simpl in *;
   destruct (BPLUS_finite_e _ _ Hfin).
   exists [FT2R a]; split; [ simpl; auto | split ; 
-  [unfold sum; rewrite Bplus_0R|] ] => //.
+  [rewrite Bplus_0R|] ] => //.
   unfold sumR; simpl; nra.  
-  intros. exists 0; simpl in H1, H2; split. 
+  intros. exists 0; simpl in H1; split. 
   have H3: ((n = 1)%nat \/ (n = 0)%nat) by lia. destruct H3; subst; simpl; nra. 
   rewrite Rabs_R0 /g /=.
   nra.
-}
-(* case non-empty l *)
++ (* case non-empty l *)
 simpl in *.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
 (* IHl *)
 pose proof (size_not_empty_nat l H) as Hlen1.
 specialize (IHl B).
 destruct IHl as (l' & Hlen' & Hsum & Hdel); auto.
+rewrite {1}/Basics.flip in Hfin.
 (* construct l'0 *)
-pose proof (BPLUS_accurate' a (sumF l) Hfin) as Hplus.
+pose proof (BPLUS_accurate' _ _ Hfin) as Hplus.
 destruct Hplus as (d' & Hd'& Hplus).
-exists (FT2R a * (1+d') :: map (Rmult (1+d')) l'); repeat split.
-{ simpl; auto. rewrite size_map; auto. }
-{ simpl; rewrite Hplus Rmult_plus_distr_r Hsum -sumR_mult; auto. } 
-intros n H1. destruct n. 
-{ simpl. exists d'; split; auto.
-  eapply Rle_trans; [apply Hd'| ]. apply d_le_g_1. rewrite size_map; auto.
-  rewrite Hlen'. lia. }
-simpl in H1. rewrite size_map in H1; rewrite Hlen' in H1.
-assert (Hlen2: (n < size l')%nat) by lia.
-specialize (Hdel n Hlen2).
-destruct Hdel as (d & Hd1 & Hd2).
-exists ( (1+d') * (1+d) -1). simpl; split.
-{ replace 0 with (Rmult (1 + d') 0) by nra. rewrite (nth_map R0).  2: lia. rewrite Hd1; nra. }
-rewrite size_map. field_simplify_Rabs. 
+rewrite /Basics.flip in Hsum,B,Hplus|-*.
+change (fun x z => @BPLUS NAN t x z) with (@BPLUS _ t)  in Hsum,B,Hplus |- *.
+exists (map (Rmult (1+d')) l' ++ [:: FT2R a * (1+d')]); repeat split.
+* rewrite size_cat size_map /= Hlen' addnC //. 
+* rewrite {}Hplus Hsum Rmult_plus_distr_r -sumR_app_cons cats0 sumR_mult //.
+* move => n H1.
+  rewrite nth_cat.
+  rewrite size_cat size_map in H1|-*. simpl size in H1.
+  destruct (n < size l')%N eqn:Hn.
+ -- rewrite (nth_map R0); [ | lia].
+   specialize (Hdel n Hn).
+    destruct Hdel as (d & Hd1 & Hd2).
+   exists ( (1+d') * (1+d) -1).
+   rewrite {}Hd1. split.
+  ++ fold (ftype t).
+     rewrite rev_cons nth_rcons size_rev.
+     destruct (n < size l)%N eqn:Hn'; [ | lia].
+     lra.
+  ++ field_simplify_Rabs. 
   eapply Rle_trans; [apply Rabs_triang | eapply Rle_trans; [apply Rplus_le_compat_r; apply Rabs_triang | ]  ].
 rewrite Rabs_mult.
 replace (Rabs d' * Rabs d + Rabs d' + Rabs d ) with
@@ -81,54 +95,55 @@ apply Rplus_le_compat_l; apply Hd'.
 apply Hd2. apply Hd'.
 replace ((1 + D) * g (size l' - 1) + D) with
 ((1 + D) * g (size l' - 1) * 1 + D * 1) by nra.
-rewrite one_plus_d_mul_g; apply Req_le; rewrite Rmult_1_r. f_equal; lia.
+rewrite one_plus_d_mul_g; apply Req_le; rewrite Rmult_1_r /=. f_equal; lia.
+ --
+ fold (ftype t).
+ assert (n = size l') by lia. subst n.
+ rewrite nth_rev /= ; [ | lia].
+ rewrite -Hlen'. do 2 replace (_ - _)%N with O by lia. simpl.
+ exists d'; split; auto.
+ eapply Rle_trans; [ apply Hd' | ].
+ apply d_le_g_1. lia.
 Qed.
 
-End BackwardError. 
-
-Section ForwardError.
-Context {NAN: FPCore.Nans} {t: type}.
-
-Notation g := (@g t).
-Notation g1 := (@g1 t).
-Notation D := (@default_rel t).
-
-Variable (x : list (ftype t)).
-Notation n := (size x).
-
-Hypothesis (Hfin: Binary.is_finite (sumF x) = true).
-
 Theorem fSUM :
-    Rabs ((sumR (map FT2R x)) - FT2R (sumF x)) <=  g n * (sumR (map Rabs (map FT2R x))).
+    forall (x: list (ftype t))  (Hfin: Binary.is_finite (sumF x)),
+    Rabs ((sumR (map FT2R x)) - FT2R (sumF x)) <=  g (size x) * (sumR (map Rabs (map FT2R x))).
 Proof.
-induction x.
-{ intros; unfold g; subst; simpl.
-  rewrite Rminus_0_r Rabs_R0; nra.  } 
-(* case a::l *)
-intros.
+move => x.
+rewrite -(revK x).
+induction (rev x); clear x => Hfin.
+- unfold g; subst; simpl. rewrite Rminus_0_r Rabs_R0; nra. 
+- (* case a::l *)
 assert (Hl: l = [] \/ l <> []).
-destruct l; auto.
-right.
-eapply hd_error_some_nil; simpl; auto.
+destruct l; auto; right; congruence. 
 destruct Hl.
-(* case empty l *)
-{ subst. unfold g; simpl; subst.
++ (* case empty l *)
+subst. unfold g; simpl; subst.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
 rewrite Bplus_0R; auto.
 field_simplify_Rabs; field_simplify; rewrite Rabs_R0. 
-apply Rmult_le_pos; auto with commonDB; apply Rabs_pos. }
-(* case non-empty l *)
-simpl in *.
+apply Rmult_le_pos; auto with commonDB; apply Rabs_pos.
++ (* case non-empty l *)
+rewrite /sumF foldl_rev /= in Hfin.
+change (fun x z : ftype t => Basics.flip BPLUS z x) with (@BPLUS _ t) in Hfin.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
 (* IHl *)
+rewrite -foldl_rev in B.
 specialize (IHl B).
 (* accuracy rewrites *)
-destruct (BPLUS_accurate'  a (sumF l) Hfin) as (d' & Hd'& Hplus).
-rewrite Hplus. 
+destruct (BPLUS_accurate'  _ _ Hfin) as (d' & Hd'& Hplus).
+move :IHl.
+rewrite /sumF.
+rewrite !foldl_rev.
+change (fun x z : ftype t => Basics.flip BPLUS z x) with (@BPLUS _ t).
+rewrite !map_rev !sumR_rev !size_rev => IHl.
+simpl.
+rewrite {}Hplus.
 (* algebra *)
 field_simplify_Rabs.
-set (s0 := sumR (map FT2R l)). 
-set (s :=  (sumF l)).
+set s0 := sumR (map FT2R l).
+ set (s :=  foldr _ _ l).
 replace (- FT2R a * d' + s0 - FT2R s * d' - FT2R s) with
   ((s0 - FT2R s) - d' * (FT2R s + FT2R a)) by nra.
 eapply Rle_trans; 
@@ -161,24 +176,14 @@ apply Req_le; f_equal.
 f_equal. lia. 
 Qed.
 
-End ForwardError.
-
-Section SumPermute.
-Context {NAN: FPCore.Nans} {t: type}.
-
-Notation g := (@g t).
-Notation g1 := (@g1 t).
-
-Variable (x x0: list (ftype t)).
-Notation n := (size x).
-
-Hypothesis (Hfin: Binary.is_finite (sumF x) = true).
-Hypothesis (Hfin0: Binary.is_finite (sumF x0) = true).
-Hypothesis (Hper: Permutation x x0).
-
 Lemma sum_forward_error_permute' :
-    Rabs ((sumR (map FT2R x0)) - FT2R (sumF x0)) <=  g n * (sumR (map Rabs (map FT2R x0))).
+   forall (x x0: list (ftype t))
+    (Hfin: Binary.is_finite (sumF x))
+    (Hfin0: Binary.is_finite (sumF x0))
+    (Hper: Permutation x x0),   
+    Rabs ((sumR (map FT2R x0)) - FT2R (sumF x0)) <=  g (size x) * (sumR (map Rabs (map FT2R x0))).
 Proof.
+intros.
 eapply Rle_trans.
 apply (fSUM x0 Hfin0).
 apply Req_le; f_equal.
@@ -187,15 +192,20 @@ rewrite (Permutation_length Hper); auto.
 Qed.
 
 Theorem sum_forward_error_permute :
-    Rabs ((sumR (map FT2R x)) - FT2R (sumF x0)) <=  g n * (sumR (map Rabs (map FT2R x))).
+   forall (x x0: list (ftype t))
+    (Hfin: Binary.is_finite (sumF x))
+    (Hfin0: Binary.is_finite (sumF x0))
+    (Hper: Permutation x x0),   
+    Rabs ((sumR (map FT2R x)) - FT2R (sumF x0)) <=  g (size x) * (sumR (map Rabs (map FT2R x))).
 Proof.
+intros.
 rewrite (sumR_permute (map FT2R x) (map FT2R x0)); [|apply Permutation_map; auto].
 eapply Rle_trans.
-apply sum_forward_error_permute'.
-apply Req_le; f_equal.
-symmetry. 
+apply sum_forward_error_permute'; eauto.
+apply Req_le; f_equal; symmetry.
+f_equal. apply Permutation_length; auto. 
 apply sumR_permute.
 repeat apply Permutation_map; auto.
 Qed.
 
-End SumPermute.
+End WithNan.

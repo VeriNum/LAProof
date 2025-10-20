@@ -5,13 +5,11 @@ From LAProof.accuracy_proofs Require Import  preamble common.
 
 Require Import Permutation.
 
-Definition sum {A: Type} (sum_op : A -> A -> A) (a b : A) : A := sum_op a b.
-
 Inductive sum_rel {A : Type} (default: A) (sum_op : A -> A -> A) : list A -> A -> Prop :=
 | sum_rel_nil  : sum_rel default sum_op [] default
 | sum_rel_cons : forall l a s,
     sum_rel default sum_op l s ->
-    sum_rel default sum_op (a::l) (sum sum_op a s).
+    sum_rel default sum_op (a::l) (sum_op a s).
 
 Definition sum_rel_R := @sum_rel R 0%R Rplus.
 
@@ -21,13 +19,13 @@ Inductive sum_any' {NAN: FPCore.Nans} {t}: forall (h: nat) (v: list (ftype t)) (
       sum_any' n1 al a -> sum_any' n2 bl b -> sum_any' (S (Nat.max n1 n2)) (al++bl) (BPLUS a b)
 | Sum_Any_perm: forall n al bl s, Permutation al bl -> sum_any' n al s -> sum_any' n bl s.
 
-Inductive sum_any {NAN: FPCore.Nans} {t}: forall (h: nat) (v: list (ftype t)) (s: ftype t), Prop :=
+Inductive sum_any {NAN: FPCore.Nans} {t:type}: forall (h: nat) (v: list (ftype t)) (s: ftype t), Prop :=
 | Sum_Any_None: sum_any O nil pos_zero
 | Sum_Any_Some: forall n v s, sum_any' n v s -> sum_any n v s.
 
 Lemma sum_rel_sum_any: forall {NAN: FPCore.Nans} {t} z (v: list (ftype t)) s (Hz: iszero z),
   sum_rel z BPLUS v s -> 
-  exists s', feq s s' /\ sum_any (Nat.pred (length v)) v s'.
+  exists s', feq s s' /\ sum_any (Nat.pred (size v)) v s'.
 Proof.
 destruct v; intros.
 -
@@ -47,7 +45,7 @@ destruct s; reflexivity).
 inversion H; clear H; subst.
 specialize (IHv a s0 z Hz H3).
 change (cons f (cons a v)) with ([f] ++ cons a v).
-replace (S (length v)) with (S (Nat.max O (length v))) by lia.
+replace (S (size v)) with (S (Nat.max O (size v))) by lia.
 destruct IHv as [s1 [? ?]].
 eexists.
 inversion H0; clear H0; subst.
@@ -76,7 +74,6 @@ nra.
 intros.
 inversion H; subst; clear H.
 inversion H0; subst; clear H0.
-unfold sum.
 eapply Rplus_le_compat.
 apply Rle_abs.
 fold sum_rel_R in H4.
@@ -96,7 +93,6 @@ inversion H; compute; nra.
 -
 intros.
 inversion H; subst; clear H.
-unfold sum.
 fold sum_rel_R in H3.
 specialize (IHl s0 H3).
 apply Rplus_le_le_0_compat; auto;
@@ -115,7 +111,6 @@ apply Rabs_R0.
 -
 intros.
 inversion H; subst; clear H.
-unfold sum.
 replace (Rabs(Rabs a + s0)) with 
   (Rabs a  + s0); try nra.
 symmetry.
@@ -147,7 +142,6 @@ inversion H; subst; clear H.
 inversion H0; subst; clear H0.
 fold sum_rel_R in H4.
 fold sum_rel_R in H3.
-unfold sum.
 eapply Rle_trans.
 apply Rabs_triang.
 replace (Rabs(Rabs a + s0)) with 
@@ -168,7 +162,6 @@ apply Rabs_pos.
 apply Req_le.
 eapply sum_rel_R_Rabs_eq; apply H3.
 Qed.
-
 
 Lemma sum_rel_R_single :
 forall (a : R) (fs : R), sum_rel_R [a] fs -> fs = a.
@@ -198,7 +191,6 @@ induction l'; simpl.
 intros. 
 inversion H; subst; clear H.
 specialize (IHl' l'' a0 s0 H3).
-unfold sum.
 replace (a0 + (a + s0)) with (a + (a0 + s0)) by nra.
 apply sum_rel_cons; auto.
 Qed.
@@ -207,16 +199,16 @@ Lemma sum_rel_bound  :
   forall (l : list R) (rs a: R)
   (Hrs : sum_rel_R l rs)
   (Hin : forall x, In x l -> Rabs x <= a),
-  Rabs rs <= INR (length l) * a.
+  Rabs rs <= INR (size l) * a.
 Proof.
 induction l; intros.
 { inversion Hrs; subst; simpl; rewrite Rabs_R0; nra. }
   inversion Hrs; subst. 
-  unfold sum; eapply Rle_trans; [apply Rabs_triang|].
+  eapply Rle_trans; [apply Rabs_triang|].
   eapply Rle_trans; [apply Rplus_le_compat;
   [apply Hin; simpl; auto| apply IHl; 
                         [ apply H2 | intros; apply Hin; simpl; auto ] ] | ].
-  apply Req_le. replace (length (a :: l)) with (length l + 1)%nat by (simpl; lia).
+  apply Req_le. replace (size (a :: l)) with (size l + 1)%nat by (simpl; lia).
   rewrite plus_INR; simpl; nra.
 Qed.
   
@@ -238,7 +230,7 @@ apply Permutation_sym in Hper.
 pose proof (@Permutation_cons_app_inv R l l' l'' a Hper).
 inversion Hrs; subst. fold sum_rel_R in H3.
 specialize (IHl (l' ++ l'') H s H3).
-unfold sum; clear Hrs.
+clear Hrs.
 apply sum_rel_R_app_cons; auto.
 Qed.
 
@@ -253,7 +245,7 @@ apply sum_rel_R_permute with (map FT2R l); auto.
 apply Permutation_map; auto.
 Qed.
 
-Definition sumR := fold_right Rplus 0.
+Definition sumR := foldr Rplus 0.
 
 Lemma sumRabs_pos x :
 0 <= sumR (map Rabs x).
@@ -307,16 +299,16 @@ Lemma sum_rel_bound'  :
   forall (t : type) (l : list (ftype t)) (rs a: R)
   (Hrs : sum_rel_R (map FT2R l) rs)
   (Hin : forall x, In x l -> Rabs (FT2R x) <= a),
-  Rabs rs <= INR (length l) * a.
+  Rabs rs <= INR (size l) * a.
 Proof.
 induction l; intros.
 { inversion Hrs; subst; simpl; rewrite Rabs_R0; nra. }
   inversion Hrs; subst. 
-  unfold sum; eapply Rle_trans; [apply Rabs_triang|].
+  eapply Rle_trans; [apply Rabs_triang|].
   eapply Rle_trans; [apply Rplus_le_compat;
   [apply Hin; simpl; auto| apply IHl; 
                         [ apply H2 | intros; apply Hin; simpl; auto ] ] | ].
-  apply Req_le. replace (length (a :: l)) with (length l + 1)%nat by (simpl; lia).
+  apply Req_le. replace (size (a :: l)) with (size l + 1)%nat by (simpl; lia).
   rewrite plus_INR; simpl; nra.
 Qed.
 
@@ -324,19 +316,18 @@ Lemma sum_rel_bound''  :
   forall (t : type) (l : list (ftype t)) (rs_abs a: R)
   (Hrs : sum_rel_R (map Rabs (map FT2R l)) rs_abs)
   (Hin : forall x, In x l -> Rabs (FT2R x) <= a),
-  rs_abs <= INR (length l) * a.
+  rs_abs <= INR (size l) * a.
 Proof.
 induction l; intros.
 { inversion Hrs; subst; simpl. compute. nra. }
   inversion Hrs; subst.
-  unfold sum. fold sum_rel_R in H2.
+   fold sum_rel_R in H2.
   eapply Rle_trans; [apply Rplus_le_compat;
   [apply Hin; simpl; auto| apply IHl; 
                         [ apply H2 | intros; apply Hin; simpl; auto ] ] | ].
-  apply Req_le. replace (length (a :: l)) with (length l + 1)%nat by (simpl; lia).
+  apply Req_le. replace (size (a :: l)) with (size l + 1)%nat by (simpl; lia).
   rewrite plus_INR; simpl; nra.
 Qed. 
-
 
 Lemma sum_rel_R_fold : forall l rs, 
    sum_rel_R l rs -> rs = sumR l.
@@ -347,7 +338,7 @@ intros; inversion H.
 fold sum_rel_R in H3.
 specialize (IHl s H3).
 subst; simpl.
-unfold sum; auto.
+auto.
 Qed.
 
 Lemma sum_map_Rmult (l : list R) (s a: R):
@@ -357,10 +348,10 @@ Proof.
 revert l s a. induction l.
 { intros. simpl. inversion H; subst; rewrite Rmult_0_r; auto. }
 intros. inversion H. destruct l.
-{ simpl; unfold sum. inversion H3; subst. rewrite Rplus_0_r.
+{ simpl. inversion H3; subst. rewrite Rplus_0_r.
   apply sum_rel_R_single'. }
 fold sum_rel_R in H3. specialize (IHl s0 a0 H3).
-unfold sum; simpl. rewrite Rmult_plus_distr_l; apply sum_rel_cons.
+simpl. rewrite Rmult_plus_distr_l; apply sum_rel_cons.
 fold sum_rel_R. simpl in IHl; auto.
 Qed.
 
@@ -433,26 +424,27 @@ eapply IHl; try eassumption.
 clear - H1; destruct a,s0; try destruct s; try destruct s0; try discriminate H1; reflexivity.
 Qed.
 
-Definition sumF := fold_right (@BPLUS _ t) neg_zero.
+Definition sumF := foldl(Basics.flip (@BPLUS _ t)) neg_zero.
 
 Lemma sum_rel_Ft_fold : forall l fs, 
-   sum_rel_Ft l fs -> fs = sumF l.
-Proof. 
-induction l.
+   sum_rel_Ft (rev l) fs -> fs = sumF l.
+Proof.
+intros.
+rewrite /sumF -(revK l) foldl_rev.
+move :fs H.
+induction (rev l).
 intros; inversion H; simpl; auto.
 intros; inversion H. 
 fold sum_rel_Ft  in H3.
-specialize (IHl s H3).
+specialize (IHl0 s H3).
 subst; simpl.
-unfold sum; auto.
+auto.
 Qed.
-
 
 (** subtract_loop is a variant on summation used in some implementations of Cholesky decomposition,
   among other things.  We should be able to prove an equivalence, of sorts, with sum_rel,
   so that the accuracy theorem for sum_rel can apply here as well. *)
-Definition subtract_loop (c: ftype t) (al: list (ftype t)) : ftype t :=
-  fold_left BMINUS al c.
+Definition subtract_loop: forall (c: ftype t) (al: list (ftype t)), ftype t := foldl BMINUS.
 
 Lemma BMINUS_neg_zero: forall (c: ftype t), feq (BMINUS neg_zero (BOPP c)) c.
 Proof. destruct c; try destruct s; reflexivity. Qed.
@@ -533,22 +525,8 @@ destruct x, y; try destruct s; try destruct s0; try reflexivity;
 unfold BPLUS, BINOP, feq, Binary.Bplus, Binary.BSN2B, BinarySingleNaN.SF2B; simpl;
 rewrite (Z.min_comm e1 e);
 rewrite ?(Pos.add_comm (fst (SpecFloat.shl_align m0 e1 (Z.min e e1)))).
--
-set (u := BinarySingleNaN.SF2B _ _).
-clearbody u.
-destruct u; simpl; auto.
--
-set (u := BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _).
-clearbody u.
-destruct u; simpl; auto.
--
-set (u := BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _).
-clearbody u.
-destruct u; simpl; auto.
--
-set (u := BinarySingleNaN.SF2B _ _).
-clearbody u.
-destruct u; simpl; auto.
+1,4: destruct (BinarySingleNaN.SF2B _ _); simpl; auto.
+1,2: destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); simpl; auto.
 Qed.
 
 Lemma MINUS_PLUS_BOPP: forall x y: ftype t, feq (BMINUS x y) (BPLUS x (BOPP y)).
@@ -556,28 +534,24 @@ Proof.
 destruct x, y; try destruct s; try destruct s0; try reflexivity;
 unfold BMINUS, BPLUS, BINOP, BOPP, UNOP, feq, Binary.Bplus, Binary.Bminus, 
    Binary.BSN2B, BinarySingleNaN.SF2B, Binary.build_nan; simpl.
-- destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); auto.
-- destruct (BinarySingleNaN.SF2B _ _); auto.
-- destruct (BinarySingleNaN.SF2B _ _); auto.
-- destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); auto.
+1,4: destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); auto.
+1,2: destruct (BinarySingleNaN.SF2B _ _); auto.
 Qed.
 
 Lemma subtract_loop_sumR: forall (c: ftype t) (al: list (ftype t)),
-  feq (subtract_loop c al) (sumF (List.rev (c :: map BOPP al))).
+  feq (subtract_loop c al) (sumF (c :: map BOPP al)).
 Proof.
 intros.
 revert c; induction al; simpl; intros.
-destruct c; try destruct s; try reflexivity; simpl; auto.
-specialize (IHal (BMINUS c a)).
-rewrite {}IHal.
+destruct c; try destruct s; reflexivity.
+rewrite {}IHal /sumF -/(ftype t).
 simpl.
-fold (ftype t).
-set (bl := List.rev _). clearbody bl.
-induction bl; simpl.
--
-rewrite !BPLUS_neg_zero BPLUS_comm;
-apply MINUS_PLUS_BOPP.
--
+set x := Basics.flip BPLUS neg_zero (BMINUS c a).
+set y := Basics.flip BPLUS  (Basics.flip BPLUS neg_zero c)  (BOPP a).
+assert (feq x y) by rewrite  /x /y /Basics.flip !BPLUS_neg_zero BPLUS_comm MINUS_PLUS_BOPP //.
+clearbody x; clearbody y.
+revert x y H; induction al; simpl; intros; auto.
+apply IHal; auto.
 apply BPLUS_mor; auto.
 Qed.
 
@@ -591,28 +565,25 @@ eexists; constructor; eauto.
 Qed.
 
 Lemma subtract_loop_sum_any:  forall  (c: ftype t) (al: list (ftype t)),
-   exists s, feq (subtract_loop c al) s /\ sum_any (length al) (List.rev (c::map BOPP al)) s.
+   exists s, feq (subtract_loop c al) s /\ sum_any (size al) (rev (c::map BOPP al)) s.
 Proof.
 intros.
-assert (exists s: ftype t, sum_rel neg_zero BPLUS (List.rev (c::map BOPP al)) s /\ feq (subtract_loop c al) s).
+assert (exists s: ftype t, sum_rel neg_zero BPLUS (rev (c::map BOPP al)) s /\ feq (subtract_loop c al) s).
 -
-destruct (sum_rel_Ft_exists (List.rev (cons c (map BOPP al)))) as [s ?].
+destruct (sum_rel_Ft_exists (rev (cons c (map BOPP al)))) as [s ?].
 exists s; split; auto.
 apply sum_rel_Ft_fold in H.
 subst s.
 apply subtract_loop_sumR.
 -
 destruct H as [s [? ?]].
-apply sum_rel_sum_any in H.
+apply sum_rel_sum_any in H; [ | reflexivity].
 destruct H as [s' [? ?]].
 exists s'.
 split. rewrite <- H; auto.
-rewrite length_app length_rev length_map in H1.
 simpl in H1.
-fold (ftype t) in *. 
-replace (Nat.pred (Init.Nat.add (length al) (S O))) with (length al) in H1 by lia.
-simpl. auto.
-reflexivity.
+rewrite size_rev /= size_map in H1.
+auto.
 Qed.
 
 End WithSTD.
