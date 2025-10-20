@@ -7,20 +7,17 @@ Context {NAN: FPCore.Nans} {t : FPStdLib.type}.
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
 
-Definition matrix_scaleF [m n] (a: ftype t) (M: 'M[ftype t]_(m,n)) :=
-  map_mx (BMULT a) M.
-
-Lemma matrix_scaleF_mixed_error:
+Lemma Fscalemx_mixed_error:
  forall [m n] (a: ftype t) (v: 'M[ftype t]_(m,n))
-   (Hfin: forall i j, Binary.is_finite (matrix_scaleF a v i j)),
+   (Hfin: F.finitemx (F.scalemx a v)),
     let vr:= map_mx FT2R v in
   exists (e eta: 'M[R]_(m,n)),
-   map_mx FT2R (matrix_scaleF a v) = (scalemx (FT2R a) (vr + e) + eta)%Ri
+   map_mx FT2R (F.scalemx a v) = (scalemx (FT2R a) (vr + e) + eta)%Ri
   /\ (forall i j, exists d, e i j = vr i j * d /\ Rabs d <= @default_rel t)
   /\ (forall i j, Rabs (eta i j) <= @default_abs t).
 Proof.
 intros.
-unfold matrix_scaleF.
+unfold F.scalemx.
 pose F (i: 'I_m) (j: 'I_n) (x: R*R) :=
   let '(e,eta) := x in
   FT2R (@BMULT NAN _ a (v i j)) = FT2R a * (FT2R (v i j) + e) + eta /\
@@ -70,16 +67,13 @@ destruct H0 as [? [? ?]].
 auto.
 Qed.
 
-Definition matrix_sumF [m n] (A B: 'M[ftype t]_(m,n)) : 'M[ftype t]_(m,n) :=
-  \matrix_(i,j) BPLUS (A i j) (B i j).
-
-Lemma matrix_sumF_mixed_error :
+Lemma Faddmx_mixed_error :
   forall [m n] (A B: 'M[ftype t]_(m,n))
-    (Hfin: forall i j, Binary.is_finite (matrix_sumF A B i j)),
+    (Hfin: F.finitemx (F.addmx A B)),
     let Ar:= map_mx FT2R A in
     let Br:= map_mx FT2R B in
   exists (e1 e2 : 'M[R]_(m,n)),
-   map_mx FT2R (matrix_sumF A B) = ((Ar + e1) + (Br + e2))%Ri
+   map_mx FT2R (F.addmx A B) = ((Ar + e1) + (Br + e2))%Ri
  /\ (forall i j, exists d, e1 i j = Ar i j * d /\ Rabs d <= @default_rel t)
  /\ (forall i j, exists d, e2 i j = Br i j * d /\ Rabs d <= @default_rel t).
 Proof.
@@ -133,14 +127,13 @@ destruct H0 as [? [? ?]].
 auto.
 Qed.
 
-
 Lemma Smat_sumF_mixed_error :
   forall [m n] (u v: 'M[ftype t]_(m,n)) (a b : ftype t)
-    (Hfin : forall i j, Binary.is_finite (matrix_sumF (matrix_scaleF a u) (matrix_scaleF b v) i j)),
+    (Hfin : F.finitemx (F.addmx (F.scalemx a u) (F.scalemx b v))),
     let vr:= map_mx FT2R v in
     let ur:= map_mx FT2R u in
   exists (e1 e2 e3 e4 e5 e6: 'M[R]_(m,n)),
-  map_mx FT2R (matrix_sumF (matrix_scaleF a u) (matrix_scaleF b v)) = 
+  map_mx FT2R (F.addmx (F.scalemx a u) (F.scalemx b v)) = 
              ((scalemx (FT2R a) (ur + e1) + e2 + e3) +
              (scalemx (FT2R b) (vr + e4) + e5 + e6))%Ri
   /\ (forall i j, exists d, e1 i j = ur i j * d /\ Rabs d <= @default_rel t)
@@ -152,43 +145,34 @@ Lemma Smat_sumF_mixed_error :
 Proof.
 intros.
 simpl.
-destruct (matrix_sumF_mixed_error _ _ Hfin) as (Du & Dv & Heq & HD).
+destruct (F.finitemx_addmx_e _ _ Hfin) as [HfinA HfinB].
+destruct (Faddmx_mixed_error _ _ Hfin) as (Du & Dv & Heq & HD).
 rewrite {}Heq.
-destruct (matrix_scaleF_mixed_error a u) as (ae & aeta & Heqa & Hea & Haeta).
-intros. specialize (Hfin i j); rewrite mxE in Hfin. destruct (BPLUS_finite_e _ _ Hfin); auto.
-destruct (matrix_scaleF_mixed_error b v) as [be [beta [Heqb [Heb Hbeta]]]].
-intros. specialize (Hfin i j); rewrite mxE in Hfin. destruct (BPLUS_finite_e _ _ Hfin); auto.
+destruct (Fscalemx_mixed_error a u HfinA) as (ae & aeta & Heqa & Hea & Haeta).
+destruct (Fscalemx_mixed_error b v HfinB) as [be [beta [Heqb [Heb Hbeta]]]].
 move :HD; rewrite {}Heqa {}Heqb => HD.
 destruct HD as [HDu HDv].
 exists ae, aeta ,Du, be, beta, Dv.
 repeat split => //.
 Qed.
 
-Definition mc_dotprodF [n: nat] (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n) : ftype t :=
-   \big[BPLUS / pos_zero]_i (BMULT (x ord0 (rev_ord i)) (y (rev_ord i) ord0)).
-
-Definition matrix_mulF [m n p] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,p)) :=
- \matrix_(i,k) mc_dotprodF (row i A) (col k B).
-
 Lemma Smat_vec_mul_mixed_error:
   forall [m n] (b: ftype t) (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,1))
-  (Hfin: forall i j, Binary.is_finite (matrix_scaleF b (matrix_mulF A B) i j)),
+  (Hfin: F.finitemx (F.scalemx b (F.mulmx A B))),
   exists (E : 'M[R]_(m,n)) (e eta1 eta2 : 'M[R]_(m,1)),
-    map_mx FT2R (matrix_scaleF b (matrix_mulF A B)) =
+    map_mx FT2R (F.scalemx b (F.mulmx A B)) =
      (scalemx (FT2R b) ((map_mx FT2R A + E)  *m (map_mx FT2R B) + eta1 + e) + eta2 )%Ri
     /\ (forall i j, Rabs (E i j) <= g n * Rabs (map_mx FT2R A i j))
     /\ (forall i j, Rabs (eta2 i j) <= @default_abs t)
-    /\ (forall i j, exists d,  e i j = FT2R (matrix_mulF A B i j) * d /\ Rabs d <= @default_rel t)
+    /\ (forall i j, exists d,  e i j = FT2R (F.mulmx A B i j) * d /\ Rabs d <= @default_rel t)
     /\ (forall i j, Rabs (eta1 i j) <= g1 n n). 
 Proof.
 intros.
-destruct (matrix_scaleF_mixed_error _ _ Hfin) as (e & eta & Heq & Hea & Hetaa).
+destruct (Fscalemx_mixed_error _ _ Hfin) as (e & eta & Heq & Hea & Hetaa).
 rewrite {}Heq in Hea|-*.
 destruct (mat_vec_mul_mixed_error A B)
   as (E & eta1 & Heq1 & H1).
-{ clear - Hfin. move => i j. move :(Hfin i j). rewrite !mxE => H.
- apply BMULT_finite_e in H. apply H.
-}
+apply (F.finitemx_scalemx_e _ _ Hfin).
 rewrite {}Heq1.
 destruct H1 as [H0 H1].
 exists E, e, eta1, eta; repeat split => //.
@@ -196,17 +180,16 @@ simpl.
 move => i j. destruct (Hea i j) as [d H2].
 exists d.
 rewrite !mxE. rewrite mxE in H2.
-unfold matrix_mulF in H2.
+unfold F.mulmx in H2.
 rewrite mxE in H2.
 auto.
 Qed.
 
-
 Lemma gemv_error:
  forall [m n] (A: 'M[ftype t]_(m,n)) (x: 'cV[ftype t]_n) (y: 'cV[ftype t]_m) (s1 s2: ftype t)
- (Hfin:  forall i j, Binary.is_finite (matrix_sumF (matrix_scaleF s1 (matrix_mulF A x)) (matrix_scaleF s2 y) i j)),
+ (Hfin:  F.finitemx (F.addmx (F.scalemx s1 (F.mulmx A x)) (F.scalemx s2 y))),
   exists e1 e2 e3 e4 e5 e6 e7 e8,
-    map_mx FT2R (matrix_sumF (matrix_scaleF s1 (matrix_mulF A x)) (matrix_scaleF s2 y)) =  
+    map_mx FT2R (F.addmx (F.scalemx s1 (F.mulmx A x)) (F.scalemx s2 y)) =  
   ((scalemx (FT2R s1) ((((map_mx FT2R A + e1) *m (map_mx FT2R x)) + e2) + e3) + e4) + e5) +
   ((scalemx (FT2R s2) (map_mx FT2R y + e6) + e7) + e8)
   /\ (forall i j, Rabs (e1 i j) <= g n * Rabs (map_mx FT2R A i j))
@@ -221,15 +204,13 @@ Lemma gemv_error:
 Proof.
 intros.
 (* proof follows from previous bounds for axpby and mul *)
-destruct (Smat_sumF_mixed_error (matrix_mulF A x) y s1 s2)
+destruct (Smat_sumF_mixed_error (F.mulmx A x) y s1 s2)
   as (e3 & e4 & e5 & e6 & e7 & e8 & Heq1 & H1) => //.
 rewrite {}Heq1.
 destruct (mat_vec_mul_mixed_error A x)
   as (e1 & e2 & Heq2 & H2).
-{ move => i j. move :(Hfin i j). rewrite !mxE => H.
-  apply BPLUS_finite_e in H.  destruct H. 
-  apply BMULT_finite_e in H. apply H.
-}
+apply F.finitemx_addmx_e in Hfin; destruct Hfin as [Hfin _].
+apply (F.finitemx_scalemx_e _ _ Hfin).
 rewrite {}Heq2 in H1|-*. 
 destruct H2 as (He1 & He2).
 destruct H1 as (He3 & He6 & He5 & He4 & He7 & He8).

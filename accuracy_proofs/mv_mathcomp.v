@@ -10,6 +10,40 @@ From mathcomp.algebra_tactics Require Import ring.
 Open Scope ring_scope.
 Open Scope order_scope.
 
+Definition sum_abs {m n} (A: 'M[R]_(m,n)) i : R:= \sum_j (Rabs (A i j)).
+Definition normv   {m} (v: 'cV[R]_m)  : R:= \big[maxr/0]_(i < m) Rabs (v i 0%Ri).
+Definition normM   {m n} (A: 'M[R]_(m,n))   : R:= \big[maxr/0]_i (sum_abs A i).
+Definition seq_of_rV {T}[n] (x: 'rV[T]_n) := map (x ord0) (ord_enum n).
+
+Ltac case_splitP j :=
+  first [is_var j | fail 1 "case_splitP requires a variable, but got" j];
+ match type of j with 'I_(addn ?a ?b) =>
+  let i := fresh "j" in let H := fresh in 
+  destruct (splitP j) as [i H | i H];
+ [replace j with (@lshift a b i); [ | apply ord_inj; simpl; lia]
+ |replace j with (@rshift a b i); [ | apply ord_inj; simpl; lia]];
+ clear j H; rename i into j
+ end.
+
+(** Example of how to use case_splitP *)
+Local Remark mul_mx_row' [R : GRing.SemiRing.type] m n p1 p2 
+    (A: 'M[R]_(m,n)) (Bl: 'M[R]_(n,p1)) (Br: 'M[R]_(n,p2)):
+  A *m row_mx Bl Br = row_mx (A *m Bl) (A *m Br).
+Proof.
+apply /matrixP => i j.
+case_splitP j.
+rewrite row_mxEl !mxE . apply eq_bigr. move => k _;  rewrite row_mxEl//.
+rewrite row_mxEr !mxE . apply eq_bigr. move => k _;  rewrite row_mxEr//.
+Qed.
+
+(** Example of how the mathcomp experts do this another way, from mathcomp.algebra.matrix  *)
+Local Remark mul_mx_row'' [R : GRing.SemiRing.type]  m n p1 p2 (A : 'M[R]_(m, n)) (Bl : 'M_(n, p1)) (Br : 'M_(n, p2)) :
+  A *m row_mx Bl Br = row_mx (A *m Bl) (A *m Br).
+Proof.
+apply/matrixP=> i k; rewrite !mxE.
+by case defk: (split k) => /[!mxE]; under eq_bigr do rewrite mxE defk.
+Qed.
+
 Lemma nth_List_nth: forall {A: Type} (d: A) (l: seq.seq A) (n: nat),
   seq.nth d l n = List.nth n l d.
 Proof.
@@ -69,10 +103,6 @@ Proof.
       have->: i = nat_of_ord (Ordinal Hi) by [].
      rewrite nth_index_enum nth_ord_enum' //.
 Qed.
-
-Definition sum_abs {m n} (A: 'M[R]_(m,n)) i : R:= \sum_j (Rabs (A i j)).
-Definition normv   {m} (v: 'cV[R]_m)  : R:= \big[maxr/0]_(i < m) Rabs (v i 0%Ri).
-Definition normM   {m n} (A: 'M[R]_(m,n))   : R:= \big[maxr/0]_i (sum_abs A i).
 
 (* generally useful lemmmas for max operator *)
 Lemma maxrC : @commutative R R maxr. 
@@ -311,4 +341,86 @@ intros.
 rewrite map_comp val_ord_enum map_nth_iota0 // take_size //.
 Qed.
 
+Module F.  (* Floating-point math-comp matrix and vector operations *)
+
+Section WithNAN. 
+Context {NAN: FPCore.Nans} {t : type}.
+
+Definition sum  [n: nat] (x: 'I_n -> ftype t) : ftype t :=
+    \big[BPLUS / pos_zero]_i x (rev_ord i).
+
+Definition dotprod [n: nat] (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n) : ftype t :=
+   \big[BPLUS / pos_zero]_i (BMULT (x ord0 (rev_ord i)) (y (rev_ord i) ord0)).
+
+Definition mulmx [m n p] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,p)) :=
+ \matrix_(i,k) dotprod (row i A) (col k B).
+
+Definition scalemx [m n] (a: ftype t) (M: 'M[ftype t]_(m,n)) :=
+  map_mx (BMULT a) M.
+
+Definition addmx [m n] (A B: 'M[ftype t]_(m,n)) : 'M[ftype t]_(m,n) :=
+  \matrix_(i,j) BPLUS (A i j) (B i j).
+
+Lemma mulmx_row:
+ forall m n p1 p2 (A: 'M[ftype t]_(m,n)) (Bl: 'M_(n,p1)) (Br: 'M_(n,p2)),
+  mulmx A (row_mx Bl Br) = row_mx (mulmx A Bl) (mulmx A Br).
+Proof.
+intros.
+apply /matrixP => i j.
+case_splitP j.
+ rewrite row_mxEl !mxE -col_lsubmx row_mxKl //.
+ rewrite row_mxEr !mxE -col_rsubmx row_mxKr //.
+Qed.
+
+Lemma dotprod_dotprodF:
+  forall [n] (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n),
+  dotprod x y = dotprodF (seq_of_rV x) (seq_of_rV (trmx y)).
+Proof.
+intros.
+ rewrite /dotprod /seq_of_rV /dotprodF /dotprod_model.dotprod !ord1.
+ rewrite (unlock (bigop_unlock)).
+ unfold reducebig, comp, applybig.
+ rewrite -(revK (map (uncurry _) _)).
+ rewrite foldl_rev.
+ simpl.
+ rewrite index_ord_enum.
+ rewrite zip_map -map_comp.
+ rewrite -map_rev rev_ord_enum -map_comp.
+ rewrite foldr_map.
+ f_equal.
+ simpl.
+ apply FunctionalExtensionality.functional_extensionality; intro i.
+ apply FunctionalExtensionality.functional_extensionality; intro z.
+ rewrite !mxE. reflexivity.
+Qed.
+
+Lemma mulmx_dotprodF:
+  forall [n] (A: 'M[ftype t]_(1,n)) (B: 'M[ftype t]_(n,1)),
+ mulmx A B = const_mx (dotprodF (seq_of_rV A) (seq_of_rV (trmx B))).
+Proof.
+intros.
+ unfold mulmx. apply /matrixP. move => i k. rewrite !mxE row_id col_id.
+ apply dotprod_dotprodF.
+Qed.
+
+Definition finitemx [m n] (A: 'M[ftype t]_(m,n)) : Prop := 
+   (forall i j, Binary.is_finite (A i j)).
+
+Lemma finitemx_addmx_e: forall [m n] (A B: 'M[ftype t]_(m,n)),
+  finitemx (addmx A B) -> finitemx A /\ finitemx B.
+Proof.
+rewrite /addmx /finitemx => m n A B Hfin.
+split =>  i j; specialize (Hfin i j); rewrite mxE in Hfin; apply BPLUS_finite_e in Hfin; apply Hfin.
+Qed.
+
+Lemma finitemx_scalemx_e: forall [m n] (c: ftype t) (A: 'M[ftype t]_(m,n)),
+  finitemx (scalemx c A) -> finitemx A.
+Proof.
+rewrite /scalemx /finitemx => m n c A Hfin i j.
+specialize (Hfin i j). rewrite mxE in Hfin. apply BMULT_finite_e in Hfin; apply Hfin.
+Qed.
+
+End WithNAN.
+
+End F.
 

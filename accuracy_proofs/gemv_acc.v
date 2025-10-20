@@ -4,60 +4,23 @@ From LAProof.accuracy_proofs Require Import preamble common
 
 From mathcomp.algebra_tactics Require Import ring.
 
-
 Section WithNAN. 
 (* mixed error bounds over lists *)
 Context {NAN: FPCore.Nans} {t : type}.
 
-
-Definition mc_dotprodF [n: nat] (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n) : ftype t :=
-   \big[BPLUS / pos_zero]_i (BMULT (x ord0 (rev_ord i)) (y (rev_ord i) ord0)).
-
-Definition matrix_mulF [m n p] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,p)) :=
- \matrix_(i,k) mc_dotprodF (row i A) (col k B).
-
-Definition seq_of_rV {T}[n] (x: 'rV[T]_n) := map (x ord0) (ord_enum n).
-
 Notation g := (@common.g t).
 Notation g1 := (@common.g1 t).
 
-
-Lemma matrix_mulF_dotprodF:
-  forall [n] (A: 'M[ftype t]_(1,n)) (B: 'M[ftype t]_(n,1)),
- matrix_mulF A B = const_mx (dotprodF (seq_of_rV A) (seq_of_rV (trmx B))).
-Proof.
-intros.
- unfold matrix_mulF. apply /matrixP. move => i k. rewrite !mxE.
- unfold seq_of_rV.
- rewrite !ord1. clear i k.
- unfold dotprodF, dotprod.
- unfold mc_dotprodF.
- rewrite (unlock (bigop_unlock)).
- unfold reducebig, comp, applybig.
- rewrite -(revK (map (uncurry _) _)).
- rewrite foldl_rev.
- simpl.
- rewrite index_ord_enum.
- rewrite zip_map -map_comp.
- rewrite -map_rev rev_ord_enum -map_comp.
- rewrite foldr_map.
- f_equal.
- simpl.
- apply FunctionalExtensionality.functional_extensionality; intro i.
- apply FunctionalExtensionality.functional_extensionality; intro x.
- rewrite !mxE. reflexivity.
-Qed.
-
 Lemma vec_vec_mul_mixed_error:
   forall [n] (A: 'M[ftype t]_(1,n)) (B: 'M[ftype t]_(n,1))
-  (Hfin: forall i j, Binary.is_finite (matrix_mulF A B i j)),
+  (Hfin: F.finitemx (F.mulmx A B)),
   exists (E : 'M[R]_(1,n)) (eta : 'M[R]_(1,1)),
-    map_mx FT2R (matrix_mulF A B) = ((map_mx FT2R A + E) *m (map_mx FT2R B) + eta)%Ri
+    map_mx FT2R (F.mulmx A B) = ((map_mx FT2R A + E) *m (map_mx FT2R B) + eta)%Ri
     /\ (forall i j, Rabs (E i j) <= g n * Rabs (map_mx FT2R A i j))
     /\ (forall i j, Rabs (eta i j) <= g1 n n).
 Proof.
 intros *.
-rewrite matrix_mulF_dotprodF.
+rewrite F.mulmx_dotprodF.
 move => Hfin.
 specialize (Hfin ord0 ord0). rewrite mxE in Hfin.
 assert (Hlen: size (seq_of_rV A) = size (seq_of_rV B^T)).
@@ -122,9 +85,9 @@ Qed.
 
 Lemma mat_vec_mul_mixed_error:
   forall [m n] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,1))
-  (Hfin: forall i j, Binary.is_finite (matrix_mulF A B i j)),
+  (Hfin: F.finitemx (F.mulmx A B)),
   exists (E : 'M[R]_(m,n)) (eta : 'M[R]_(m,1)),
-    map_mx FT2R (matrix_mulF A B) = ((map_mx FT2R A + E) *m (map_mx FT2R B) + eta)%Ri
+    map_mx FT2R (F.mulmx A B) = ((map_mx FT2R A + E) *m (map_mx FT2R B) + eta)%Ri
     /\ (forall i j, Rabs (E i j) <= g n * Rabs (map_mx FT2R A i j))
     /\ (forall i j, Rabs (eta i j) <= g1 n n).
 Proof.
@@ -138,21 +101,21 @@ split; [apply matrixP | split];  intros i j; destruct i; lia.
 change (m.+1) with (1+m)%nat in A,Hfin|-*.
 destruct (IHm (dsubmx A)) as [E2 [eta2 [? [? ?]]]]. {
    move => i j. specialize (Hfin (rshift 1 i) j).
-   unfold matrix_mulF in Hfin|-*.
+   unfold F.mulmx in Hfin|-*.
    rewrite mxE in Hfin. rewrite mxE row_dsubmx //.
 }
 clear IHm.
 destruct (vec_vec_mul_mixed_error (usubmx A) B) as [E1 [eta1 [? [? ?]]]]. {
    move => i j. specialize (Hfin (lshift m i) j).
-   unfold matrix_mulF in Hfin|-*.
+   unfold F.mulmx in Hfin|-*.
    rewrite mxE in Hfin. rewrite mxE row_usubmx //.
 }
 exists (col_mx E1 E2), (col_mx eta1 eta2).
 split; [ | split].
 +
-replace (matrix_mulF A B) with (col_mx (matrix_mulF (usubmx A) B) (matrix_mulF (dsubmx A) B)). 2:{
+replace (F.mulmx A B) with (col_mx (F.mulmx (usubmx A) B) (F.mulmx (dsubmx A) B)). 2:{
     clear.
-   unfold matrix_mulF. apply /matrixP. move => i j. 
+   unfold F.mulmx. apply /matrixP. move => i j. 
 destruct (splitP i) as [i'|i'];
  [replace i with (@lshift 1 m i'); [  | apply ord_inj; simpl; auto]
  |replace i with (@rshift 1 m i'); [ | apply ord_inj; simpl; lia]].
@@ -185,11 +148,10 @@ destruct (splitP i) as [i'|i'];
  move :(H1 i' j).  rewrite !col_mxEd //.
 Qed. 
 
-
 Theorem forward_error :
  forall [m n] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,1))
-  (Hfin: forall i j, Binary.is_finite (matrix_mulF A B i j)),
-  normv (map_mx FT2R (matrix_mulF A B) - (map_mx FT2R A *m map_mx FT2R B))
+  (Hfin: F.finitemx (F.mulmx A B)),
+  normv (map_mx FT2R (F.mulmx A B) - (map_mx FT2R A *m map_mx FT2R B))
     <= (g n * normM (map_mx FT2R A) * normv (map_mx FT2R B)) + g1 n n.
 Proof.
 intros.

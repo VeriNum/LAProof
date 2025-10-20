@@ -295,6 +295,15 @@ specialize (IHx (l' ++ l'') H ).
 simpl. rewrite IHx sumR_app_cons; auto.
 Qed.
 
+Lemma sumR_rev: forall l, sumR (rev l) = sumR l.
+Proof.
+move => l.
+apply sumR_permute.
+rewrite rev_list_rev.
+apply Permutation_sym.
+apply Permutation_rev.
+Qed.
+
 Lemma sum_rel_bound'  :
   forall (t : type) (l : list (ftype t)) (rs a: R)
   (Hrs : sum_rel_R (map FT2R l) rs)

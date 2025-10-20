@@ -16,16 +16,6 @@ Notation D := (@default_rel t).
 
 Notation neg_zero := (@common.neg_zero t). 
 
-Lemma sumR_rev: forall l, sumR (rev l) = sumR l.
-Proof.
-move => l.
-apply sumR_permute.
-rewrite rev_list_rev.
-apply Permutation_sym.
-apply Permutation_rev.
-Qed.
-
-
 Theorem bSUM :
   forall (x: list (ftype t)) (Hfin: Binary.is_finite (sumF x)),
     exists (x': list R), 
