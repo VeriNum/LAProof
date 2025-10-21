@@ -19,11 +19,11 @@ The LAProof repository contains a machine-checked correctness proof of a C funct
 implementing compressed sparse row matrix-
 vector multiplication as an example of connecting LAProof to concrete programs.
 
-** DOCUMENTATION
+## DOCUMENTATION
 
 LAProof 2.0beta1 is based more directly on MathComp; that is, matrix and vector operations use definitions in mathcomp.algebra.matrix.
 
-Most of the definitions and lemmas listed here are parameterized by a floating-point format not shown in this summary: that is, {_: FPCore.Nans}{t: FPStdLib.type}.
+Most of the definitions and lemmas listed here are parameterized by a floating-point format not shown in this summary: that is, `{_: FPCore.Nans}{t: FPStdLib.type}`.
 
 - `F.sum [n] ('I_n -> ftype t) : ftype t`
 - `F.dotprod [n]  (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n) : ftype t`
