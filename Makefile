@@ -19,7 +19,7 @@ Makefile.coq: _CoqProject
 clean:
 	if [ -e Makefile.coq ]; then $(MAKE) -f Makefile.coq cleanall; fi 
 	$(RM) Makefile.coq Makefile.coq.conf
-	$(RM) C/sparse.v C/cholesky.v
+	$(RM) C/sparse.v C/cholesky.v C/alloc.v C/densemat.v C/bandmat.v
 
 INSTALLFILES1 ?= $(shell awk '/accuracy_proofs/{print $$NF"o"}' _CoqProject)
 

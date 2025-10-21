@@ -1,5 +1,11 @@
-C/sparse.v: C/src/sparse.c C/include/sparse.h
-	    clightgen -normalize -IC/include $< -o $@
+# CONVERTING .c FILES TO .v FILES USING clightgen
+C/%.v: C/src/%.c
+	clightgen -normalize -IC/include $< -o $@
 
-C/cholesky.v: C/src/cholesky.c C/include/sparse.h
-	    clightgen -normalize -IC/include $< -o $@
+
+# the rest of this is adapted from the makedepend part of ../Makefile
+C/sparse.v: C/include/sparse.h
+C/cholesky.v: C/include/sparse.h
+C/alloc.v: C/include/alloc.h
+C/bandmat.v: C/include/densemat.h C/include/bandmat.h
+C/densemat.v: C/include/densemat.h

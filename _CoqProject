@@ -27,3 +27,11 @@ C/verif_sparse_byrows.v
 C/VSU_sparse.v
 C/cholesky.v
 C/verif_cholesky.v
+C/alloc.v
+C/spec_alloc.v
+C/verif_alloc.v
+C/densemat.v
+C/spec_densemat.v
+C/verif_densemat.v
+C/matrix_model.v
+C/bandmat.v
