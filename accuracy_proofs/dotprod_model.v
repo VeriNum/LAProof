@@ -1,7 +1,6 @@
 From LAProof.accuracy_proofs Require Import preamble common float_acc_lems.
 Require Import FunctionalExtensionality.
-
-Section DotProdGeneric.
+Require Import Permutation.
 
 Definition dotprod {A} (mult plus: A -> A -> A) (zero : A) (v1 v2: list A):A :=
   foldl  (Basics.flip plus) zero (map (uncurry mult) (zip v1 v2)).
@@ -29,8 +28,6 @@ intros; simpl; destruct l.
 - unfold dotprod. rewrite /= {2}/Basics.flip Hpz. destruct l; auto.
 Qed.
 
-End DotProdGeneric.
-
 Section DotProdFloat.
 Context {NAN : FPCore.Nans} {t : type}.
 
@@ -43,6 +40,57 @@ Inductive dot_prod_rel :
 | dot_prod_rel_cons : forall l (xy : ftype t * ftype t) s,
     dot_prod_rel  l s ->
     dot_prod_rel  (xy::l) (BPLUS (BMULT  (fst xy) (snd xy)) s).
+
+Inductive dotprod_any' : forall (h: nat) (v: list (ftype t * ftype t)) (s: ftype t), Prop :=
+| Dotprod_Any_1: forall x, dotprod_any' O [x] (BMULT (fst x) (snd x))
+| Dotprod_Any_split: forall n1 n2 al bl a b, 
+      dotprod_any' n1 al a -> dotprod_any' n2 bl b -> dotprod_any' (S (Nat.max n1 n2)) (al++bl) (BPLUS a b)
+| Dotprod_Any_perm: forall n al bl s, Permutation al bl -> dotprod_any' n al s -> dotprod_any' n bl s.
+
+Inductive dotprod_any : forall (h: nat) (v: list (ftype t * ftype t)) (s: ftype t), Prop :=
+| Dotprod_Any_None: dotprod_any O nil pos_zero
+| Dotprod_Any_Some: forall n v s, dotprod_any' n v s -> dotprod_any n v s.
+
+Lemma dotprod_rel_dotprod_any:  forall (z: ftype t) (v: list (ftype t * ftype t)) s (Hz: iszero z),
+  Forall (fun xy => Binary.is_finite (BMULT (fst xy) (snd xy))) v ->
+  dot_prod_rel v s -> 
+  exists s', feq s s' /\ dotprod_any (Nat.pred (size v)) v s'.
+Proof.
+destruct v as [ | [x y] v]; intros * Hz Hfin H.
+-
+destruct z; try discriminate; clear Hfin.
+inversion H; clear H; subst; (eexists; split; [ | constructor]; reflexivity).
+-
+revert x y s z Hfin Hz H; induction v as [ | [x y] v]; simpl; intros.
++
+inversion H; clear H; subst.
+inversion Hfin; clear Hfin; subst. rename H2 into Hfin. rename H1 into Hfin1.
+inversion H3; clear H3; subst.
+simpl in *.
+eexists.
+split; [ | constructor; constructor].
+simpl.
+apply BPLUS_0_r. apply strict_feq_refl; auto.
++
+inversion Hfin; clear Hfin; subst. rename H3 into Hfin. rename H2 into Hfin1.
+inversion H; clear H; subst.
+specialize (IHv x y s0 z Hfin Hz H3).
+simpl in *.
+change (cons (x0,y0) (cons (x,y) v)) with ([(x0,y0)] ++ cons (x,y) v).
+replace (S (size v)) with (S (Nat.max O (size v))) by lia.
+destruct IHv as [s1 [? ?]].
+eexists.
+inversion H0; clear H0; subst.
+simpl in H1.
+split.
+2:{ constructor 2.
+eapply Dotprod_Any_split; auto.
+apply Dotprod_Any_1.
+eassumption.
+}
+clear z Hz H3 H1.
+rewrite H; auto.
+Qed.
 
 Lemma dotprodF_rel_fold_right :
 forall (v1 v2: list (ftype t)), 
@@ -69,6 +117,9 @@ Inductive fma_dot_prod_rel :
     fma_dot_prod_rel  l s ->
     fma_dot_prod_rel  (xy::l) (BFMA (fst xy) (snd xy) s).
 
+(* NOTE:  There is no fma_dotprod_any, because that doesn't really fit the FMA model.
+  That is, dotprod_any keeps its intermediate results in the same precision as the input values,
+  and that's not very FMA-like. *)
 
 Lemma fma_dot_prod_rel_fold_right  :
 forall (v1 v2: list (ftype t)), 
