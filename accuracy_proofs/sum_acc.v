@@ -2,9 +2,10 @@
   the sum of two floating point lists; the functional model for
   the summation is defined in sum_model.v.*)
 
-From LAProof.accuracy_proofs Require Import preamble common 
+From LAProof.accuracy_proofs Require Import preamble common
                                             sum_model
-                                            float_acc_lems.
+                                            float_acc_lems .
+Require LAProof.accuracy_proofs.mv_mathcomp.
 
 Require Import Permutation.
 
@@ -40,10 +41,11 @@ destruct Hl.
   exists [FT2R a]; split; [ simpl; auto | split ; 
   [rewrite Bplus_0R|] ] => //.
   unfold sumR; simpl; nra.  
-  intros. exists 0; simpl in H1; split. 
-  have H3: ((n = 1)%nat \/ (n = 0)%nat) by lia. destruct H3; subst; simpl; nra. 
-  rewrite Rabs_R0 /g /=.
-  nra.
+  intros. exists 0; simpl in H1; split.
+ rewrite Rplus_0_r Rmult_1_r. 
+  have H3: ((n = 1)%nat \/ (n = 0)%nat) by lia.
+ destruct H3; subst; auto.
+  rewrite Rabs_R0 /g /=. lra.
 + (* case non-empty l *)
 simpl in *.
 destruct (BPLUS_finite_e _ _ Hfin) as (A & B).
@@ -71,8 +73,7 @@ exists (map (Rmult (1+d')) l' ++ [:: FT2R a * (1+d')]); repeat split.
    rewrite {}Hd1. split.
   ++ fold (ftype t).
      rewrite rev_cons nth_rcons size_rev.
-     destruct (n < size l)%N eqn:Hn'; [ | lia].
-     lra.
+     destruct (n < size l)%N eqn:Hn'; [ | lia]. nra.
   ++ field_simplify_Rabs. 
   eapply Rle_trans; [apply Rabs_triang | eapply Rle_trans; [apply Rplus_le_compat_r; apply Rabs_triang | ]  ].
 rewrite Rabs_mult.
@@ -94,6 +95,44 @@ rewrite one_plus_d_mul_g; apply Req_le; rewrite Rmult_1_r /=. f_equal; lia.
  exists d'; split; auto.
  eapply Rle_trans; [ apply Hd' | ].
  apply d_le_g_1. lia.
+Qed.
+
+Theorem Fsum_mixed_error :
+  forall [n] (x: 'I_n -> ftype t) (Hfin: Binary.is_finite (mv_mathcomp.F.sum x)),
+    exists (x': 'I_n -> R), 
+    FT2R (mv_mathcomp.F.sum x) = \sum_i x' i /\
+    (forall i: 'I_n, exists delta, 
+        x' i = FT2R (x i) * (1 + delta) /\ Rabs delta <= g (n-1)).
+Proof.
+intros.
+have :(Binary.is_finite (sumF (map x (ord_enum n)))).
+rewrite -mv_mathcomp.F.sum_sumF //.
+move  => Hfin'.
+destruct (bSUM _ Hfin') as [x' [H [H0 H1]]].
+rewrite size_map mv_mathcomp.size_ord_enum in H. subst n.
+exists (nth R0 x').
+split.
+rewrite mv_mathcomp.F.sum_sumF. rewrite H0 mv_mathcomp.sumR_sum //.
+move => i.
+destruct (H1 i) as [delta [H2 H3]].
+destruct i; simpl; lia.
+exists delta.
+rewrite {}H2.
+change GRing.mul with Rmult.
+change GRing.add with Rplus.
+change (GRing.one _) with 1%Re.
+split; auto.
+clear H3.
+f_equal.
+f_equal.
+clear.
+destruct (size x'); clear x'.
+simpl.
+destruct i; lia.
+rewrite (nth_map (@ord0 n) common.neg_zero).
+rewrite mv_mathcomp.nth_ord_enum' //.
+rewrite mv_mathcomp.size_ord_enum.
+pose proof ltn_ord i. lia.
 Qed.
 
 Theorem fSUM :
@@ -164,6 +203,35 @@ apply Rmult_le_compat; try apply Rabs_pos;
 apply d_le_g_1; lia. 
 apply Req_le; f_equal.
 f_equal. lia. 
+Qed.
+
+Lemma Fsum_forward_error: 
+    forall [n] (x: 'I_n -> ftype t)  (Hfin: Binary.is_finite (mv_mathcomp.F.sum x)),
+    Rabs (\sum_i (FT2R (x i)) - FT2R (mv_mathcomp.F.sum x)) <= g n * (\sum_i (Rabs (FT2R (x i)))).
+Proof.
+intros.
+have :(Binary.is_finite (sumF (map x (ord_enum n)))).
+rewrite -mv_mathcomp.F.sum_sumF //.
+move  => Hfin'.
+move :(fSUM _ Hfin') => H.
+rewrite !mv_mathcomp.sumR_sum !size_map !mv_mathcomp.size_ord_enum -map_comp in H.
+rewrite mv_mathcomp.F.sum_sumF.
+match goal with H: Rle (Rabs (Rminus ?A _)) (Rmult _ ?B) |- Rle (Rabs (Rminus ?A' _)) (Rmult _ ?B') =>
+   replace A' with A; [replace B' with B | ]; auto; clear
+end.
+-
+apply eq_bigr => i _.
+destruct n. destruct i; lia.
+rewrite -map_comp.
+rewrite (nth_map (@ord0 n) R0).
+rewrite  mv_mathcomp.nth_ord_enum' //.
+rewrite mv_mathcomp.size_ord_enum //.
+-
+apply eq_bigr => i _.
+destruct n. destruct i; lia.
+rewrite (nth_map (@ord0 n) R0).
+rewrite  mv_mathcomp.nth_ord_enum' //.
+rewrite mv_mathcomp.size_ord_enum //.
 Qed.
 
 Lemma sum_forward_error_permute' :

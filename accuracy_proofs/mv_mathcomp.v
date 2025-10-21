@@ -341,13 +341,23 @@ intros.
 rewrite map_comp val_ord_enum map_nth_iota0 // take_size //.
 Qed.
 
+Lemma sumR_sum: forall (x: seq R), sumR x = \sum_(i in 'I_(size x)) nth R0 x (nat_of_ord i).
+Proof.
+intros.
+rewrite /sumR  (unlock bigop_unlock)
+ /reducebig /comp /applybig /= index_ord_enum.
+ rewrite {1}(nth_ord_enum_lemma R0 x).
+ rewrite foldr_map //.
+Qed.
+
+
 Module F.  (* Floating-point math-comp matrix and vector operations *)
 
 Section WithNAN. 
 Context {NAN: FPCore.Nans} {t : type}.
 
 Definition sum  [n: nat] (x: 'I_n -> ftype t) : ftype t :=
-    \big[BPLUS / pos_zero]_i x (rev_ord i).
+    \big[BPLUS / neg_zero]_i x (rev_ord i).
 
 Definition dotprod [n: nat] (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n) : ftype t :=
    \big[BPLUS / pos_zero]_i (BMULT (x ord0 (rev_ord i)) (y (rev_ord i) ord0)).
@@ -372,13 +382,20 @@ case_splitP j.
  rewrite row_mxEr !mxE -col_rsubmx row_mxKr //.
 Qed.
 
+Lemma sum_sumF: forall [n] (x: 'I_n -> ftype t), sum x = sumF (map x (ord_enum n)).
+Proof.
+ intros.
+ rewrite /sum /sumF (unlock bigop_unlock) /reducebig /comp /applybig
+ -(revK (map x _)) foldl_rev -map_rev rev_ord_enum -map_comp foldr_map index_ord_enum //.
+Qed.
+
 Lemma dotprod_dotprodF:
   forall [n] (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n),
   dotprod x y = dotprodF (seq_of_rV x) (seq_of_rV (trmx y)).
 Proof.
 intros.
  rewrite /dotprod /seq_of_rV /dotprodF /dotprod_model.dotprod !ord1.
- rewrite (unlock (bigop_unlock)).
+ rewrite (unlock bigop_unlock).
  unfold reducebig, comp, applybig.
  rewrite -(revK (map (uncurry _) _)).
  rewrite foldl_rev.
