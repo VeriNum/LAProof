@@ -97,7 +97,7 @@ rewrite one_plus_d_mul_g; apply Req_le; rewrite Rmult_1_r /=. f_equal; lia.
  apply d_le_g_1. lia.
 Qed.
 
-Theorem Fsum_mixed_error :
+Theorem Fsum_backward_error :
   forall [n] (x: 'I_n -> ftype t) (Hfin: Binary.is_finite (mv_mathcomp.F.sum x)),
     exists (x': 'I_n -> R), 
     FT2R (mv_mathcomp.F.sum x) = \sum_i x' i /\

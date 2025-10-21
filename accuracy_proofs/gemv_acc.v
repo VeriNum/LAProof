@@ -148,7 +148,7 @@ destruct (splitP i) as [i'|i'];
  move :(H1 i' j).  rewrite !col_mxEd //.
 Qed. 
 
-Theorem forward_error :
+Theorem mat_vec_mul_forward_error :
  forall [m n] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,1))
   (Hfin: F.finitemx (F.mulmx A B)),
   normv (map_mx FT2R (F.mulmx A B) - (map_mx FT2R A *m map_mx FT2R B))
