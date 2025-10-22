@@ -668,6 +668,7 @@ Local Open Scope ring_scope.
 
 Definition rem_trail_zero (s: seq F) : seq F := dropWhileEnd (fun x => x == 0) s.
 
+
 Lemma rem_trail_zero_wf: forall s,
   last 1 (rem_trail_zero s) != 0.
 Proof.
@@ -675,7 +676,7 @@ Proof.
   have: (dropWhileEnd (eq_op^~ 0) s) = (dropWhileEnd (eq_op^~ 0) s) by [].
   rewrite (dropWhileEnd_spec _ _ 1) => [[[l1 [Hl1 Hinl1]] Hlast]].
   case Hdrop: (dropWhileEnd (eq_op^~ 0) s) => [/= | h t /=].
-  - apply GRing.oner_neq0.
+  - apply GRing.Theory.oner_neq0.
   - rewrite Hdrop in Hlast. by apply Hlast.
 Qed.
 
