@@ -1,7 +1,6 @@
 (* This file contains theorems connecting MathComp operations on 
   matrices and vectors to operations on lists. *)
 
-
 From LAProof.accuracy_proofs Require Import preamble common 
     dotprod_model sum_model dot_acc float_acc_lems.
 
