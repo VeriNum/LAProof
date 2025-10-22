@@ -1,3 +1,18 @@
+# COQDOC publishing
+COQDOCEXTRAFLAGS= -g --no-lib-name --index genindex --lib-subtitles --interpolate -utf8
+
+publish: html
+	cd gh-pages; git submodule update
+	cd gh-pages; mkdir -p docs
+	cp html/* gh-pages/docs
+	$(HIDE)for i in gh-pages/docs/*; do \
+	 if [ ! -f html/`basename $$i` ]; then \
+	   echo git rm --force $$i; git rm --force $$i; \
+	   fi; done
+	cd gh-pages; git add docs
+	cd gh-pages; git commit -m "Publishing docs" docs
+	cd gh-pages; git push
+
 # CONVERTING .c FILES TO .v FILES USING clightgen
 C/%.v: C/src/%.c
 	clightgen -normalize -IC/include $< -o $@
