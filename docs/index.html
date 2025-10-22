@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>LAProof: accuracy and correctness of linear algebra programs</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">LAProof: accuracy and correctness of linear algebra programs</h1>
+
+<p>
+LAProof is a modular, portable proof layer between
+the verification of application software and the verification
+of programs implementing operations defined by the basic linear algebra subprograms (BLAS) specification.
+<p>
+<i>See:</i>  <a href=https://doi.org/10.1109/ARITH58626.2023.00021>the paper in <i>30th IEEE International Symposium on Computer Arithmetic (ARITH '23)</i></a> or <a href=https://www.cs.princeton.edu/~appel/papers/LAProof.pdf>non-paywall version</a>
+<p>
+LAProof provides formal machine-checked proofs of the accuracy of basic linear algebra operations:
+inner product using conventional multiply and add, inner product
+using fused multiply-add, scaled matrix-vector and matrix-matrix
+multiplication, and scaled vector and matrix addition. LAProof error bounds are backward error
+bounds and mixed backward-forward error bounds that account
+for underflow, proved subject to no assumptions except a low-
+level formal model of IEEE-754 arithmetic. We treat low-order
+error terms concretely, not approximating as O(u<sup>2</sup>).
+<p>
+The LAProof repository contains a machine-checked correctness proof of a C function
+implementing compressed sparse row matrix-vector multiplication as an example of connecting LAProof to concrete programs.
+<p>
+LAProof 2.0beta1 is based more directly on MathComp (compared to <a href=https://github.com/VeriNum/LAProof/tree/0045d7bf34def80d770dec87155a28eb3e58c938>LAProof 1.0</a> which used
+a list-of-list representation for matrices).   That is, matrix and vector operations use definitions in <a href=https://math-comp.github.io/htmldoc_2_5_0/mathcomp.algebra.matrix.html>mathcomp.algebra.matrix</a>.
+  
+<h2>DOCUMENTATION</h2>
+
+The complete table of contents is <a href=toc.html>here</a>.
+
+<p>
+Most of the definitions and lemmas listed here are parameterized by a floating-point format not shown in this summary: that is, implicit parameters <tt>{_: FPCore.Nans}{t: FPStdLib.type}</tt>.
+
+<ul>
+  <li><a href=LAPRoof.accuracy_proofs.mv_mathcomp.html#F.sum>F.sum</a> <tt>[n] ('I_n -> ftype t) : ftype t</tt>
+<li><a href=LAProof.accuracy_proofs.mv_mathcomp.html#F.dotprod>F.dotprod</a> <tt>[n]  (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n) : ftype t</tt>
+<li><a href=LAProof.accuracy_proofs.mv_mathcomp.html#F.mulmx>F.mulmx</a> <tt>[m n p] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,p)) : 'M[ftype t]_(m,p)</tt>
+<li><a href=LAProof.accuracy_proofs.mv_mathcomp.html#F.scalemx>F.scalemx</a> <tt>[m n] (a: ftype t) (M: 'M[ftype t]_(m,n)) : 'M[ftype t]_(m,n)</tt>
+<li><a href=LAProof.accuracy_proofs.mv_mathcomp.html#F.addmx>F.addmx</a> <tt>[m n] (A B: 'M[ftype t]_(m,n)) : 'M[ftype t]_(m,n))</tt>
+<li><a href=LAProof.accuracy_proofs.sum_acc.html#Fsum_backward_error>Fsum_backward_error</a> <tt>[n] (x: 'I_n -> ftype t) ...</tt>
+<li><a href=LAProof.accuracy_proofs.sum_acc.html#Fsum_forward_error>Fsum_forward_error</a> <tt>[n] (x: 'I_n -> ftype t) ...</tt>
+<li><a href=LAProof.accuracy_proofs.vec_op_acc.html#Faddmx_mixed_error>Faddmx_mixed_error</a> <tt>[m n] (A B: 'M[ftype t]_(m,n)) ...</tt>
+<li><a href=LAProof.accuracy_proofs.vec_op_acc.html#Fscalemx_mixed_error>Fscalemx_mixed_error</a> <tt>[m n] (a: ftype t) (v: 'M[ftype t]_(m,n)) ...</tt>
+<li><a href=LAProof.accuracy_proofs.gemv_acc.html#vec_vec_mul_mixed_error>vec_vec_mul_mixed_error</a> <tt>[n] (A: 'rV[ftype t]_n) (B: 'cV[ftype t]_n) ...</tt>
+<li><a href=LAProof.accuracy_proofs.gemv_acc.html#mat_vec_mul_mixed_error>mat_vec_mul_mixed_error</a> <tt>[m n] (A 'M[ftype t](m,n)) (B: 'cV[ftype t]_n) ...</tt>
+<li><a href=LAProof.accuracy_proofs.gemv_acc.html#mat_vec_mul_forward_error>mat_vec_mul_forward_error</a> <tt>[m n]  (A 'M[ftype t](m,n)) (B: 'cV[ftype t]_n) ...</tt>
+<li><a href=LAProof.accuracy_proofs.gemm_acc.html#mat_sum_error>mat_sum_error</a> <tt>[m n] (A B: 'M[ftype t]_(m,n)) ...</tt>
+<li><a href=LAProof.accuracy_proofs.gemm_acc.html#mat_axpby_error>mat_axpby_error</a> <tt> [m n] (A B: 'M[ftype t]_(m,n)) (x y: ftype t) ...</tt> (xA+yB)
+<li><a href=LAProof.accuracy_proofs.gemm_acc.html#GEMM_error>GEMM_error</a> <tt>[m n p] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,p)) (Y: 'M[ftype t]_(m,p)) (s1 s2: ftype t) ...</tt> (s1*A*B+s2*Y)
+</ul>
+
+
+<div class="code">
+<div class="paragraph">
+ . . . more to come . . .
+
+</div>
+</div>
+
+<div id="footer">
+<hr/>
+<h1><a href=toc.html>Table of contents</a></h1>
+<h1><a href="genindex.html">Index</a></h1>
+</div>
+
+</div>
+
+</body>
+</html>
