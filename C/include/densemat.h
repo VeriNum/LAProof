@@ -78,5 +78,15 @@ double densemat_get(densemat_t dm, int i, int j);
 void densemat_set(densemat_t dm, int i, int j, double x);
 void densemat_addto(densemat_t dm, int i, int j, double x);
 
+/** dot product: let x be an m*n matrix, let y be an n*p matrix,
+    multiply row of x by column j of y. */
+double densematn_dotprod(int m, int n, int p, int i, int j, double *x, double *y);
+double densemat_dotprod(int i, int j, densemat_t x, densemat_t y);
+
+/** compute z = x * y
+ */
+void densematn_mult(int m, int n, int p, double *x, double *y, double *z);
+void densemat_mult(densemat_t x, densemat_t y, densemat_t z);
+
 //ldoc off
 #endif /* DENSEMAT_H */

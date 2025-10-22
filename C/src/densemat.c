@@ -437,3 +437,29 @@ double densemat_norm(densemat_t vm)
 {
     return data_norm(vm->data, vm->m*vm->n);
 }
+
+/** dot product: let x be an m*n matrix, let y be an n*p matrix,
+    multiply row of x by column j of y. */
+double densematn_dotprod(int m, int n, int p, int i, int j, double *x, double *y) {
+  int k; double s=0.0;
+  for (k=0; k<n; k++)
+    s += densematn_get(x,m,i,k)*densematn_get(y,n,k,j);
+  return s;
+}
+
+double densemat_dotprod(int i, int j, densemat_t x, densemat_t y) {
+  return densematn_dotprod(x->m, x->n, y->n, i, j, x->data, y->data);
+}
+
+/** compute z = x * y
+ */
+void densematn_mult(int m, int n, int p, double *x, double *y, double *z) {
+  int i,j;
+  for (i=0; i<m; i++)
+    for (j=0; j<p; j++)
+      densematn_set(z, m, i, j, densematn_dotprod(m,n,p,i,j,x,y));
+}
+
+void densemat_mult(densemat_t x, densemat_t y, densemat_t z) {
+	densematn_mult(x->m, x->n, y->n, x->data, y->data, z->data);
+}
