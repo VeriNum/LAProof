@@ -72,8 +72,22 @@ Most of the definitions and lemmas listed here are parameterized by a floating-p
 Generally these prove that the C programs correctly implement the algorithms.  These theorems may be composed with the algorithm accuracy proofs.
 
 <dl>
-  <dt>Dense Matrices
-    <dl>
+  <dt>Functional models</dt>
+    <dl><a href=LAProof.C.matrix_model.html>Matrix model definitions and lemmas</a>
+  <dt>Dense Matrices: <a href=densemat.html><tt>densemat.c</tt></a></dt>
+    <dd><a href=LAProof.C.spec_densemat.html>Specifications</a>,
+      <a href=LAProof.C.densemat_lemmas.html>Supporting lemmas</a>,
+      Correctness proofs of 
+      <a href=LAProof.C.verif_densemat.html>basic operations</a>,
+      <a href=LAProof.C.verif_densemat_mult.html>matrix multiply</a>,
+      <a href=LAProof.C.verif_densemat_cholesky.html>Cholesky factoring and solve</a>,
+      and <a href=LAProof.C.VSU_densemat.html>packaging the Verified Software Unit</a>.
+  <dt>Sparse Matrices: <tt>sparse.c</tt></dt>
+  <dd><a href=LAProof.C.spec_sparse.html>Specification</a>,
+      <a href=LAProof.C.verif_sparse.html>Verification</a>.
+     This is a bit out of date, as it is proved with respect to a list-of-lists
+    model instead of MathComp matrices.
+</dl>
 
 <div class="code">
 <div class="paragraph">
