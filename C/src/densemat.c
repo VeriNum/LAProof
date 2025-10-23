@@ -443,7 +443,7 @@ double densemat_norm(densemat_t vm)
 double densematn_dotprod(int m, int n, int p, int i, int j, double *x, double *y) {
   int k; double s=0.0;
   for (k=0; k<n; k++)
-    s += densematn_get(x,m,i,k)*densematn_get(y,n,k,j);
+    s = densematn_get(x,m,i,k)*densematn_get(y,n,k,j) + s;
   return s;
 }
 

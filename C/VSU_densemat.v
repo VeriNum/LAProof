@@ -16,7 +16,7 @@ From mathcomp Require (*Import*) div ssralg countalg finalg zmodp matrix.
 From mathcomp.zify Require Import ssrZ zify.
 Import fintype matrix.
 
-From LAProof.C Require Import  densemat_lemmas verif_densemat verif_densemat_mult.
+From LAProof.C Require Import  densemat_lemmas verif_densemat verif_densemat_mult verif_densemat_cholesky.
 
 Unset Implicit Arguments.
 Unset Strict Implicit.

@@ -14,6 +14,7 @@ Definition normv   {m} (v: 'cV[R]_m)  : R:= \big[maxr/0]_(i < m) Rabs (v i 0%Ri)
 Definition normM   {m n} (A: 'M[R]_(m,n))   : R:= \big[maxr/0]_i (sum_abs A i).
 Definition seq_of_rV {T}[n] (x: 'rV[T]_n) := map (x ord0) (ord_enum n).
 
+
 Ltac case_splitP j :=
   first [is_var j | fail 1 "case_splitP requires a variable, but got" j];
  match type of j with 'I_(addn ?a ?b) =>
@@ -102,6 +103,20 @@ Proof.
       have->: i = nat_of_ord (Ordinal Hi) by [].
      rewrite nth_index_enum nth_ord_enum' //.
 Qed.
+
+
+Lemma size_seq_of_rV : forall {T} [n] x, size (@seq_of_rV T n x) = n.
+Proof.
+intros.
+rewrite /seq_of_rV size_map size_ord_enum //.
+Qed.
+
+Lemma nth_seq_of_rV: forall {T}[n](d: T)(x: 'rV[T]_n) (i: 'I_n), nth d (seq_of_rV x) i = x ord0 i.
+Proof.
+intros.
+pose proof (ltn_ord i).
+rewrite /seq_of_rV (nth_map i d) ?nth_ord_enum' // size_ord_enum //.
+Qed. 
 
 (* generally useful lemmmas for max operator *)
 Lemma maxrC : @commutative R R maxr. 

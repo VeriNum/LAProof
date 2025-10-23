@@ -23,6 +23,9 @@ From mathcomp.zify Require Import ssrZ zify.
 (** Among all the mathcomp stuff, these are the files that we *do* want to Import: *)
 Import fintype matrix.
 
+Require LAProof.accuracy_proofs.export.
+Module F := LAProof.accuracy_proofs.mv_mathcomp.F.
+
 (** Now we undo all the settings that mathcomp has modified *)
 Unset Implicit Arguments.
 Unset Strict Implicit.
@@ -554,7 +557,7 @@ Definition densematn_dotprod_spec :=
     SEP (densematn shA (map_mx Some A) pA; densematn shB (map_mx Some B) pB)
  POST [ tdouble ]  let '(existT _ m (existT _ n (existT _ p ((A,B),(i,j))))) := X in
   PROP()
-  RETURN( Vfloat (Zconst the_type 0))
+  RETURN( Vfloat (F.dotprod (row i A) (col j B)))
   SEP (densematn shA (map_mx Some A) pA; densematn shB (map_mx Some B) pB).
 
 Definition densemat_dotprod_spec :=
@@ -567,11 +570,8 @@ Definition densemat_dotprod_spec :=
     SEP (densemat shA (map_mx Some A) pA; densemat shB (map_mx Some B) pB)
  POST [ tdouble ]  let '(existT _ m (existT _ n (existT _ p ((A,B),(i,j))))) := X in
   PROP()
-  RETURN( Vfloat (Zconst the_type 0))
+  RETURN( Vfloat (F.dotprod (row i A) (col j B)))
   SEP (densemat shA (map_mx Some A) pA; densemat shB (map_mx Some B) pB).
-
-Require LAProof.accuracy_proofs.export.
-Module F := LAProof.accuracy_proofs.mv_mathcomp.F.
 
 Definition densematn_mult_spec :=
  DECLARE _densematn_mult
@@ -584,7 +584,7 @@ Definition densematn_mult_spec :=
               densematn shC (@const_mx (option (ftype the_type)) m p None) pC)
  POST [ tvoid ]  let '(existT _ m (existT _ n (existT _ p (A,B)))):= X in
   PROP()
-  RETURN( Vfloat (Zconst the_type 0))
+  RETURN()
   SEP (densematn shA (map_mx Some A) pA; densematn shB (map_mx Some B) pB; 
             densematn shC (map_mx Some (F.mulmx A B)) pC).
 
@@ -599,7 +599,7 @@ Definition densemat_mult_spec :=
               densemat shC (@const_mx (option (ftype the_type)) m p None) pC)
  POST [ tvoid ]  let '(existT _ m (existT _ n (existT _ p (A,B)))) := X in
   PROP()
-  RETURN( Vfloat (Zconst the_type 0))
+  RETURN()
   SEP (densemat shA (map_mx Some A) pA; densemat shB (map_mx Some B) pB; 
             densemat shC (map_mx Some (F.mulmx A B)) pC).
 

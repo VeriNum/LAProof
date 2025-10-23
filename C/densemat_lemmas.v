@@ -441,4 +441,54 @@ repeat change (snd (?A,?B)) with B in *.
 Ltac start_function ::= start_function1; destruct_PRE_POST_lets; start_function2; start_function3.
 
 
+(** * Tactics for calling matrix subscripting functions *)
+
+(** When doing [forward_call] to the function [densematn_get] and [densematn_set], one
+ must first build a dependently typed package as illustrated above in [body_densemat_clear].
+ The tactics in this section help automate that, so one can do 
+ - [forward_densematn_get] instead of [forward_call] when calling [densemat_get]
+ - [forward_densematn_set] instead of [forward_call] when calling [densemat_set]
+*)
+
+(* begin hide *)
+Ltac typecheck ctx x t :=
+  lazymatch type of x with ?t2 =>
+    tryif unify t t2 then idtac else fail 3 "In" ctx ", type of" x "should be" t "but is" t2
+  end.
+
+Ltac typecheck_forward_densemat ctx M i j p sh x :=
+  lazymatch type of M with
+  |  (@matrix _ ?m ?n) => 
+       typecheck ctx M  (@matrix (option (ftype the_type)) m n);
+       typecheck ctx i (ordinal m);
+       typecheck ctx j (ordinal n)
+  | ?T => fail "type of" M "should be (matrix (ftype the_type) _ _) but is" T
+  end;
+  typecheck ctx p Values.val;
+  typecheck ctx sh share;
+  typecheck ctx x (ftype the_type).
+(* end hide *)
+
+ (** Parameters:  
+   - [M: 'M[option (ftype the_type)]_(m,n)], the matrix value to be subscripted
+   - [i: 'I_m] [j: 'I_n],  the indices at which to subscript
+   - [p: val],  the address in memory where the matrix is represented column-major
+   - [sh: share], the permission-share of the representation in memory
+   - [x:  ftype the_type], the expected result of subscripting the matrix, or the value to store into the matrix
+ *)
+
+Ltac forward_densematn_get M i j p sh x:=
+   typecheck_forward_densemat forward_densematn_get M i j p sh x;
+   let X := fresh "X" in 
+   pose (X := existT _ (_,_) (M,(i, j)) 
+          : {mn : nat * nat & 'M[option (ftype the_type)]_(fst mn, snd mn) * ('I_(fst mn) * 'I_(snd mn))}%type);
+    forward_call (X, p, sh, x); clear X.
+
+Ltac forward_densematn_set M i j p sh x:=
+   typecheck_forward_densemat forward_densematn_set M i j p sh x;
+   let X := fresh "X" in 
+   pose (X := existT _ (_,_) (M,(i, j)) 
+          : {mn : nat * nat & 'M[option (ftype the_type)]_(fst mn, snd mn) * ('I_(fst mn) * 'I_(snd mn))}%type);
+    forward_call (X, p, sh, x); clear X.
+
 
