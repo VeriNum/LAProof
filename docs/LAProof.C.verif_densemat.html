@@ -22,11 +22,11 @@
 </div>
 
 <div class="doc">
-<a id="lab11"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
+<a id="lab12"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
 
 <div class="paragraph"> </div>
 
-<a id="lab12"></a><h1 class="section">Prologue.</h1>
+<a id="lab13"></a><h1 class="section">Prologue.</h1>
 
 
 <div class="paragraph"> </div>
@@ -60,7 +60,7 @@
 </div>
 
 <div class="doc">
-<a id="lab13"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> verification</h1>
+<a id="lab14"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -70,7 +70,7 @@
 </div>
 
 <div class="doc">
-<a id="lab14"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_free</span></span> verification</h1>
+<a id="lab15"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_free</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -80,7 +80,7 @@
 </div>
 
 <div class="doc">
-<a id="lab15"></a><h1 class="section">Unpacking dependently typed WITH components</h1>
+<a id="lab16"></a><h1 class="section">Unpacking dependently typed WITH components</h1>
 
 <div class="paragraph"> </div>
 
@@ -93,7 +93,7 @@
  
 <div class="paragraph"> </div>
 
-<a id="lab16"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_clear</span></span> verification</h1>
+<a id="lab17"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_clear</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -134,7 +134,7 @@ This proof demonstrates a good way to prove a function call to a function whose
 </div>
 
 <div class="doc">
-<a id="lab17"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_get</span></span> verification</h1>
+<a id="lab18"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_get</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -149,7 +149,7 @@ This proof demonstrates a good way to prove a function call to a function whose
 </div>
 
 <div class="doc">
-<a id="lab18"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_set</span></span> verification</h1>
+<a id="lab19"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_set</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -164,7 +164,7 @@ This proof demonstrates a good way to prove a function call to a function whose
 </div>
 
 <div class="doc">
-<a id="lab19"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_addto</span></span> verification</h1>
+<a id="lab20"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_addto</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -174,73 +174,6 @@ This proof demonstrates a good way to prove a function call to a function whose
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <a id="body_densemat_addto" class="idref" href="#body_densemat_addto"><span class="id" title="lemma">body_densemat_addto</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densemat_addto"><span class="id" title="definition">f_densemat_addto</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_addto_spec"><span class="id" title="definition">densemat_addto_spec</span></a>.<br/>
-
-<br/>
-</div>
-
-<div class="doc">
-<a id="lab20"></a><h1 class="section">Tactics for calling matrix subscripting functions</h1>
-
-<div class="paragraph"> </div>
-
- When doing <span class="inlinecode"><span class="id" title="var">forward_call</span></span> to the function <span class="inlinecode"><span class="id" title="var">densematn_get</span></span> and <span class="inlinecode"><span class="id" title="var">densematn_set</span></span>, one
- must first build a dependently typed package as illustrated above in <span class="inlinecode"><a class="idref" href="LAProof.C.verif_densemat.html#body_densemat_clear"><span class="id" title="lemma">body_densemat_clear</span></a></span>.
- The tactics in this section help automate that, so one can do 
-<ul class="doclist">
-<li> <span class="inlinecode"><span class="id" title="var">forward_densematn_get</span></span> instead of <span class="inlinecode"><span class="id" title="var">forward_call</span></span> when calling <span class="inlinecode"><span class="id" title="var">densemat_get</span></span>
-
-</li>
-<li> <span class="inlinecode"><span class="id" title="var">forward_densematn_set</span></span> instead of <span class="inlinecode"><span class="id" title="var">forward_call</span></span> when calling <span class="inlinecode"><span class="id" title="var">densemat_set</span></span>
-
-</li>
-</ul>
-
-</div>
-<div class="code">
-
-<br/>
-
-<br/>
-</div>
-
-<div class="doc">
-Parameters:  
-<ul class="doclist">
-<li> <span class="inlinecode"><span class="id" title="var">M</span>:</span> <span class="inlinecode">'<span class="id" title="var">M</span>[<a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a></span> <span class="inlinecode">(<span class="id" title="definition">ftype</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)]<span class="id" title="var">_</span>(<span class="id" title="var">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span>, the matrix value to be subscripted
-
-</li>
-<li> <span class="inlinecode"><span class="id" title="var">i</span>:</span> <span class="inlinecode">'<span class="id" title="var">I_m</span></span> <span class="inlinecode"><span class="id" title="var">j</span>:</span> <span class="inlinecode">'<span class="id" title="var">I_n</span></span>,  the indices at which to subscript
-
-</li>
-<li> <span class="inlinecode"><span class="id" title="var">p</span>:</span> <span class="inlinecode"><span class="id" title="abbreviation">val</span></span>,  the address in memory where the matrix is represented column-major
-
-</li>
-<li> <span class="inlinecode"><span class="id" title="var">sh</span>:</span> <span class="inlinecode"><span class="id" title="definition">share</span></span>, the permission-share of the representation in memory
-
-</li>
-<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a>:</span>  <span class="inlinecode"><span class="id" title="definition">ftype</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a></span>, the expected result of subscripting the matrix, or the value to store into the matrix
-
-</li>
-</ul>
- 
-</div>
-<div class="code">
-
-<br/>
-<span class="id" title="keyword">Ltac</span> <span class="id" title="var">forward_densematn_get</span> <span class="id" title="var">M</span> <span class="id" title="var">i</span> <span class="id" title="var">j</span> <span class="id" title="var">p</span> <span class="id" title="var">sh</span> <span class="id" title="var">x</span>:=<br/>
-&nbsp;&nbsp;&nbsp;<span class="id" title="var">typecheck_forward_densemat</span> <span class="id" title="var">forward_densematn_get</span> <span class="id" title="var">M</span> <span class="id" title="var">i</span> <span class="id" title="var">j</span> <span class="id" title="var">p</span> <span class="id" title="var">sh</span> <span class="id" title="var">x</span>;<br/>
-&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">X</span> := <span class="id" title="tactic">fresh</span> "X" <span class="id" title="tactic">in</span> <br/>
-&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> (<span class="id" title="var">X</span> := <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#existT"><span class="id" title="constructor">existT</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">_</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><span class="id" title="var">_</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">M</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,(</span></a><span class="id" title="var">i</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">j</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">))</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#cc5e56ba3765e2d6b17e66d19b966f1d"><span class="id" title="notation">{</span></a><a id="mn:9" class="idref" href="#mn:9"><span class="id" title="binder">mn</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#cc5e56ba3765e2d6b17e66d19b966f1d"><span class="id" title="notation">:</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#cc5e56ba3765e2d6b17e66d19b966f1d"><span class="id" title="notation">&amp;</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)<span class="id" title="notation">]</span><span class="id" title="notation">_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:9"><span class="id" title="variable">mn</span></a><span class="id" title="notation">,</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:9"><span class="id" title="variable">mn</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">(</span></a><span class="id" title="notation">'</span><span class="id" title="notation">I_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:9"><span class="id" title="variable">mn</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">I_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:9"><span class="id" title="variable">mn</span></a><span class="id" title="notation">)</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">)</span></a><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#cc5e56ba3765e2d6b17e66d19b966f1d"><span class="id" title="notation">}</span></a>%<span class="id" title="keyword">type</span>);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">forward_call</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">X</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">p</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">sh</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">x</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>; <span class="id" title="tactic">clear</span> <span class="id" title="var">X</span>.<br/>
-
-<br/>
-<span class="id" title="keyword">Ltac</span> <span class="id" title="var">forward_densematn_set</span> <span class="id" title="var">M</span> <span class="id" title="var">i</span> <span class="id" title="var">j</span> <span class="id" title="var">p</span> <span class="id" title="var">sh</span> <span class="id" title="var">x</span>:=<br/>
-&nbsp;&nbsp;&nbsp;<span class="id" title="var">typecheck_forward_densemat</span> <span class="id" title="var">forward_densematn_set</span> <span class="id" title="var">M</span> <span class="id" title="var">i</span> <span class="id" title="var">j</span> <span class="id" title="var">p</span> <span class="id" title="var">sh</span> <span class="id" title="var">x</span>;<br/>
-&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">X</span> := <span class="id" title="tactic">fresh</span> "X" <span class="id" title="tactic">in</span> <br/>
-&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> (<span class="id" title="var">X</span> := <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#existT"><span class="id" title="constructor">existT</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">_</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><span class="id" title="var">_</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">M</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,(</span></a><span class="id" title="var">i</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">j</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">))</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#cc5e56ba3765e2d6b17e66d19b966f1d"><span class="id" title="notation">{</span></a><a id="mn:10" class="idref" href="#mn:10"><span class="id" title="binder">mn</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#cc5e56ba3765e2d6b17e66d19b966f1d"><span class="id" title="notation">:</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#cc5e56ba3765e2d6b17e66d19b966f1d"><span class="id" title="notation">&amp;</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)<span class="id" title="notation">]</span><span class="id" title="notation">_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:10"><span class="id" title="variable">mn</span></a><span class="id" title="notation">,</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:10"><span class="id" title="variable">mn</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">(</span></a><span class="id" title="notation">'</span><span class="id" title="notation">I_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:10"><span class="id" title="variable">mn</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">I_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:10"><span class="id" title="variable">mn</span></a><span class="id" title="notation">)</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">)</span></a><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#cc5e56ba3765e2d6b17e66d19b966f1d"><span class="id" title="notation">}</span></a>%<span class="id" title="keyword">type</span>);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">forward_call</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">X</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">p</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">sh</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">x</span><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>; <span class="id" title="tactic">clear</span> <span class="id" title="var">X</span>.<br/>
 
 <br/>
 </div>
@@ -262,36 +195,6 @@ Parameters:
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <a id="body_densemat_norm" class="idref" href="#body_densemat_norm"><span class="id" title="lemma">body_densemat_norm</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densemat_norm"><span class="id" title="definition">f_densemat_norm</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_norm_spec"><span class="id" title="definition">densemat_norm_spec</span></a>.<br/>
-
-<br/>
-</div>
-
-<div class="doc">
-<a id="lab22"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_cfactor</span></span> verification: Cholesky factorization</h1>
-
-</div>
-<div class="code">
-
-<br/>
-<span class="id" title="keyword">Lemma</span> <a id="body_densematn_cfactor" class="idref" href="#body_densematn_cfactor"><span class="id" title="lemma">body_densematn_cfactor</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densematn_cfactor"><span class="id" title="definition">f_densematn_cfactor</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densematn_cfactor_spec"><span class="id" title="definition">densematn_cfactor_spec</span></a>.<br/>
-
-<br/>
-<span class="id" title="keyword">Lemma</span> <a id="body_densemat_cfactor" class="idref" href="#body_densemat_cfactor"><span class="id" title="lemma">body_densemat_cfactor</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densemat_cfactor"><span class="id" title="definition">f_densemat_cfactor</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_cfactor_spec"><span class="id" title="definition">densemat_cfactor_spec</span></a>.<br/>
-
-<br/>
-</div>
-
-<div class="doc">
-<a id="lab23"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_csolve</span></span> verification: Cholesky solve by forward substitution and back substitution</h1>
-
-</div>
-<div class="code">
-
-<br/>
-<span class="id" title="keyword">Lemma</span> <a id="body_densematn_csolve" class="idref" href="#body_densematn_csolve"><span class="id" title="lemma">body_densematn_csolve</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densematn_csolve"><span class="id" title="definition">f_densematn_csolve</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densematn_csolve_spec"><span class="id" title="definition">densematn_csolve_spec</span></a>.<br/>
-
-<br/>
-<span class="id" title="keyword">Lemma</span> <a id="body_densemat_csolve" class="idref" href="#body_densemat_csolve"><span class="id" title="lemma">body_densemat_csolve</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densemat_csolve"><span class="id" title="definition">f_densemat_csolve</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_csolve_spec"><span class="id" title="definition">densemat_csolve_spec</span></a>.<br/>
 </div>
 </div>
 

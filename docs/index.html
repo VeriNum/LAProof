@@ -46,6 +46,7 @@ a list-of-list representation for matrices).   That is, matrix and vector operat
 
 The complete table of contents is <a href=toc.html>here</a>.
 
+<h3>Algorithm Accuracy Proofs</h3>
 <p>
 Most of the definitions and lemmas listed here are parameterized by a floating-point format not shown in this summary: that is, implicit parameters <tt>{_: FPCore.Nans}{t: FPStdLib.type}</tt>.
 
@@ -67,6 +68,12 @@ Most of the definitions and lemmas listed here are parameterized by a floating-p
 <li><a href=LAProof.accuracy_proofs.gemm_acc.html#GEMM_error>GEMM_error</a> <tt>[m n p] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,p)) (Y: 'M[ftype t]_(m,p)) (s1 s2: ftype t) ...</tt> (s1*A*B+s2*Y)
 </ul>
 
+<h3>C Program Correctness Proofs</h3>
+Generally these prove that the C programs correctly implement the algorithms.  These theorems may be composed with the algorithm accuracy proofs.
+
+<dl>
+  <dt>Dense Matrices
+    <dl>
 
 <div class="code">
 <div class="paragraph">
