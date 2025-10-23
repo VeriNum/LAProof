@@ -9,10 +9,10 @@
 
 //ldoc on
 /**
+ * # `bandmat.c`: Implementation of band matrix operations
  * ## Band matrix construction
- * 
+ * Allocate/free/clear a band matrix
  */
-// Allocate/free/clear a band matrix
 bandmat_t bandmat_malloc(int n, int b)
 {
   bandmat_t vm = surely_malloc(sizeof(struct bandmat_t) + (n*(b+1))*sizeof(double));
@@ -37,7 +37,7 @@ void bandmat_clear(bandmat_t vm)
 
 
 
-// Getting, setting, adding to band matrices
+/** Getting, setting, adding to band matrices */
 double bandmatn_get(double *data, int rows, int i, int d) {
   return data[i+d*rows];
 }
@@ -63,7 +63,7 @@ void bandmat_addto(bandmat_t dm, int i, int d, double x) {
 }
 
 
-// Convert dense n-by-n A to band matrix P with bandwidth bw
+/** Convert dense n-by-n A to band matrix P with bandwidth bw */
 bandmat_t dense_to_band(densemat_t A, int bw)
 {
     int n = A->n;

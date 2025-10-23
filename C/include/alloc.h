@@ -3,7 +3,7 @@
 
 //ldoc on
 /**
- * # Memory allocation
+ * # `alloc.h`: Memory allocation
  * 
  * The C `malloc`/`calloc` may return `NULL` to indicate out-of-memory.
  * We would rather have functions that, if they return at all, guarantee

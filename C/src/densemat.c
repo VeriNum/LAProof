@@ -8,9 +8,10 @@
 
 //ldoc on
 /**
+ * # `densemat.c`: Implementation of dense matrix operations
  * ## Memory management
  *
- * The `densemat_malloc` function allocates space for the head structure
+ * `densemat_malloc` allocates space for the head structure
  * (which contains the first entry in the data array) along with space
  * for the remainder of the `m*n` double precision numbers in the data array.  
  */

@@ -1,17 +1,27 @@
 # COQDOC publishing
 COQDOCEXTRAFLAGS= -g --no-lib-name --index genindex --lib-subtitles --interpolate -utf8
 
-publish: html
+publish: html cdocs
 	cd gh-pages; git submodule update
-	cd gh-pages; mkdir -p docs
+	cd gh-pages; rm -rf docs; mkdir docs
 	cp html/* gh-pages/docs
-	$(HIDE)for i in gh-pages/docs/*; do \
-	 if [ ! -f html/`basename $$i` ]; then \
-	   echo git rm --force $$i; git rm --force $$i; \
-	   fi; done
+	cp -R cdoc/*.html cdoc/*_files gh-pages/docs
 	cd gh-pages; git add docs
 	cd gh-pages; git commit -m "Publishing docs" docs
 	cd gh-pages; git push
+
+# Quarto documentation of C programs
+LDOC= 	lua cdoc/ldoc.lua
+CDOCS= cdoc/alloc.qmd cdoc/densemat.qmd cdoc/bandmat.qmd
+
+cdoc/%.html: cdoc/%.qmd
+	cd cdoc; quarto render $(notdir $^) --to html --quiet
+
+cdoc/%.qmd: C/include/%.h C/src/%.c
+	$(LDOC) -highlight c -p quarto -o $@ $^
+
+cdocs: $(patsubst %.qmd,%.html,$(CDOCS))
+
 
 # CONVERTING .c FILES TO .v FILES USING clightgen
 C/%.v: C/src/%.c

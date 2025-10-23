@@ -3,7 +3,7 @@
 
 //ldoc on
 /**
- * # Band matrix operations
+ * # `bandmat.h`: Band matrix operations
  * 
  * We store symmetric band matrices using the LAPACK symmetric band
  * format (see, e.g. `DSBTRF`).  This is a packed storage format

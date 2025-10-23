@@ -1,5 +1,9 @@
 #include <stdlib.h>
 
+//ldoc on
+/**
+ * # `alloc.c`: Memory allocation
+ */
 void *surely_malloc(size_t n) {
   void *p = malloc(n);
   if (!p) exit(1);
@@ -24,4 +28,3 @@ int *int_calloc(int n) {
      p[i]=0;
   return p;
 }
-

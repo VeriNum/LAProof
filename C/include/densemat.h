@@ -5,10 +5,10 @@
 
 //ldoc on
 /**
- * # Vector and matrix conveniences
+ * # `densemat.h`: Dense matrix operations
  * 
  * To represent a dense matrix, we define a structure `densemat_t` consisting of 
- * dimensions followed by a data array.  
+ * dimensions followed by a data array.
  */
 
 typedef struct densemat_t {
