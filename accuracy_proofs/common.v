@@ -488,6 +488,42 @@ rewrite Generic_fmt.round_generic //.
 apply Binary.generic_format_B2R.
 Qed.
 
+
+Lemma BMINUS_neg_zero: forall (c: ftype t), feq (BMINUS neg_zero (BOPP c)) c.
+Proof. destruct c; try destruct s; reflexivity. Qed.
+
+Lemma foldl_congr: forall  (op: ftype t -> ftype t -> ftype t)
+                                          (Hop: forall x y, feq x y -> forall x' y', feq x' y' ->
+                                                  feq (op x x') (op y y'))
+                                           (u v: ftype t) al bl, 
+  feq u v -> Forall2 feq al bl -> feq (foldl op u al) (foldl op v bl).
+Proof.
+intros.
+revert u v H bl H0; induction al; destruct bl; simpl; intros; inversion H0; clear H0; subst; auto.
+Qed.
+
+Lemma BPLUS_neg_zero: forall (c: ftype t), feq (BPLUS c neg_zero) c.
+Proof. destruct c; try destruct s; reflexivity. Qed.
+
+Lemma BPLUS_comm: forall (x y: ftype t),  feq (BPLUS x y) (BPLUS y x).
+Proof.
+destruct x, y; try destruct s; try destruct s0; try reflexivity;
+unfold BPLUS, BINOP, feq, Binary.Bplus, Binary.BSN2B, BinarySingleNaN.SF2B; simpl;
+rewrite (Z.min_comm e1 e);
+rewrite ?(Pos.add_comm (fst (SpecFloat.shl_align m0 e1 (Z.min e e1)))).
+1,4: destruct (BinarySingleNaN.SF2B _ _); simpl; auto.
+1,2: destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); simpl; auto.
+Qed.
+
+Lemma MINUS_PLUS_BOPP: forall x y: ftype t, feq (BMINUS x y) (BPLUS x (BOPP y)).
+Proof.
+destruct x, y; try destruct s; try destruct s0; try reflexivity;
+unfold BMINUS, BPLUS, BINOP, BOPP, UNOP, feq, Binary.Bplus, Binary.Bminus, 
+   Binary.BSN2B, BinarySingleNaN.SF2B, Binary.build_nan; simpl.
+1,4: destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); auto.
+1,2: destruct (BinarySingleNaN.SF2B _ _); auto.
+Qed.
+
 End WithType. 
 
 Global Hint Resolve 
@@ -517,4 +553,3 @@ try match goal with |-?z <> 0 =>
 field_simplify z (*; Interval.Tactic.interval *)
 end)
 end.
-

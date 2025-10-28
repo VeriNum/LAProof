@@ -74,12 +74,12 @@ forward_for_simple_bound (Z.of_nat j)
    forward_for_simple_bound (Z.of_nat i)
      (EX k':Z, EX k:'I_n,
       PROP(k'=Z.of_nat k; cholesky_jik_upto i (lshift1 j) A R)
-      LOCAL(temp _s (val_of_float (subtract_loop A R i j k) );
+      LOCAL(temp _s (val_of_float (subtract_loop_jik (A i j) R i j k) );
             temp _i (Vint (Int.repr i)); temp _j (Vint (Int.repr j)); 
             temp _n (Vint (Int.repr n)); temp _A p)
       SEP(densematn sh (joinLU M (map_mx Some R)) p))%assert.
     pose proof (ltn_ord i); lia.
-  * Exists zero. entailer!!. f_equal. unfold subtract_loop. simpl. rewrite seq.take0.
+  * Exists zero. entailer!!. f_equal. unfold subtract_loop_jik. simpl. rewrite seq.take0.
     destruct (H5 i j) as [_ [_ [_ H8]]]. rewrite H8; auto.
   * Intros. subst i0.
     assert (Hi := ltn_ord i).
@@ -92,15 +92,15 @@ forward_for_simple_bound (Z.of_nat j)
     pose (Sk := @Ordinal n _ H7).
     Exists Sk. 
     change (Vfloat
-            (Float.sub (subtract_loop A R i j k)
+            (Float.sub (subtract_loop_jik (A i j) R i j k)
                (Float.mul (R k i) (R k j))))
-    with (val_of_float (BMINUS (subtract_loop A R i j k) (BMULT (R k i) (R k j)))).
+    with (val_of_float (BMINUS (subtract_loop_jik (A i j) R i j k) (BMULT (R k i) (R k j)))).
     entailer!!. split. simpl; lia.
      f_equal.
-     unfold subtract_loop.
+     unfold subtract_loop_jik, subtract_loop.
      simpl nat_of_ord. rewrite (take_snoc k) by (rewrite size_ord_enum; lia). 
-     rewrite !map_app, fold_left_app.
-     simpl. rewrite !nth_ord_enum'.  f_equal.
+     rewrite !seq.map_cat, seq.foldl_cat.
+     simpl. rewrite !nth_ord_enum'.  reflexivity.
     *
     Intros k'.
     assert (i=k')%nat by (apply ord_inj; lia). subst k'.
@@ -108,7 +108,7 @@ forward_for_simple_bound (Z.of_nat j)
     unfold joinLU, map_mx. rewrite !mxE. simpl. replace (ssrnat.leq _ _) with true by lia. auto.
     pose (X := existT _ (n,n) (joinLU M (map_mx Some R),(i,j)) 
           : {mn : nat * nat & 'M[option (ftype the_type)]_(fst mn, snd mn) * ('I_(fst mn) * 'I_(snd mn))}%type).
-    forward_call (X,p,sh, BDIV (subtract_loop A R i j i) (R i i)); clear X.
+    forward_call (X,p,sh, BDIV (subtract_loop_jik (A i j) R i j i) (R i i)); clear X.
     set (rij := BDIV _ _).
     assert (Datatypes.is_true (ssrnat.leq (S (S i)) n)) by (pose proof ltn_ord j; lia).
     pose (i1 := @Ordinal n _ H7).
@@ -130,11 +130,11 @@ forward_for_simple_bound (Z.of_nat j)
    forward_for_simple_bound (Z.of_nat i)
      (EX k':Z, EX k:'I_n,
       PROP(k' = Z.of_nat k)
-      LOCAL(temp _s (val_of_float (subtract_loop A R i i k) );
+      LOCAL(temp _s (val_of_float (subtract_loop_jik (A i i) R i i k) );
             temp _j (Vint (Int.repr i)); 
             temp _n (Vint (Int.repr n)); temp _A p)
       SEP(densematn sh (joinLU M (map_mx Some R)) p)).
-  * Exists zero. entailer!!. unfold subtract_loop. simpl. rewrite seq.take0.
+  * Exists zero. entailer!!. unfold subtract_loop_jik. simpl. rewrite seq.take0.
     f_equal. destruct (H4 i i) as [_ [_ [? ?]]]. symmetry; apply H6; lia.
   * Intros. subst i0.
     forward_densematn_get  (joinLU M (map_mx Some R)) k i p sh (R k i).
@@ -154,10 +154,10 @@ forward_for_simple_bound (Z.of_nat j)
    is resolved. *)
  unfold BSQRT, UNOP. f_equal. extensionality x. simpl. f_equal. apply proof_irr.
    }
-    forward_densematn_set  (joinLU M (map_mx Some R)) i i p sh (BSQRT (subtract_loop A R i i i)).
+    forward_densematn_set  (joinLU M (map_mx Some R)) i i p sh (BSQRT (subtract_loop_jik (A i i) R i i i)).
     assert (Datatypes.is_true (ssrnat.leq (S (S i)) (S n))) by (lia).
     Exists (@Ordinal (S n) (S i) H6).
-    Exists (update_mx R i i (BSQRT (subtract_loop A R i i i))).
+    Exists (update_mx R i i (BSQRT (subtract_loop_jik (A i i) R i i i))).
     entailer!!. split. simpl. lia.
     apply cholesky_jik_upto_newrow; auto.   
     apply derives_refl'. f_equal.
@@ -213,22 +213,21 @@ assert (HML: forall i j: 'I_n, (j <= i) -> M j i = Some (L i j)). {
    destruct (M i i); try contradiction; auto.
 }
 
-pose (fstep i := fold_left (forward_subst_step L) (sublist 0 i (ord_enum n)) x).
+pose (fstep i := seq.foldl (forward_subst_step L) x (sublist 0 i (ord_enum n))).
 forward_for_simple_bound (Z.of_nat n) (EX i:Z,
    PROP ( )
    LOCAL (temp _R p; temp _x xp; temp _n (Vint (Int.repr n)))
    SEP (densematn rsh M p; 
             densematn sh (map_mx Some (fstep i)) xp))%assert.
-- unfold fstep, fold_left; rewrite sublist_nil; entailer!!.
+- unfold fstep, seq.foldl; rewrite sublist_nil; entailer!!.
 - ordify n i.
   assert (IHn : Inhabitant 'I_n) by exact i. 
   forward_densematn_get (map_mx Some (fstep i)) i (@ord0 O) xp sh (fstep i i ord0).
   apply mxE.
   forward_for_simple_bound (Z.of_nat i) (EX j:Z,
    PROP ( )
-   LOCAL (temp _bi (val_of_float (fold_left BMINUS 
-                     (map (fun j => BMULT (L i j) (fstep i j ord0)) (sublist 0 j (ord_enum n)))
-                      (fstep i i ord0))); 
+   LOCAL (temp _bi (val_of_float (seq.foldl BMINUS (fstep i i ord0)
+                     (map (fun j => BMULT (L i j) (fstep i j ord0)) (sublist 0 j (ord_enum n))))); 
           temp _i (Vint (Int.repr i)); temp _R p; 
    temp _x xp; temp _n (Vint (Int.repr n)))
    SEP (densematn rsh M p;
@@ -248,7 +247,7 @@ forward_for_simple_bound (Z.of_nat n) (EX i:Z,
   pose proof (Zlength_ord_enum n). 
    f_equal.
    rewrite (sublist_split 0 j (Z.of_nat j + 1)) by lia. 
-   rewrite map_app, fold_left_app.   
+   rewrite map_app, seq.foldl_cat.   
    rewrite (sublist_one j (j+1)) by lia.
    simpl.
   rewrite Znth_ord_enum.
@@ -256,16 +255,16 @@ forward_for_simple_bound (Z.of_nat n) (EX i:Z,
  +    
    forward_densematn_get M i i p rsh (L i i).
    apply HML; lia.
-  set (bi := fold_left _ _ _ ).
+  set (bi := seq.foldl _ _ _ ).
   forward_densematn_set (map_mx Some (fstep i)) i (@ord0 O) xp sh (BDIV bi (L i i)).
   entailer!!.
   apply derives_refl'. f_equal.
    unfold fstep.
    rewrite (sublist_split 0 i (i+1)) by lia.
-   rewrite fold_left_app.
+   rewrite seq.foldl_cat.
    rewrite (sublist_one i) by lia. simpl.
   rewrite Znth_ord_enum.
-  set (al := fold_left _ _ _).
+  set (al := seq.foldl _ _ _).
   subst bi. change (fstep i)  with al.
   unfold forward_subst_step.
   change ssralg.GRing.zero with (@ord0 O).
@@ -277,8 +276,11 @@ forward_for_simple_bound (Z.of_nat n) (EX i:Z,
   unfold map_mx; rewrite !mxE.
   ord1_eliminate j'.
   simpl.
+  subst uu. unfold subtract_loop.
   destruct (Nat.eq_dec _ _); auto.
-
+ simpl. f_equal. f_equal. f_equal.
+ rewrite map_map.
+  apply seq.eq_in_map. intros ? ?. reflexivity.
 - 
  deadvars!.
  pose (R := map_mx optfloat_to_float M).
@@ -292,7 +294,7 @@ assert (HMR: forall i j: 'I_n, (j >= i) -> M i j = Some (R i j)). {
  destruct (M i j); try contradiction; auto.
 }
 
-pose (bstep i := fold_left (backward_subst_step R) (rev (sublist i  n (ord_enum n))) (fstep n)).
+pose (bstep i := seq.foldl (backward_subst_step R) (fstep n) (rev (sublist i  n (ord_enum n)))).
 
 forward_loop (EX i:Z,
    PROP (0 <= i <= n)
@@ -318,9 +320,8 @@ forward_loop (EX i:Z,
   forward_for_simple_bound (Z.of_nat n) (EX j:Z,
    PROP (i1 < j)
    LOCAL (temp _yi (val_of_float 
-            (fold_left BMINUS 
-              (map (fun j => BMULT (R i1 j) (bstep i j ord0)) (sublist i j (ord_enum n)))
-                      (bstep i i1 ord0)));
+            (seq.foldl BMINUS (bstep i i1 ord0)
+              (map (fun j => BMULT (R i1 j) (bstep i j ord0)) (sublist i j (ord_enum n)))));
           temp _i__1 (Vint (Int.repr i)); temp _R p; 
           temp _x xp; temp _n (Vint (Int.repr n)))
    SEP (densematn rsh M p;
@@ -338,7 +339,7 @@ forward_loop (EX i:Z,
    entailer!!.
    rewrite (sublist_split i j) by lia.
    rewrite (sublist_one j) by lia.
-   rewrite map_app, fold_left_app.
+   rewrite map_app, seq.foldl_cat.
    simpl.
    rewrite Znth_ord_enum.
    reflexivity.
@@ -347,7 +348,7 @@ forward_loop (EX i:Z,
    entailer!!. simpl. repeat f_equal; lia.
    apply HMR; lia.
     Intros vret. subst vret.
-   set (bi := fold_left _ _ _).
+   set (bi := seq.foldl _ _ _).
    forward_densematn_set (map_mx Some (bstep i)) i1 (@ord0 O) xp sh (BDIV bi (R i1 i1)).
    entailer!!. simpl; repeat f_equal; lia.
    forward.
@@ -359,10 +360,11 @@ forward_loop (EX i:Z,
    rewrite (sublist_split i1 (i1+1)) by lia.
    rewrite (sublist_one i1) by lia.
    simpl rev.
-   rewrite fold_left_app.
+   rewrite seq.foldl_cat.
    simpl.
    rewrite Znth_ord_enum.
    unfold backward_subst_step at 1.
+   unfold subtract_loop.
    apply matrixP; intros i' j'.
    unfold update_mx, map_mx; rewrite !mxE.
    ord1_eliminate j'.
@@ -370,6 +372,7 @@ forward_loop (EX i:Z,
    rewrite drop_sublist.
    f_equal. f_equal. subst bi. f_equal.
    change @seq.map with @map.
+   rewrite map_map.
    f_equal. f_equal; lia.
   *
    forward.
