@@ -1,11 +1,27 @@
+(** * Importing a proof from libValidSDP into LAProof *)
+
+(** libValidSDP and LAProof each have proofs about the accuracy of linear-algebra operations in 
+  floating-point, but they represent floating-point very differently.
+ -  LAProof says that [ftype t] is an IEEE-754 floating-point number with a number of exponent bits
+   and mantissa bits specified by [t], and with all the Infinity and NaN behaviors specified by IEEE-754.
+ - libValidSDP says that a floating pointer number is a real number that satisfies the [format] predicate,
+     where [format] is a predicate [R->bool].  The abstraction in libValidSDP makes some things easier
+     to prove, perhaps; in any case, some very useful things are proved there.  But we might not want
+     to use the [format] abstraction globally, because then we couldn't distinguish infinities from NaNs.
+  Because it is proved (in module libvalidsdp.flocq_float) that the IEEE floats are an instance of
+  a legal format, one can import theorems from libValidSDP into LAProof (though not vice versa).
+  This module is a demonstration of how to do that.  The theorem in libValidSDP is 
+     [cholesky.lemma_2_1], and it is imported here as [LVSDP_lemma_2_1].
+ 
+*)
+
+
 From LAProof.accuracy_proofs Require Import preamble common.
 From libValidSDP Require cholesky flocq_float float_spec float_infnan_spec flocq_float binary_infnan.
 
 Section WithNaN.
 
-
 Context {NAN: FPCore.Nans} {t : type}.
-
 
 Definition default_rel : R :=
   / 2 * Raux.bpow Zaux.radix2 (- fprec t + 1).
@@ -26,7 +42,13 @@ Notation eps := (default_rel).
 Notation eta := (default_abs).
 
 Lemma default_abs_nonzero:  default_abs <> 0.
-Admitted. (* easy *)
+rewrite /eta.
+apply Rmult_integral_contrapositive.
+split. lra.
+rewrite bpow_powerRZ.
+apply powerRZ_NOR.
+simpl. lra.
+Qed.
 
 Definition fspec := @flocq_float.flocq_float (fprecp t) (femax t) (fprec_gt_one _) prec_lt_emax.
 
@@ -34,7 +56,10 @@ Lemma fspec_eta_nonzero: float_spec.eta fspec <> 0.
 Proof.
 simpl.
 rewrite /flocq_float.eta.
-Admitted.  (* easy *)
+rewrite bpow_powerRZ.
+apply powerRZ_NOR.
+simpl. lra.
+Qed.
 
 Definition iszero {t} (x: ftype t) : bool := 
   match x with Binary.B754_zero _ _ _ => true | _ => false end.
@@ -458,6 +483,28 @@ rewrite !ffunE.
 rewrite rshift1; auto.
 Qed.
 
+Lemma LVSDP_ytilded_eq: forall [k] (a b : F ^ k) (c bk: F),
+    Binary.is_finite bk ->
+    Binary.is_finite (ytilded c a b bk) ->
+  float_spec.FS_val (cholesky.ytilded (mkFS c) [ffun i => mkFS (fun_of_fin a i)]  [ffun i => mkFS (fun_of_fin b i)]  (mkFS bk)) =
+  FT2R (ytilded c a b bk).
+Proof.
+intros * FINbk H. 
+rewrite /cholesky.ytilded /ytilded /cholesky.stilde /stilde.
+rewrite -FS_val_fdiv'; auto.
+f_equal. f_equal.
+rewrite /ytilded /stilde in H.
+apply BDIV_finite_e in H; auto.
+rewrite LVSDP_fcmsum_eq; auto.
+f_equal. apply eq_dffun => i.
+rewrite !ffunE.
+rewrite FS_val_mkFS -FS_val_fmult' //.
+destruct (fsum_l2r_rec_finite_e1 _ _ _ H).
+specialize (H1 i).
+rewrite !ffunE in H1.
+destruct (BMULT _ _); try discriminate; auto.
+Qed.
+
 Lemma LVSDP_lemma_2_1 k (a b : F^k) (c bk : F) 
    (Hbk : ~iszero bk)
    (FINbk: Binary.is_finite bk)
@@ -466,7 +513,6 @@ Lemma LVSDP_lemma_2_1 k (a b : F^k) (c bk : F)
   < INR k.+1 * eps * (Rabs (FT2R bk * FT2R (ytilded c a b bk)) + \sum_i Rabs (FT2R(a i) * FT2R(b i)))
     + (1 + INR k.+1 * eps) * (INR k.+1 + Rabs (FT2R bk)) * eta.
 Proof.
-
 pose a' := [ffun i => mkFS (a i)].
 pose b' := [ffun i => mkFS (b i)].
 have Hbk': float_spec.FS_val (mkFS bk) <> 0. {
@@ -475,38 +521,19 @@ have Hbk': float_spec.FS_val (mkFS bk) <> 0. {
 }
 pose proof @cholesky.lemma_2_1 fspec fspec_eta_nonzero k a' b' (mkFS c) (mkFS bk) Hbk'.
 repeat change (float_spec.FS_val (mkFS ?x)) with (FT2R x) in H|-*.
-replace (float_spec.FS_val (cholesky.ytilded (mkFS c) a' b' (mkFS bk))) with (FT2R (ytilded c a b bk)) in H; [ | clear H].
-replace (\sum_i (float_spec.FS_val _ * _)) with (\sum_i (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H; [ | clear H].
-replace (\sum_i Rabs (float_spec.FS_val _ * _)) with (\sum_i Rabs (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H; [ | clear H].
-replace (float_spec.eta fspec) with eta in H; [ | clear H].
-replace (float_spec.eps fspec) with eps in H; [ | clear H].
+rewrite LVSDP_ytilded_eq in H; auto.
+replace (\sum_i (float_spec.FS_val _ * _)) with (\sum_i (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H.
+2: apply eq_big; auto; move => i _; rewrite /a' /b' !ffunE //.
+replace (\sum_i Rabs (float_spec.FS_val _ * _)) with (\sum_i Rabs (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H.
+2: apply eq_big; auto; move => i _; rewrite /a' /b' !ffunE //.
+replace (float_spec.eta fspec) with eta in H.
+2: rewrite /eta /flocq_float.eta /fspec /flocq_float.flocq_float /float_spec.eta /flocq_float.eta bpow_minus1;
+      simpl IZR; change (flocq_float.prec) with (fprec t); nra.
+replace (float_spec.eps fspec) with eps in H.
 apply H.
--
 simpl.
 rewrite /eps /flocq_float.eps /flocq_float.prec.
 rewrite bpow_plus_1.
 fold (fprec t).
 simpl. nra.
--
-rewrite /eta /flocq_float.eta /fspec /flocq_float.flocq_float /float_spec.eta /flocq_float.eta bpow_minus1.
-simpl IZR. change (flocq_float.prec) with (fprec t). nra.
--
-apply eq_big; auto; move => i _; rewrite /a' /b' !ffunE //.
--
-apply eq_big; auto; move => i _; rewrite /a' /b' !ffunE //.
--
-rewrite /cholesky.ytilded /ytilded /cholesky.stilde /stilde.
-rewrite -FS_val_fdiv'; auto.
-f_equal. f_equal.
-rewrite /ytilded /stilde in FINyt.
-apply BDIV_finite_e in FINyt; auto.
-clear bk FINbk Hbk Hbk'.
-rewrite LVSDP_fcmsum_eq; auto.
-f_equal. apply eq_dffun => i.
-rewrite !ffunE.
-rewrite FS_val_mkFS -FS_val_fmult' //.
-destruct (fsum_l2r_rec_finite_e1 _ _ _ FINyt).
-specialize (H0 i).
-rewrite !ffunE in H0.
-destruct (BMULT _ _); try discriminate; auto.
 Qed.
