@@ -17,6 +17,7 @@ accuracy_proofs/gemv_acc.v
 accuracy_proofs/vec_op_acc.v
 accuracy_proofs/gemm_acc.v
 accuracy_proofs/export.v
+accuracy_proofs/fcmsumxy.v
 
 C/floatlib.v
 C/sparse_model.v
