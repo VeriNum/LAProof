@@ -537,3 +537,5 @@ rewrite bpow_plus_1.
 fold (fprec t).
 simpl. nra.
 Qed.
+
+End WithNaN.
