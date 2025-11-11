@@ -61,17 +61,57 @@ Definition update_mx {T} [m n] (M: 'M[T]_(m,n)) (i: 'I_m) (j: 'I_n) (x: T) : 'M[
 
 Definition neg_zero {t}: ftype t := Binary.B754_zero (fprec t) (femax t) true.
 
+
+Lemma map_inj: forall [T1 T2] (f: T1 -> T2) (H: injective f) (al bl: list T1), map f al = map f bl -> al=bl.
+Proof.
+induction al; destruct bl; simpl; intros; inversion H0; clear H0; subst; auto.
+f_equal; auto.
+Qed.
+
+Lemma enum_mem_ordinal: forall n, enum_mem (mem (ordinal n)) = ord_enum n.
+Proof.
+move => n. 
+apply (@map_inj _ _ (@nat_of_ord n) (@ord_inj _)).
+rewrite val_ord_enum val_enum_ord //.
+Qed.
+
+
+Definition widen_ik {n} (i: 'I_n) (k: 'I_i) : 'I_n := 
+   widen_ord (ltnW (ltn_ord i)) k.
+
+Lemma take_ord_enum: forall [n] (k: 'I_n), take k (ord_enum n) = map (@widen_ik _ _) (ord_enum k).
+Proof.
+intros.
+  destruct k as [k H]; simpl in *.
+  unfold widen_ik. simpl.
+  set (H0 := ltnW _). clearbody H0.
+  change (fun _ => _) with (@widen_ord k n H0).
+  apply (@map_inj _ _ (@nat_of_ord n)). apply ord_inj.
+  rewrite map_take val_ord_enum take_iota /minn H /ord_enum -map_comp pmap_filter.
+  2: move => x; unfold insub; destruct idP; auto.
+  clear.
+  destruct k; auto.
+  set (n := S k) in *.
+  replace (fun x => isSome (insub x)) with (fun x => leq (S x) (addn O n)).
+  2: extensionality m; unfold isSome, insub; destruct idP; auto.
+  rewrite filter_iota_ltn; auto; lia.
+  lia.
+Qed.
+
+
 (** * Functional model of Cholesky decomposition (jik algorithm) *)
 (** The next three definitions, up to [cholesky_jik_spec], are adapted from
   similar definitions in coq-libvalidsdp by P. Roux et al. *)
 
+Definition subtract_loop {t} (c: ftype t) (l: seq (ftype t * ftype t)) :=
+  foldl BMINUS c (map (uncurry BMULT) l).
 
-Definition subtract_loop {t} [n] (A R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
-  fold_left BMINUS  (map (fun k' => BMULT (R k' i) (R k' j)) (take k (ord_enum n)))  (A i j).
+Definition subtract_loop_jik {t}  [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
+   subtract_loop c (map (fun k' => (R k' i, R k' j)) (take k (ord_enum n))).
 
 Definition cholesky_jik_ij {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
-     (forall Hij: (i<j)%N, R i j = BDIV (subtract_loop A R i j i) (R i i))  
-   /\ (forall Hij: i=j, R i j = BSQRT (subtract_loop A R i j i)).
+     (forall Hij: (i<j)%N, R i j = BDIV (subtract_loop_jik (A i j) R i j i) (R i i))  
+   /\ (forall Hij: i=j, R i j = BSQRT (subtract_loop_jik (A i j) R i j i)).
 
 Definition cholesky_jik_spec {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
   forall i j, cholesky_jik_ij A R i j.
@@ -98,12 +138,54 @@ Inductive sum_any {t}: forall (v: list (ftype t)) (s: ftype t), Prop :=
 | Sum_Any_perm: forall al bl s, Permutation al bl -> sum_any al s -> sum_any bl s.
 (* END copied form iterative_methods/sparse/sparse_model.v *)
 
-Definition subtract_loop' {t} [n] (A R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t -> Prop :=
-  sum_any (A i j :: map (fun k' => BOPP (BMULT (R k' i) (R k' j))) (take k (ord_enum n))).
+Definition subtract_loop_any {t} [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t -> Prop :=
+  sum_any (c :: map (fun k' => BOPP (BMULT (R k' i) (R k' j))) (take k (ord_enum n))).
 
-Definition cholesky_jik_ij' {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
-     ((i < j)%N -> exists x, subtract_loop' A R i j i x /\ R i j = BDIV x (R i i))
-   /\ (i=j -> exists x, subtract_loop' A R i j i x /\ R i j = BSQRT x).
+Definition cholesky_jik_ij_any {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
+     ((i < j)%N -> exists x, subtract_loop_any (A i j) R i j i x /\ R i j = BDIV x (R i i))
+   /\ (i=j -> exists x, subtract_loop_any (A i j) R i j i x /\ R i j = BSQRT x).
+
+
+Module AlternatePresentations.
+(* This module discusses other possible presentations of the subtract loop. *)
+
+Definition subtract_loop_ffuns' {t} [n: nat] (c: ftype t) (a b: (ftype t)^n) : ftype t :=
+   foldl BMINUS c (map (uncurry BMULT) (zip (image a 'I_n) (image b 'I_n))).
+
+Definition subtract_loop_ffuns {t} [n: nat] (c: ftype t) (a b: (ftype t)^n) : ftype t :=
+   foldl BMINUS c (map (fun k => BMULT (a k) (b k)) (ord_enum n)).
+
+Remark subtract_loop_ffuns_ffuns' {t} [n] c a b:
+       @subtract_loop_ffuns t n c a b = subtract_loop_ffuns' c a b.
+Proof.
+rewrite /subtract_loop_ffuns /subtract_loop_ffuns' /image_mem enum_mem_ordinal zip_map -map_comp //.
+Qed.
+
+Definition subtract_loop_alt {t} [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
+   subtract_loop_ffuns c [ffun k': 'I_k => R (widen_ik k') i] [ffun k': 'I_k => R (widen_ik k') j].
+
+Definition subtract_loop_listpairs {t} (c: ftype t) (l: seq (ftype t * ftype t)) :=
+  foldl BMINUS c (map (uncurry BMULT) l).
+
+Definition subtract_loop_original {t} [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
+  foldl BMINUS c (map (fun k' => BMULT (R k' i) (R k' j)) (take k (ord_enum n))).
+
+Remark subtract_loop_jik_original {t} [n] c R i j k:
+   @subtract_loop_jik t n c R i j k = @subtract_loop_original t n c R i j k.
+Proof.
+rewrite /subtract_loop_jik /subtract_loop /subtract_loop_listpairs -map_comp //.
+Qed.
+
+Remark subtract_loop_alt_original {t} [n] c R i j k:
+    @subtract_loop_alt t n c R i j k = @subtract_loop_original t n c R i j k.
+Proof.
+rewrite /subtract_loop_alt /subtract_loop_original /subtract_loop_ffuns take_ord_enum -map_comp.
+f_equal.
+apply eq_in_map => x _.
+rewrite /comp !ffunE //.
+Qed.
+
+End AlternatePresentations.
 
 (** Supporting lemmas for proving steps of the Cholesky "jik" algorithm *)
 
@@ -153,7 +235,7 @@ Lemma update_i_lt_j:
    (i1: 'I_n)
    (Hi1: nat_of_ord i1 = S i),
    cholesky_jik_upto i (lshift1 j) A R ->
-   let rij := BDIV (subtract_loop A R i j i) (R i i) in
+   let rij := BDIV (subtract_loop_jik (A i j) R i j i) (R i i) in
     @cholesky_jik_upto t n i1 (lshift1 j) A (update_mx R i j rij).
 Proof.
 intros * Hij i1 Hi1 H1 rij i' j'.
@@ -173,14 +255,14 @@ destruct (Nat.eq_dec _ _); simpl.
 * destruct (Nat.eq_dec _ _); [ lia | simpl].
   apply ord_inj in e; subst i.
   rewrite H1. f_equal.
-  unfold subtract_loop.
+  unfold subtract_loop_jik.
   f_equal.
   apply eq_in_subrange; intros a H3; simpl.
   rewrite !mxE; simpl. 
   destruct (Nat.eq_dec _ _); auto; lia.
   destruct (Nat.eq_dec _ _); auto; lia.
 * rewrite H1. f_equal.
-  unfold subtract_loop.
+  unfold subtract_loop_jik.
   f_equal.
   apply eq_in_subrange; intros a H3; simpl.
   rewrite !mxE.
@@ -193,7 +275,7 @@ destruct (Nat.eq_dec _ _); simpl.
   destruct (Nat.eq_dec _ _); try lia.
   specialize (H1 (Logic.eq_refl _)).
   rewrite H1. simpl. f_equal.
-  unfold subtract_loop.
+  unfold subtract_loop_jik.
   f_equal.
   apply eq_in_subrange; intros a H3; simpl.
   rewrite !mxE.
@@ -201,7 +283,7 @@ destruct (Nat.eq_dec _ _); simpl.
   *
   specialize (H1 (Logic.eq_refl _)).
   rewrite H1. simpl. f_equal.
-  unfold subtract_loop.
+  unfold subtract_loop_jik.
   f_equal.
   apply eq_in_subrange; intros a H3; simpl.
   rewrite !mxE. simpl in H2.
@@ -223,7 +305,7 @@ destruct (Nat.eq_dec _ _); simpl.
     clear n0 H3.
     f_equal.
   match goal with |- _ = _ _ ?ff _ _ _ => set (f:=ff) end.
-  unfold subtract_loop.
+  unfold subtract_loop_jik.
   f_equal.
   apply eq_in_subrange; intros a H3; simpl.
   subst f. rewrite !mxE.
@@ -234,7 +316,7 @@ destruct (Nat.eq_dec _ _); simpl.
    destruct H1 as [H1 _]; auto; try lia.
    rewrite H1; auto.
    f_equal.
-  unfold subtract_loop.
+  unfold subtract_loop_jik.
   f_equal.
   apply eq_in_subrange; intros a H3; simpl.
   rewrite !mxE.
@@ -297,21 +379,18 @@ Lemma subtract_another:
     (Hkj: (k < j)%N)
     (k1: 'I_n)
     (Hk1: nat_of_ord k1 = S k),
-    subtract_loop A R i j k1 = 
-     BMINUS (subtract_loop A R i j k) (BMULT (R k i) (R k j)).
+    subtract_loop_jik (A i j) R i j k1 = 
+     BMINUS (subtract_loop_jik (A i j) R i j k) (BMULT (R k i) (R k j)).
 Proof.
 intros.
 assert (Datatypes.is_true (leq (S (S (nat_of_ord k))) n)).
   pose proof ltn_ord k1; lia.
 assert (k1 = @Ordinal n (S k) H). apply ord_inj; auto.
 subst k1.
-unfold subtract_loop at 1.
+unfold subtract_loop_jik at 1.
 rewrite (take_snoc i).
   2: (rewrite  size_ord_enum; pose proof ltn_ord k;  lia).
-rewrite !map_cat.
-simpl map.
-rewrite fold_left_app; simpl; f_equal.
-rewrite nth_ord_enum'. auto.
+rewrite /subtract_loop !map_cat /= foldl_cat /= nth_ord_enum' //.
 Qed.
 
 (* END copied from iterative_methods/cholesky/verif_cholesky.v *)
@@ -326,7 +405,7 @@ Lemma cholesky_jik_upto_newrow:
  forall t n (j: 'I_n) (A R: 'M[ftype t]_n),
   cholesky_jik_upto j (lshift1 j) A R ->
   cholesky_jik_upto (@Ordinal n 0 (leq_ltn_trans (leq0n j) (ltn_ord j)))
-     (@Ordinal n.+1 (j.+1)%N (ltn_ord j)) A (update_mx R j j (BSQRT (subtract_loop A R j j j))).
+     (@Ordinal n.+1 (j.+1)%N (ltn_ord j)) A (update_mx R j j (BSQRT (subtract_loop_jik (A j j) R j j j))).
 Proof.
 pose proof I.
 intros.
@@ -341,7 +420,7 @@ split; [ | split3]; intros; try split; hnf; intros; try lia.
    destruct (Nat.eq_dec _ _); [lia  |]. simpl.
    destruct H2.
    rewrite H1; [ |apply Hij]. f_equal.
-   * unfold subtract_loop. f_equal.
+   * unfold subtract_loop_jik. f_equal.
      apply eq_in_subrange.
      intros. unfold update_mx. rewrite !mxE.
      repeat (destruct (Nat.eq_dec _ _)); try lia. auto.
@@ -351,7 +430,7 @@ split; [ | split3]; intros; try split; hnf; intros; try lia.
    unfold update_mx at 1. rewrite mxE.
    repeat destruct (Nat.eq_dec _ _); try lia. simpl.
    rewrite H4. f_equal.
-   * unfold subtract_loop. f_equal.
+   * unfold subtract_loop_jik. f_equal.
      apply eq_in_subrange.
      intros. unfold update_mx. rewrite !mxE.
      repeat destruct (Nat.eq_dec _ _); try lia; auto.
@@ -362,7 +441,7 @@ split; [ | split3]; intros; try split; hnf; intros; try lia.
  + apply ord_inj in e. subst. unfold update_mx. rewrite !mxE.
    repeat destruct (Nat.eq_dec _ _); try lia; auto. simpl.
    f_equal.
-   unfold subtract_loop. f_equal.
+   unfold subtract_loop_jik. f_equal.
    apply eq_in_subrange.
    intros. rewrite !mxE.
    repeat destruct (Nat.eq_dec _ _); try lia; auto. 
@@ -371,7 +450,7 @@ split; [ | split3]; intros; try split; hnf; intros; try lia.
    simpl.
    destruct (H1 ltac:(lia)). rewrite H6; auto.
    f_equal.
-   unfold subtract_loop. f_equal.
+   unfold subtract_loop_jik. f_equal.
    apply eq_in_subrange.
    intros. unfold update_mx. rewrite !mxE.
    repeat destruct (Nat.eq_dec _ _); try lia; auto.
@@ -385,30 +464,36 @@ Qed.
 
 (** Functional models of forward substitution and back substitution *)
 
+
+Goal forall {t} [n] (L: 'M[ftype t]_n) (x: 'cV[ftype t]_n) (i: 'I_n),
+  foldl BMINUS (x i ord0)
+           (map (fun j => BMULT (L i j) (x j ord0)) (take i (ord_enum n))) =
+  subtract_loop (x i ord0) (map (fun j => (L i j, x j ord0)) (take i (ord_enum n))).
+Proof.
+intros.
+rewrite /subtract_loop -map_comp //.
+Qed.
+
 Definition forward_subst_step {t: type} [n: nat] 
          (L: 'M[ftype t]_n) (x: 'cV[ftype t]_n) (i: 'I_n) 
      : 'cV_n  :=
    update_mx x i ord0
-    (BDIV (fold_left BMINUS
-           (map (fun j => BMULT (L i j) (x j ord0)) (take i (ord_enum n)))
-           (x i ord0))
+    (BDIV (subtract_loop (x i ord0) (map (fun j => (L i j, x j ord0)) (take i (ord_enum n))))
           (L i i)).
 
 Definition forward_subst [t: type] [n]
          (L: 'M[ftype t]_n) (x: 'cV[ftype t]_n) : 'cV_n :=
-  fold_left (forward_subst_step L) (ord_enum n) x.
+  foldl (forward_subst_step L) x (ord_enum n).
 
 Definition backward_subst_step {t: type} [n: nat]
          (U: 'M[ftype t]_n) (x: 'cV[ftype t]_n) (i: 'I_n) : 'cV_n :=
     update_mx x i ord0
-      (BDIV (fold_left BMINUS 
-              (map (fun j => BMULT (U i j) (x j ord0)) (drop (i+1) (ord_enum n)))
-              (x i ord0))
+      (BDIV (subtract_loop (x i ord0) (map (fun j => (U i j, x j ord0)) (drop (i+1) (ord_enum n))))
          (U i i)).
 
 Definition backward_subst {t: type} [n: nat]
          (U: 'M[ftype t]_n) (x: 'cV[ftype t]_n) : 'cV[ftype t]_n :=
-     fold_left (backward_subst_step U) (rev (ord_enum n)) x.
+     foldl (backward_subst_step U) x (rev (ord_enum n)).
 
 (** * Definitions for manipulating triangular matrices *)
 

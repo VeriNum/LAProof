@@ -453,102 +453,10 @@ Qed.
 (** subtract_loop is a variant on summation used in some implementations of Cholesky decomposition,
   among other things.  We should be able to prove an equivalence, of sorts, with sum_rel,
   so that the accuracy theorem for sum_rel can apply here as well. *)
-Definition subtract_loop: forall (c: ftype t) (al: list (ftype t)), ftype t := foldl BMINUS.
-
-Lemma BMINUS_neg_zero: forall (c: ftype t), feq (BMINUS neg_zero (BOPP c)) c.
-Proof. destruct c; try destruct s; reflexivity. Qed.
-
-Lemma subtract_loop_congr1: forall  (u v: ftype t) al, 
-  feq u v -> feq (subtract_loop u al) (subtract_loop v al).
-Proof.
-intros.
-revert u v H; induction al; simpl; intros; auto.
-apply IHal. rewrite H; auto.
-Qed.
-
-(* Don't seem to need this yet.  . . .
-Definition loose_feq (x y: ftype t) : Prop :=
- match x,y with
- | Binary.B754_zero _ _ _, Binary.B754_zero _ _ _ => true
- | Binary.B754_zero _ _ _, _ => false
- | _, Binary.B754_zero _ _ _ => false
- | Binary.B754_finite _ _ b1 m1 e1 _, Binary.B754_finite _ _ b2 m2 e2 _ => 
-      and (eq b1 b2) (and (eq m1 m2) (eq e1 e2))
- | Binary.B754_finite _ _ _ _ _ _, _ => false
- | _, Binary.B754_finite _ _ _ _ _ _ => false
- | _, _ => true
- end.  
-
-Lemma loose_feq_refl : Relation_Definitions.reflexive _ loose_feq.
-Proof.
-intro x; destruct x; simpl; auto.
-Qed.
-
-Lemma loose_feq_sym : Relation_Definitions.symmetric (ftype t) loose_feq.
-Proof.
-intros x y; destruct x,y; simpl; auto.
-intros [? [? ?]].
-subst. auto.
-Qed.
-
-Lemma loose_feq_trans: Relation_Definitions.transitive (ftype t) loose_feq.
-Proof.
-intros x y z.
-destruct x,y,z; simpl; intros; auto; try contradiction; try discriminate.
-destruct H as [? [? ?]]; destruct H0 as [? [? ?]]; subst; auto.
-Qed.
-
-Add Parametric Relation : (ftype t) loose_feq
-  reflexivity proved by loose_feq_refl
-  symmetry proved by loose_feq_sym
-  transitivity proved by loose_feq_trans
-   as loose_feq_rel.
-
-Add Parametric Morphism: (@BPLUS NAN t)
- with signature loose_feq ==> loose_feq ==> loose_feq
- as loose_BPLUS_mor.
-Proof.
-intros.
-destruct x,y; inversion H; clear H; subst; destruct x0,y0; inversion H0; clear H0; subst; 
-repeat match goal with s: bool |- _ => destruct s end; simpl in *;
-repeat match goal with H: _ /\ _ |- _ => destruct H end;
-subst;
-repeat proof_irr; 
-try constructor; auto; try reflexivity.
-Qed.
-
-Lemma feq_loose_feq: forall x y, feq x y -> loose_feq x y.
-Proof.
-intros.
-destruct x, y; try destruct s; try destruct s0; simpl in *; auto.
-Qed.
-
-*)
-
-Lemma BPLUS_neg_zero: forall (c: ftype t), feq (BPLUS c neg_zero) c.
-Proof. destruct c; try destruct s; reflexivity. Qed.
-
-Lemma BPLUS_comm: forall (x y: ftype t),  feq (BPLUS x y) (BPLUS y x).
-Proof.
-destruct x, y; try destruct s; try destruct s0; try reflexivity;
-unfold BPLUS, BINOP, feq, Binary.Bplus, Binary.BSN2B, BinarySingleNaN.SF2B; simpl;
-rewrite (Z.min_comm e1 e);
-rewrite ?(Pos.add_comm (fst (SpecFloat.shl_align m0 e1 (Z.min e e1)))).
-1,4: destruct (BinarySingleNaN.SF2B _ _); simpl; auto.
-1,2: destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); simpl; auto.
-Qed.
-
-Lemma MINUS_PLUS_BOPP: forall x y: ftype t, feq (BMINUS x y) (BPLUS x (BOPP y)).
-Proof.
-destruct x, y; try destruct s; try destruct s0; try reflexivity;
-unfold BMINUS, BPLUS, BINOP, BOPP, UNOP, feq, Binary.Bplus, Binary.Bminus, 
-   Binary.BSN2B, BinarySingleNaN.SF2B, Binary.build_nan; simpl.
-1,4: destruct (BinarySingleNaN.binary_normalize _ _ _ _ _ _ _ _); auto.
-1,2: destruct (BinarySingleNaN.SF2B _ _); auto.
-Qed.
+(* Definition subtract_loop: forall (c: ftype t) (al: list (ftype t)), ftype t := foldl BMINUS. *)
 
 Lemma subtract_loop_sumR: forall (c: ftype t) (al: list (ftype t)),
-  feq (subtract_loop c al) (sumF (c :: map BOPP al)).
+  feq (foldl BMINUS c al) (sumF (c :: map BOPP al)).
 Proof.
 intros.
 revert c; induction al; simpl; intros.
@@ -574,10 +482,10 @@ eexists; constructor; eauto.
 Qed.
 
 Lemma subtract_loop_sum_any:  forall  (c: ftype t) (al: list (ftype t)),
-   exists s, feq (subtract_loop c al) s /\ sum_any (size al) (rev (c::map BOPP al)) s.
+   exists s, feq (foldl BMINUS c al) s /\ sum_any (size al) (rev (c::map BOPP al)) s.
 Proof.
 intros.
-assert (exists s: ftype t, sum_rel neg_zero BPLUS (rev (c::map BOPP al)) s /\ feq (subtract_loop c al) s).
+assert (exists s: ftype t, sum_rel neg_zero BPLUS (rev (c::map BOPP al)) s /\ feq (foldl BMINUS c al) s).
 -
 destruct (sum_rel_Ft_exists (rev (cons c (map BOPP al)))) as [s ?].
 exists s; split; auto.
