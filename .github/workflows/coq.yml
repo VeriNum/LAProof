@@ -54,7 +54,7 @@ jobs:
             coq-vcfloat.2.3 \
             coq-vst.2.15 \
             coq-vst-lib.2.15.1 \
-	    coq-libvalidsdp.1.0.4
+            coq-libvalidsdp.1.0.4
             echo '::endgroup::'
 
             make -j2
