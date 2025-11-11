@@ -1,6 +1,9 @@
 # COQDOC publishing
 COQDOCEXTRAFLAGS= -g --no-lib-name --index genindex --lib-subtitles --interpolate -utf8
 
+accuracy: accuracy_proofs/export.vo
+C: C/verif_alloc.vo C/verif_sparse.vo C/verif_sparse_byrows.vo C/VSU_densemat.vo
+
 publish: html cdocs
 	cd gh-pages; git submodule update
 	cd gh-pages; rm -rf docs; mkdir docs
