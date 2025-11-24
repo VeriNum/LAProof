@@ -44,9 +44,17 @@ a list-of-list representation for matrices).   That is, matrix and vector operat
   
 <h2>DOCUMENTATION</h2>
 
-The complete table of contents is <a href=toc.html>here</a>.
+<h3>C programs</h3>
+<ul>
+<li><a href=alloc.html>alloc.[c,h]</a>:&nbsp;&nbsp;&nbsp;Memory allocation utilities
+<li><a href=densemat.html>densemat.[c,h]</a>:&nbsp;&nbsp;&nbsp;Dense matrix operations
+<li><a href=bandmat.html>bandmat.[c,h]</a>:&nbsp;&nbsp;&nbsp;Symmetric band matrix operations
+<li><a href=sparse.html>sparse.[c,h]</a>:&nbsp;&nbsp;&nbsp;CSR (Compressed Sparse Row) matrix operations
+</ul>
 
 <h3>Algorithm Accuracy Proofs</h3>
+<p>
+ See also the <a href=toc.html>specs-and-proofs table of contents</a>.
 <p>
 Most of the definitions and lemmas listed here are parameterized by a floating-point format not shown in this summary: that is, implicit parameters <tt>{_: FPCore.Nans}{t: FPStdLib.type}</tt>.
 
@@ -69,8 +77,10 @@ Most of the definitions and lemmas listed here are parameterized by a floating-p
 </ul>
 
 <h3>C Program Correctness Proofs</h3>
+<p>
+ See also the <a href=toc.html>specs-and-proofs table of contents</a>.
+<p>
 Generally these prove that the C programs correctly implement the algorithms.  These theorems may be composed with the algorithm accuracy proofs.
-
 <dl>
   <dt>Functional models
     <dd><a href=LAProof.C.matrix_model.html>Matrix model definitions and lemmas</a>
@@ -82,24 +92,17 @@ Generally these prove that the C programs correctly implement the algorithms.  T
       <a href=LAProof.C.verif_densemat_mult.html>matrix multiply</a>,
       <a href=LAProof.C.verif_densemat_cholesky.html>Cholesky factoring and solve</a>,
       and <a href=LAProof.C.VSU_densemat.html>packaging the Verified Software Unit</a>.
-  <dt>Sparse Matrices: <tt>sparse.c</tt>
+  <dt>Band Matrices: <a href=bandmat.html><tt>bandmat.c</tt></a><dd>(not yet proved correct).
+  <dt>Sparse Matrices: <a href=sparse.html><tt>sparse.c</tt></a>
   <dd><a href=LAProof.C.spec_sparse.html>Specification</a>,
-      <a href=LAProof.C.verif_sparse.html>Verification</a>.
-     This is a bit out of date, as it is proved with respect to a list-of-lists
-    model instead of MathComp matrices.
+    <a href=LAProof.C.verif_sparse.html>Verification</a>.
+      Correctness of CSR matrix-vector multiply.
 </dl>
-
-<div class="code">
-<div class="paragraph">
- . . . more to come . . .
-
-</div>
-</div>
 
 <div id="footer">
 <hr/>
-<h1><a href=toc.html>Table of contents</a></h1>
-<h1><a href="genindex.html">Index</a></h1>
+<h1><a href=toc.html>Table of contents (specifications and proofs, not C code)</a></h1>
+<h1><a href="genindex.html">Index of specifications and proofs</a></h1>
 </div>
 
 </div>

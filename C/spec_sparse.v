@@ -1,3 +1,17 @@
+(**  * LAProof.C.spec_sparse: VST specifications of functions on sparse matrices. *)
+(** ** Corresponds to C program [sparse.h] and [sparse.c] *)
+(** The principal funspecs here are:
+  - [csr_matrix_vector_multiply_spec], specifying correctness of the C program for 
+     Compressed Sparse Row floating-point matrix-vector multiply 
+     w.r.t. a list-of-lists functional model of matrices;
+  - [csr_matrix_vector_multiply_spec'], specifying correctness of the same program
+     w.r.t. a MathComp floating-point functional model
+  - along with the theorem [csr_matrix_vector_multiply_spec_sub] that 
+    the former implies the latter.
+ See also section IV of the paper, "LAProof: A Library of Formal Proofs of Accuracy and Correctness for Linear Algebra Programs", 
+   https://www.cs.princeton.edu/~appel/papers/LAProof.pdf
+*)
+
 Require Import VST.floyd.proofauto.
 From LAProof.C Require Import sparse sparse_model.
 Require Import vcfloat.FPStdCompCert.
