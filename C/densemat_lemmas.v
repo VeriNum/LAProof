@@ -400,20 +400,6 @@ symmetry.
 apply rev_alt.
 Qed.
 
-(** * Tactics for ordinals *)
-(** Given a variable [i] of type [Z], replace it everywhere with a variable [i] of type ['I_n],
-    appropriately coerced. *)
-Ltac ordify n i :=
-  let Hi := fresh "H" i in
-  let Hj := fresh "H" i in 
-  let j := fresh "i" in 
-  assert (Hi: Datatypes.is_true (ssrnat.leq (S (Z.to_nat i)) n)) by lia;
-  set (j := @Ordinal n (Z.to_nat i) Hi);
-  assert (Hj : i = Z.of_nat (nat_of_ord j)) by (simpl; lia);
-  clearbody j; clear Hi;
-  subst i;
-  rename j into i.
-
 (** Given a variable (j: 'I_1), substitute ord0  everywhere *)
 Ltac ord1_eliminate j :=
   let H := fresh in assert (H:= ord1 j); simpl in H; subst j.

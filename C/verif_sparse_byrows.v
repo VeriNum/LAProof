@@ -9,10 +9,10 @@ Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
 
-Lemma fold_crs_rep:
+Lemma fold_csr_rep:
   forall sh  (p v ci rp: val) mval cols (vals: list (ftype Tdouble))  col_ind row_ptr,
-     crs_rep_aux mval cols vals col_ind row_ptr ->
-     data_at sh t_crs
+     csr_rep_aux mval cols vals col_ind row_ptr ->
+     data_at sh t_csr
           (v, (ci, (rp, (Vint (Int.repr (matrix_rows mval)),
                       Vint (Int.repr cols))))) p *
      data_at sh (tarray tdouble (Zlength col_ind)) (map Vfloat vals) v *
@@ -20,24 +20,24 @@ Lemma fold_crs_rep:
                      (map Vint (map Int.repr col_ind)) ci *
      data_at sh (tarray tuint (matrix_rows mval + 1))
             (map Vint (map Int.repr row_ptr)) rp
-     |-- crs_rep sh mval p.
+     |-- csr_rep sh mval p.
 Proof.
 intros.
-unfold crs_rep.
+unfold csr_rep.
 Exists v ci rp cols vals col_ind row_ptr.
 rewrite prop_true_andp by auto.
 cancel.
 Qed.
 
-Lemma body_crs_matrix_rows: semax_body Vprog Gprog f_crs_matrix_rows crs_matrix_rows_spec.
+Lemma body_csr_matrix_rows: semax_body Vprog Gprog f_csr_matrix_rows csr_matrix_rows_spec.
 Proof.
 start_function.
 forward.
-sep_apply fold_crs_rep.
+sep_apply fold_csr_rep.
 forward.
 Qed.
 
-Lemma body_crs_row_vector_multiply: semax_body Vprog Gprog f_crs_row_vector_multiply crs_row_vector_multiply_spec.
+Lemma body_csr_row_vector_multiply: semax_body Vprog Gprog f_csr_row_vector_multiply csr_row_vector_multiply_spec.
 Proof.
 start_function.
 rename H3 into FINmval.
@@ -54,7 +54,7 @@ forward.
 clear H6.
 assert (CRS := H5).
 assert (COLS: cols = Zlength vval). {
-  pose proof (crs_rep_matrix_cols _ _ _ _ _ H5).
+  pose proof (csr_rep_matrix_cols _ _ _ _ _ H5).
   rewrite <- (sublist.Forall_Znth _ _ _ H2 H).
   rewrite (sublist.Forall_Znth _ _ _ H2 H6); auto.
 }
@@ -91,7 +91,7 @@ change float with (ftype Tdouble) in *.
 forward.
 assert (0 <= Znth h col_ind < Zlength vval). {
     specialize (H10 _ H2).
-    assert (H11 := crs_row_rep_col_range _ _ _ _ H10 (h - Znth i row_ptr)).
+    assert (H11 := csr_row_rep_col_range _ _ _ _ H10 (h - Znth i row_ptr)).
     autorewrite with sublist in H11.
   subst cols.
   apply H11. rep_lia.
@@ -112,13 +112,13 @@ eapply partial_row_next; try eassumption; lia.
  erewrite partial_row_end; try eassumption; auto.
  unfold matrix_vector_mult.
  rewrite Znth_map by rep_lia. reflexivity.
- unfold crs_rep.
+ unfold csr_rep.
  thaw FR1.
  Exists vp ci rp (Zlength vval) vals col_ind row_ptr.
  entailer!.
 Qed.
 
-Lemma body_crs_matrix_vector_multiply_byrows : semax_body Vprog Gprog f_crs_matrix_vector_multiply_byrows crs_matrix_vector_multiply_byrows_spec.
+Lemma body_csr_matrix_vector_multiply_byrows : semax_body Vprog Gprog f_csr_matrix_vector_multiply_byrows csr_matrix_vector_multiply_byrows_spec.
 Proof.
 start_function.
 forward_call.
@@ -127,7 +127,7 @@ forward_for_simple_bound (Zlength mval)
    PROP(Forall2 feq result (sublist 0 i (matrix_vector_mult mval vval))) 
    LOCAL (temp _rows (Vint (Int.repr (matrix_rows mval))); 
    temp _m m; temp _v v; temp _p p)
-   SEP (crs_rep sh1 mval m;
+   SEP (csr_rep sh1 mval m;
    data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v;
    data_at sh3 (tarray tdouble (matrix_rows mval)) 
       (map Vfloat result ++ Zrepeat Vundef (matrix_rows mval - i)) p))%assert.

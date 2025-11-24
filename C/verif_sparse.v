@@ -10,14 +10,14 @@ Set Bullet Behavior "Strict Subproofs".
 Open Scope logic.
 
 Definition the_loop_body : statement.
-let c := constr:(f_crs_matrix_vector_multiply) in
+let c := constr:(f_csr_matrix_vector_multiply) in
 let c := eval red in c in 
 match c with context [Sloop (Ssequence _ ?body)] =>
  exact body
 end.
 Defined.
 
-Lemma crs_multiply_loop_body : 
+Lemma csr_multiply_loop_body : 
  forall (Espec : OracleKind)  (sh1 sh2 sh3 : share)
    (m : val) (mval : matrix Tdouble)
    (v : val) (vval : vector Tdouble)
@@ -35,12 +35,12 @@ Lemma crs_multiply_loop_body :
   (cols : Z)
   (vals : list (ftype Tdouble))
   (col_ind row_ptr : list Z)
-  (H4 : crs_rep_aux mval cols vals col_ind row_ptr)
+  (H4 : csr_rep_aux mval cols vals col_ind row_ptr)
   (FRAME: mpred)
   (H5 : 0 <= 0 < Zlength row_ptr)
   (i : Z)
   (H6 : 0 <= i < matrix_rows mval),
-semax (func_tycontext f_crs_matrix_vector_multiply Vprog Gprog [])
+semax (func_tycontext f_csr_matrix_vector_multiply Vprog Gprog [])
   (PROP ( )
    LOCAL (temp _i (Vint (Int.repr i));
    temp _next (Vint (Int.repr (Znth i row_ptr))); 
@@ -78,7 +78,7 @@ intros.
 unfold the_loop_body.
 abbreviate_semax.
 assert (CRS := H4).
-assert (COLS := crs_rep_matrix_cols _ _ _ _ _ H4).
+assert (COLS := csr_rep_matrix_cols _ _ _ _ _ H4).
 destruct H4 as [? [? [? [? ?]]]].
 forward.
 forward.
@@ -155,7 +155,7 @@ forward_if.
               (Znth (h-Znth i row_ptr) (sublist (Znth i row_ptr) (Znth (i+1) row_ptr) col_ind))
          by list_solve.
 
-  pose proof (crs_row_rep_col_range _ _ _ _ H10).
+  pose proof (csr_row_rep_col_range _ _ _ _ H10).
   specialize (H0 (h - Znth i row_ptr)).
   autorewrite with sublist in H0. autorewrite with sublist. 
   rewrite <- (sublist.Forall_Znth _ _ _ H6 H), (sublist.Forall_Znth _ _ _ H6 COLS).
@@ -197,8 +197,8 @@ Exists r.
 entailer!.
 Qed.
 
-Lemma body_crs_matrix_vector_multiply : 
-  semax_body Vprog Gprog f_crs_matrix_vector_multiply crs_matrix_vector_multiply_spec.
+Lemma body_csr_matrix_vector_multiply : 
+  semax_body Vprog Gprog f_csr_matrix_vector_multiply csr_matrix_vector_multiply_spec.
 Proof.
 start_function.
 rename H3 into FINmval.
@@ -236,7 +236,7 @@ apply derives_refl.
 -
 Intros.
 eapply semax_post_flipped'.
-eapply crs_multiply_loop_body; eassumption; auto.
+eapply csr_multiply_loop_body; eassumption; auto.
 Intros r.
 Exists (result ++ [r]).
 entailer!.
@@ -271,7 +271,7 @@ entailer!.
 clear - H6.
 unfold matrix_rows, matrix_vector_mult in *.
 rewrite sublist_same in H6 by list_solve. auto.
-unfold crs_rep.
+unfold csr_rep.
 Exists vp ci rp cols vals col_ind row_ptr.
 rewrite prop_true_andp by auto.
 cancel.

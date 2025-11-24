@@ -220,7 +220,7 @@ forward_for_simple_bound (Z.of_nat n) (EX i:Z,
    SEP (densematn rsh M p; 
             densematn sh (map_mx Some (fstep i)) xp))%assert.
 - unfold fstep, seq.foldl; rewrite sublist_nil; entailer!!.
-- ordify n i.
+- mv_mathcomp.ordify n i.
   assert (IHn : Inhabitant 'I_n) by exact i. 
   forward_densematn_get (map_mx Some (fstep i)) i (@ord0 O) xp sh (fstep i i ord0).
   apply mxE.
@@ -233,7 +233,7 @@ forward_for_simple_bound (Z.of_nat n) (EX i:Z,
    SEP (densematn rsh M p;
              densematn sh (map_mx Some (fstep i)) xp))%assert.
  + entailer!!.
- + rename i0 into j. ordify n j.
+ + rename i0 into j. mv_mathcomp.ordify n j.
     destruct H1 as [_ H1]. destruct H2 as [_ H2].
     forward_densematn_get M j i p rsh (L i j).
    apply HML; lia.
@@ -310,7 +310,7 @@ forward_loop (EX i:Z,
   * 
     rewrite <- (Z.sub_add 1 i) in *.
    set (i1 := i-1) in *.
-   ordify n i1. rewrite Hi0 in *. clear i Hi0. clear H2. 
+   mv_mathcomp.ordify n i1. rewrite Hi0 in *. clear i Hi0. clear H2. 
   assert (IHn : Inhabitant 'I_n) by exact i1. 
    pose (i := i1+1).
    forward_densematn_get (map_mx Some (bstep i)) i1 (@ord0 O) xp sh (bstep i i1  ord0).
@@ -328,7 +328,7 @@ forward_loop (EX i:Z,
              densematn sh (map_mx Some (bstep i)) xp))%assert.
   -- forward. Exists i; entailer!!. autorewrite with sublist. reflexivity. 
   -- rename i0 into j. Intros.
-   ordify n j.
+   mv_mathcomp.ordify n j.
    forward_densematn_get M i1 j p rsh (R i1 j).
    entailer!!. 
      simpl; repeat f_equal; lia.
