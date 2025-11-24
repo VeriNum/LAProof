@@ -50,7 +50,7 @@
 </div>
 
 <div class="doc">
-<a id="lab8"></a><h1 class="section">VSU definitions</h1>
+<a id="lab10"></a><h1 class="section">VSU definitions</h1>
  VSU, "Verified Software Units" is VST's system for modular proofs about modular programs. 
  Here, we want to import a subset of the malloc/free interface (<span class="inlinecode"><span class="id" title="definition">MallocASI</span></span>),
  a subset of our own custom wrapper for malloc (<span class="inlinecode"><span class="id" title="var">AllocASI</span></span>),
@@ -86,7 +86,7 @@
 </div>
 
 <div class="doc">
-<a id="lab9"></a><h1 class="section">Many useful supporting lemmas about <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#column_major"><span class="id" title="definition">column_major</span></a></span>, <span class="inlinecode"><span class="id" title="inductive">ordinal</span></span>, <span class="inlinecode"><span class="id" title="definition">ord_enum</span></span>, etc.</h1>
+<a id="lab11"></a><h1 class="section">Many useful supporting lemmas about <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#column_major"><span class="id" title="definition">column_major</span></a></span>, <span class="inlinecode"><span class="id" title="inductive">ordinal</span></span>, <span class="inlinecode"><span class="id" title="definition">ord_enum</span></span>, etc.</h1>
 
 <div class="paragraph"> </div>
 
@@ -171,26 +171,6 @@
 </div>
 
 <div class="doc">
-<a id="lab10"></a><h1 class="section">Tactics for ordinals</h1>
- Given a variable <span class="inlinecode"><span class="id" title="var">i</span></span> of type <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span>, replace it everywhere with a variable <span class="inlinecode"><span class="id" title="var">i</span></span> of type <span class="inlinecode">'<span class="id" title="var">I_n</span></span>,
-    appropriately coerced. 
-</div>
-<div class="code">
-<span class="id" title="keyword">Ltac</span> <span class="id" title="var">ordify</span> <span class="id" title="var">n</span> <span class="id" title="var">i</span> :=<br/>
-&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">Hi</span> := <span class="id" title="tactic">fresh</span> "H" <span class="id" title="var">i</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">Hj</span> := <span class="id" title="tactic">fresh</span> "H" <span class="id" title="var">i</span> <span class="id" title="tactic">in</span> <br/>
-&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">j</span> := <span class="id" title="tactic">fresh</span> "i" <span class="id" title="tactic">in</span> <br/>
-&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="var">Hi</span>: <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#is_true"><span class="id" title="definition">Datatypes.is_true</span></a> (<span class="id" title="definition">ssrnat.leq</span> (<a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> (<a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.ZArith.BinInt.html#Z.to_nat"><span class="id" title="definition">Z.to_nat</span></a> <span class="id" title="var">i</span>)) <span class="id" title="var">n</span>)) <span class="id" title="tactic">by</span> <span class="id" title="var">lia</span>;<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">set</span> (<span class="id" title="var">j</span> := @<span class="id" title="constructor">Ordinal</span> <span class="id" title="var">n</span> (<a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.ZArith.BinInt.html#Z.to_nat"><span class="id" title="definition">Z.to_nat</span></a> <span class="id" title="var">i</span>) <span class="id" title="var">Hi</span>);<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="var">Hj</span> : <span class="id" title="var">i</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.ZArith.BinInt.html#Z.of_nat"><span class="id" title="definition">Z.of_nat</span></a> (<span class="id" title="definition">nat_of_ord</span> <span class="id" title="var">j</span>)) <span class="id" title="tactic">by</span> (<span class="id" title="tactic">simpl</span>; <span class="id" title="var">lia</span>);<br/>
-&nbsp;&nbsp;<span class="id" title="var">clearbody</span> <span class="id" title="var">j</span>; <span class="id" title="tactic">clear</span> <span class="id" title="var">Hi</span>;<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">subst</span> <span class="id" title="var">i</span>;<br/>
-&nbsp;&nbsp;<span class="id" title="tactic">rename</span> <span class="id" title="var">j</span> <span class="id" title="var">into</span> <span class="id" title="var">i</span>.<br/>
-
-<br/>
-</div>
-
-<div class="doc">
 Given a variable (j: 'I_1), substitute ord0  everywhere 
 </div>
 <div class="code">
@@ -224,7 +204,7 @@ Given a variable (j: 'I_1), substitute ord0  everywhere
 </div>
 
 <div class="doc">
-<a id="lab11"></a><h1 class="section">Tactics for calling matrix subscripting functions</h1>
+<a id="lab12"></a><h1 class="section">Tactics for calling matrix subscripting functions</h1>
 
 <div class="paragraph"> </div>
 
@@ -251,7 +231,7 @@ Given a variable (j: 'I_1), substitute ord0  everywhere
 <div class="doc">
 Parameters:  
 <ul class="doclist">
-<li> <span class="inlinecode"><span class="id" title="var">M</span>:</span> <span class="inlinecode">'<span class="id" title="var">M</span>[<a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a></span> <span class="inlinecode">(<span class="id" title="definition">ftype</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)]<span class="id" title="var">_</span>(<span class="id" title="var">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span>, the matrix value to be subscripted
+<li> <span class="inlinecode"><span class="id" title="var">M</span>:</span> <span class="inlinecode">'<span class="id" title="var">M</span>[<a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a></span> <span class="inlinecode">(<span class="id" title="definition">ftype</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)]<span class="id" title="var">_</span>(<span class="id" title="projection">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span>, the matrix value to be subscripted
 
 </li>
 <li> <span class="inlinecode"><span class="id" title="var">i</span>:</span> <span class="inlinecode">'<span class="id" title="var">I_m</span></span> <span class="inlinecode"><span class="id" title="var">j</span>:</span> <span class="inlinecode">'<span class="id" title="var">I_n</span></span>,  the indices at which to subscript

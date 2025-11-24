@@ -22,7 +22,7 @@
 </div>
 
 <div class="doc">
-<a id="lab1"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.h</span></span> and <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
+<a id="lab3"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.h</span></span> and <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
  Among other things, this .v file serves as a demonstration of how to write VST specifications
   of functions with respect to a functional model expressed using the MathComp matrix library.
   To do that, we start by importing the usual things that one would import into a VST funspecs
@@ -102,7 +102,7 @@ In a typical VST proof, many variables and operators have type <span class="inli
 </div>
 
 <div class="doc">
-<a id="lab2"></a><h2 class="section">Abstracting the floating-point precision</h2>
+<a id="lab4"></a><h2 class="section">Abstracting the floating-point precision</h2>
  C programs may use single precision or double precision.
   This chart covers different wa7ys to talk about these types.
 <pre>
@@ -173,7 +173,7 @@ There is a correspondence between a <span class="inlinecode"><span class="id" ti
 </div>
 
 <div class="doc">
-<a id="lab3"></a><h2 class="section">Conversions between floats, float-options, and <span class="inlinecode"><span class="id" title="abbreviation">val</span></span></h2>
+<a id="lab5"></a><h2 class="section">Conversions between floats, float-options, and <span class="inlinecode"><span class="id" title="abbreviation">val</span></span></h2>
 
 </div>
 <div class="code">
@@ -242,9 +242,9 @@ Here's a proof that it really is a convertible equality
 </div>
 
 <div class="doc">
-<a id="lab4"></a><h2 class="section">Representation predicates for dense matrices</h2>
- Let <span class="inlinecode"><span class="id" title="var">A</span>:</span> <span class="inlinecode">'<span class="id" title="var">M_</span>(<span class="id" title="var">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span> be a matrix of floats, and <span class="inlinecode"><span class="id" title="var">p</span>:</span> <span class="inlinecode"><span class="id" title="abbreviation">val</span></span> be an address.
-  We want a <i>Verifiable C</i> representation predicate <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#densemat"><span class="id" title="definition">densemat</span></a></span> saying that <span class="inlinecode"><span class="id" title="var">A</span></span> is
+<a id="lab6"></a><h2 class="section">Representation predicates for dense matrices</h2>
+ Let <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fcmsumxy.html#WithNaN.A"><span class="id" title="section">A</span></a>:</span> <span class="inlinecode">'<span class="id" title="var">M_</span>(<span class="id" title="projection">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span> be a matrix of floats, and <span class="inlinecode"><span class="id" title="var">p</span>:</span> <span class="inlinecode"><span class="id" title="abbreviation">val</span></span> be an address.
+  We want a <i>Verifiable C</i> representation predicate <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#densemat"><span class="id" title="definition">densemat</span></a></span> saying that <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fcmsumxy.html#WithNaN.A"><span class="id" title="section">A</span></a></span> is
   represented in memory at address <span class="inlinecode"><span class="id" title="var">p</span></span> using the C type <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#densemat_t"><span class="id" title="definition">densemat_t</span></a></span>,
   in column-major order, perhaps only partially initialized, with access permission <span class="inlinecode"><span class="id" title="var">sh</span></span>.
 
@@ -354,12 +354,12 @@ As usual with new spatial predicates, populate the Hint databases <span class="i
 </div>
 
 <div class="doc">
-<a id="lab5"></a><h1 class="section">Function specifications (funspecs)</h1>
+<a id="lab7"></a><h1 class="section">Function specifications (funspecs)</h1>
  Compare these to the function headers in <span class="inlinecode"><span class="id" title="var">densemat.h</span></span> 
 <div class="paragraph"> </div>
 
- <span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> takes <span class="inlinecode"><span class="id" title="var">m</span></span> and <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span> such that <span class="inlinecode"><span class="id" title="var">m</span>×<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span> is representable as a signed integer, 
-    and returns an uninitialized <span class="inlinecode"><span class="id" title="var">m</span>×<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span> matrix. 
+ <span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> takes <span class="inlinecode"><span class="id" title="projection">m</span></span> and <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span> such that <span class="inlinecode"><span class="id" title="projection">m</span>×<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span> is representable as a signed integer, 
+    and returns an uninitialized <span class="inlinecode"><span class="id" title="projection">m</span>×<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span> matrix. 
 </div>
 <div class="code">
 <span class="id" title="keyword">Definition</span> <a id="densemat_malloc_spec" class="idref" href="#densemat_malloc_spec"><span class="id" title="definition">densemat_malloc_spec</span></a> :=<br/>
@@ -387,7 +387,7 @@ As usual with new spatial predicates, populate the Hint databases <span class="i
 
     This funspec illustrates how we must handle dependently typed WITH clauses.
     That is, the bound variables of this specification include a dimension (m,n) and
-    a matrix of type <span class="inlinecode">'<span class="id" title="var">M_</span>(<span class="id" title="var">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span>.  Because VST's <span class="inlinecode"><span class="id" title="var">WITH</span></span> clauses cannot handle dependent
+    a matrix of type <span class="inlinecode">'<span class="id" title="var">M_</span>(<span class="id" title="projection">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span>.  Because VST's <span class="inlinecode"><span class="id" title="var">WITH</span></span> clauses cannot handle dependent
     typing among the separate bound variables, we package this up as a <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#sigT"><span class="id" title="inductive">sigT</span></a></span> named <span class="inlinecode"><span class="id" title="var">X</span></span>.
     Then, to extract the bounds from <span class="inlinecode"><span class="id" title="var">X</span></span> part we use <span class="inlinecode"><span class="id" title="var">projT1</span></span>, and to extract the matrix
     we use <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Specif.html#projT2"><span class="id" title="definition">projT2</span></a></span>. 
@@ -456,14 +456,14 @@ As usual with new spatial predicates, populate the Hint databases <span class="i
 
 <div class="doc">
 <span class="inlinecode"><span class="id" title="var">densematn_get</span></span> fetches the (i,j) component of a matrix.  Since the matrix is in column-major
-    order, we must also pass the number of rows <span class="inlinecode"><span class="id" title="var">m</span></span>.  Since this function does not do bounds-checking,
+    order, we must also pass the number of rows <span class="inlinecode"><span class="id" title="projection">m</span></span>.  Since this function does not do bounds-checking,
     there is no need to also pass the number of columns <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span>.  In principle, since we are proving the 
    program correct, there's no need for dynamic bounds checking.  
 
 <div class="paragraph"> </div>
 
-  The precondition of the function enforces that <span class="inlinecode">0</span> <span class="inlinecode">≤</span> <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">&lt;</span> <span class="inlinecode"><span class="id" title="var">m</span></span> and <span class="inlinecode">0</span> <span class="inlinecode">≤</span> <span class="inlinecode"><span class="id" title="var">j</span></span> <span class="inlinecode">&lt;</span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span>.  It does so by construction
-   of the dependently typed value <span class="inlinecode"><span class="id" title="var">X</span></span>, where the last component is a pair <span class="inlinecode">(<span class="id" title="var">i</span>:</span> <span class="inlinecode">'<span class="id" title="var">I_</span>[<span class="id" title="var">m</span>],</span> <span class="inlinecode"><span class="id" title="var">j</span>:</span> <span class="inlinecode">'<a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Logic.html#I"><span class="id" title="constructor">I</span></a>[<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>]).</span>
+  The precondition of the function enforces that <span class="inlinecode">0</span> <span class="inlinecode">≤</span> <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">&lt;</span> <span class="inlinecode"><span class="id" title="projection">m</span></span> and <span class="inlinecode">0</span> <span class="inlinecode">≤</span> <span class="inlinecode"><span class="id" title="var">j</span></span> <span class="inlinecode">&lt;</span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span>.  It does so by construction
+   of the dependently typed value <span class="inlinecode"><span class="id" title="var">X</span></span>, where the last component is a pair <span class="inlinecode">(<span class="id" title="var">i</span>:</span> <span class="inlinecode">'<span class="id" title="var">I_</span>[<span class="id" title="projection">m</span>],</span> <span class="inlinecode"><span class="id" title="var">j</span>:</span> <span class="inlinecode">'<a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Init.Logic.html#I"><span class="id" title="constructor">I</span></a>[<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>]).</span>
     <span class="inlinecode"></span>
 </div>
 <div class="code">
@@ -739,7 +739,7 @@ As usual with new spatial predicates, populate the Hint databases <span class="i
 </div>
 
 <div class="doc">
-<a id="lab6"></a><h1 class="section">Not-yet-specified functions</h1>
+<a id="lab8"></a><h1 class="section">Not-yet-specified functions</h1>
 
 </div>
 <div class="code">
@@ -778,7 +778,7 @@ As usual with new spatial predicates, populate the Hint databases <span class="i
 </div>
 
 <div class="doc">
-<a id="lab7"></a><h1 class="section">Building the "Abstract Specification Interface", the list of funspecs for this module</h1>
+<a id="lab9"></a><h1 class="section">Building the "Abstract Specification Interface", the list of funspecs for this module</h1>
 
 </div>
 <div class="code">
