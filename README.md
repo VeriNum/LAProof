@@ -21,4 +21,4 @@ vector multiplication as an example of connecting LAProof to concrete programs.
 
 LAProof 2.0beta1 is based more directly on MathComp; that is, matrix and vector operations use definitions in mathcomp.algebra.matrix.
 
-## <a href=https://verinum.org/LAProof/>DOCUMENTATION</a>
+## <a href=https://verinum.org/LAProof/>DOCUMENTATION: click here</a>
