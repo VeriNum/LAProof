@@ -8,7 +8,7 @@
   return p;
   }*/
 
-double crs_row_vector_multiply(struct crs_matrix *m, double *v, unsigned i) {
+double csr_row_vector_multiply(struct csr_matrix *m, double *v, unsigned i) {
   double *val = m->val;
   unsigned *col_ind = m->col_ind;
   unsigned *row_ptr = m->row_ptr;
@@ -23,17 +23,17 @@ double crs_row_vector_multiply(struct crs_matrix *m, double *v, unsigned i) {
   return s;
 }
 
-void crs_matrix_vector_multiply_byrows (struct crs_matrix *m, double *v, double *p) {
-  unsigned i, rows=crs_matrix_rows(m);
+void csr_matrix_vector_multiply_byrows (struct csr_matrix *m, double *v, double *p) {
+  unsigned i, rows=csr_matrix_rows(m);
   for (i=0; i<rows; i++)
-    p[i]=crs_row_vector_multiply(m,v,i);
+    p[i]=csr_row_vector_multiply(m,v,i);
 }
 
-/* crs_matrix_vector_multiply(m,v,p)
+/* csr_matrix_vector_multiply(m,v,p)
       multiplies a sparse matrix m by a dense vector v,
       putting the result into the (already allocated) dense vector p
 */
-void crs_matrix_vector_multiply (struct crs_matrix *m, double *v, double *p) {
+void csr_matrix_vector_multiply (struct csr_matrix *m, double *v, double *p) {
   unsigned i, rows=m->rows;
   double *val = m->val;
   unsigned *col_ind = m->col_ind;
@@ -57,7 +57,7 @@ void crs_matrix_vector_multiply (struct crs_matrix *m, double *v, double *p) {
    as the vector diag.  Let A be a matrix with number of rows equal
    to dimension of D.  let m represent A.
    Then diag_mult(diag,m) sets m to represent D*A 
-void diag_mult(double *diag, struct crs_matrix *m) {
+void diag_mult(double *diag, struct csr_matrix *m) {
   unsigned i, h, rows=m->rows;
   for (i=0; i<rows; i++) {
     unsigned k=m->row_ptr[i+1];
@@ -68,6 +68,6 @@ void diag_mult(double *diag, struct crs_matrix *m) {
 }
 */
 
-unsigned crs_matrix_rows (struct crs_matrix *m) {
+unsigned csr_matrix_rows (struct csr_matrix *m) {
   return m->rows;
 }

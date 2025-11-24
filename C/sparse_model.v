@@ -8,25 +8,25 @@ Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
 
-Inductive crs_row_rep {t: type} : 
+Inductive csr_row_rep {t: type} : 
   forall (cols: Z) (vals: list (ftype t)) (col_ind: list Z) 
   (v: list  (ftype t)), Prop :=
- | crs_row_rep_nil: crs_row_rep 0%Z nil nil nil
- | crs_row_rep_zero: forall cols vals col_ind v,
-          crs_row_rep (cols-1) vals (map Z.pred col_ind) v ->
-          crs_row_rep cols vals col_ind (Zconst t 0 :: v)
- | crs_row_rep_val: forall cols x vals col_ind v,
-          crs_row_rep (cols-1) vals (map Z.pred col_ind) v ->
-          crs_row_rep cols (x::vals) (0::col_ind) (x::v).
+ | csr_row_rep_nil: csr_row_rep 0%Z nil nil nil
+ | csr_row_rep_zero: forall cols vals col_ind v,
+          csr_row_rep (cols-1) vals (map Z.pred col_ind) v ->
+          csr_row_rep cols vals col_ind (Zconst t 0 :: v)
+ | csr_row_rep_val: forall cols x vals col_ind v,
+          csr_row_rep (cols-1) vals (map Z.pred col_ind) v ->
+          csr_row_rep cols (x::vals) (0::col_ind) (x::v).
 
-Definition crs_rep_aux {t: type} 
+Definition csr_rep_aux {t: type} 
   (mval: matrix t) (cols: Z) (vals: list (ftype t)) (col_ind: list Z) (row_ptr: list Z) : Prop :=
   Zlength row_ptr = 1 + Zlength mval /\
   Zlength vals = Znth (Zlength mval) row_ptr /\
   Zlength col_ind = Znth (Zlength mval) row_ptr /\
   sorted Z.le (0::row_ptr ++ [Int.max_unsigned]) /\ 
   forall j, 0 <= j < Zlength mval ->
-        crs_row_rep cols 
+        csr_row_rep cols 
              (sublist (Znth j row_ptr) (Znth (j+1) row_ptr) vals)
              (sublist (Znth j row_ptr) (Znth (j+1) row_ptr) col_ind)
              (Znth j mval).
@@ -41,11 +41,11 @@ rewrite !Znth_app1 in H by lia.
 apply H; list_solve.
 Qed.
 
-Lemma crs_rep_matrix_cols {t: type}:
+Lemma csr_rep_matrix_cols {t: type}:
    forall (mval: matrix t) cols vals col_ind row_ptr,
-   crs_rep_aux mval cols vals col_ind row_ptr -> matrix_cols mval cols.
+   csr_rep_aux mval cols vals col_ind row_ptr -> matrix_cols mval cols.
 Proof.
-unfold crs_rep_aux.
+unfold csr_rep_aux.
 intros mval cols.
 induction mval; intros; [constructor | ].
 destruct H as [L [L0 [L1 (*[COL*) [SORT ?]]]](*]*).
@@ -100,9 +100,9 @@ split3; [ | | split3].
        rewrite !Z.sub_add. auto.
 Qed.
 
-Lemma crs_row_rep_cols_nonneg:
+Lemma csr_row_rep_cols_nonneg:
  forall {t} cols (vals: list (ftype t)) col_ind vval,
-  crs_row_rep cols vals col_ind vval ->
+  csr_row_rep cols vals col_ind vval ->
   0 <= cols.
 Proof.
 induction 1; intros.
@@ -111,25 +111,25 @@ induction 1; intros.
 - lia.
 Qed.
 
-Lemma crs_row_rep_col_range:
+Lemma csr_row_rep_col_range:
  forall {t} cols (vals: list (ftype t)) col_ind vval,
-  crs_row_rep cols vals col_ind vval ->
+  csr_row_rep cols vals col_ind vval ->
    forall j, 0 <= j < Zlength col_ind -> 0 <= Znth j col_ind < cols.
 Proof.
 induction 1; intros.
 - list_solve.
-- specialize (IHcrs_row_rep j ltac:(list_solve)). rewrite Znth_map in * by list_solve. lia.
+- specialize (IHcsr_row_rep j ltac:(list_solve)). rewrite Znth_map in * by list_solve. lia.
 - destruct (zeq j 0).
-  + subst. rewrite Znth_0_cons. apply crs_row_rep_cols_nonneg in H. lia.
+  + subst. rewrite Znth_0_cons. apply csr_row_rep_cols_nonneg in H. lia.
   + rewrite Znth_pos_cons by lia.
-     specialize (IHcrs_row_rep (j-1) ltac:(list_solve)).
-     rewrite Znth_map in IHcrs_row_rep by list_solve. 
+     specialize (IHcsr_row_rep (j-1) ltac:(list_solve)).
+     rewrite Znth_map in IHcsr_row_rep by list_solve. 
      lia.
 Qed.
 
-Lemma crs_row_rep_property: 
+Lemma csr_row_rep_property: 
  forall {t} (P: ftype t -> Prop) cols (vals: list (ftype t)) col_ind vval,
-  crs_row_rep cols vals col_ind vval ->
+  csr_row_rep cols vals col_ind vval ->
   Forall P vval -> Forall P vals.
 Proof.
 intros.
@@ -199,7 +199,7 @@ Definition partial_row {NAN: Nans} {t} (i: Z) (h: Z) (vals: list (ftype t)) (col
 
 Lemma partial_row_start {NAN: Nans}:
  forall {t} i (mval: matrix t) cols vals col_ind row_ptr vval,
-  crs_rep_aux mval cols vals col_ind row_ptr ->
+  csr_rep_aux mval cols vals col_ind row_ptr ->
   partial_row i (Znth i row_ptr) vals col_ind row_ptr vval = Zconst t 0.
 Proof.
 intros.
@@ -226,14 +226,14 @@ Lemma partial_row_end {NAN: Nans}:
   (FINmval: Forall (Forall finite) mval)
   (LEN: Zlength vval = cols),
   0 <= i < matrix_rows mval ->
-  crs_rep_aux mval cols vals col_ind row_ptr ->
+  csr_rep_aux mval cols vals col_ind row_ptr ->
   feq (partial_row i (Znth (i+1) row_ptr) vals col_ind row_ptr vval)
       (Znth i (matrix_vector_mult mval vval)).
 Proof.
 intros.
 unfold partial_row.
 unfold matrix_vector_mult.
-assert (COL := crs_rep_matrix_cols _ _ _ _ _ H0).
+assert (COL := csr_rep_matrix_cols _ _ _ _ _ H0).
 red in COL.
 destruct H0 as [? [? [? [? ?]]]].
 specialize (H4 _ H).
@@ -245,7 +245,7 @@ assert (FINrow := sublist.Forall_Znth _ _ _ H FINmval).
 set (row := Znth i mval) in *. clearbody row.
 assert (FINvals': Forall finite vals'). {
  clear - FINrow H4.
- eapply crs_row_rep_property; eauto.
+ eapply csr_row_rep_property; eauto.
 }
 clear - H4 FINvval FINvals' FINrow LEN.
 unfold dotprod.
@@ -274,8 +274,8 @@ destruct vval as [ | v0 vval'].
       BFMA (fst x12) (snd x12) s0) (combine v vval') s).
   *
    inv FINvval.
-   rewrite <- IHcrs_row_rep; clear IHcrs_row_rep; auto.
-   pose proof (crs_row_rep_col_range _ _ _ _ H4). clear H4.
+   rewrite <- IHcsr_row_rep; clear IHcsr_row_rep; auto.
+   pose proof (csr_row_rep_col_range _ _ _ _ H4). clear H4.
    rewrite Zlength_map in H by list_solve.
    rewrite Zlength_cons in H.
    assert (Forall (fun j => 1 <= j <= (Zlength vval')) col_ind).
@@ -300,7 +300,7 @@ destruct vval as [ | v0 vval'].
 -
   inv FINrow. rename H1 into FINx. rename H2 into FINrow.
   inv FINvals'. clear H1. rename H2 into FINvals.
-  specialize (IHcrs_row_rep FINrow FINvals).
+  specialize (IHcsr_row_rep FINrow FINvals).
   destruct vval as [ | v0 vval'].
  + simpl. rewrite Znth_nil. unfold default, zerof.
    transitivity  (rowmult s vals col_ind []).
@@ -313,8 +313,8 @@ destruct vval as [ | v0 vval'].
    simpl. rewrite Znth_0_cons.
    forget (BFMA x v0 s) as s1. clear s x FINx.
    inv FINvval. rename H1 into FINv0. rename H2 into FINvval.
-   rewrite <- IHcrs_row_rep; auto; clear IHcrs_row_rep.
-   pose proof (crs_row_rep_col_range _ _ _ _ H4). clear H4.
+   rewrite <- IHcsr_row_rep; auto; clear IHcsr_row_rep.
+   pose proof (csr_row_rep_col_range _ _ _ _ H4). clear H4.
    rewrite Zlength_map in H by list_solve.
    assert (Forall (fun j => 1 <= j <= Zlength vval') col_ind). {
      apply Forall_Znth. intros.
@@ -348,7 +348,7 @@ Lemma partial_row_next {NAN : Nans }:
   0 <= Znth i row_ptr ->
   Znth i row_ptr <= h < Zlength vals ->
   Zlength vals = Zlength col_ind ->
-  crs_rep_aux mval cols vals col_ind row_ptr ->
+  csr_rep_aux mval cols vals col_ind row_ptr ->
 partial_row i (h + 1) vals col_ind row_ptr vval = 
 BFMA (Znth h vals) (Znth (Znth h col_ind) vval)
   (partial_row i h vals col_ind row_ptr vval).

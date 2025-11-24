@@ -17,9 +17,9 @@ Definition sparseImports : funspecs := [fma_spec]. (* Ideally ,
 Definition SparseVSU {NAN : FPCore.Nans}: VSU nil sparseImports ltac:(QPprog prog) SparseASI emp.
   Proof. 
     mkVSU prog SparseASI.
-- solve_SF_internal body_crs_matrix_rows.
-- solve_SF_internal body_crs_row_vector_multiply.
-- solve_SF_internal body_crs_matrix_vector_multiply_byrows.
-- solve_SF_internal body_crs_matrix_vector_multiply.
+- solve_SF_internal body_csr_matrix_rows.
+- solve_SF_internal body_csr_row_vector_multiply.
+- solve_SF_internal body_csr_matrix_vector_multiply_byrows.
+- solve_SF_internal body_csr_matrix_vector_multiply.
 Qed.
 

@@ -37,3 +37,9 @@ lia.cache
 nia.cache
 nlia.cache
 nra.cache
+cdoc/*
+cdoc/*/*
+html/LAProof.*
+html/genindex.html
+html/*.css
+html/toc.html

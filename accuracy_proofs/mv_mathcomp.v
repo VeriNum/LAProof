@@ -14,6 +14,23 @@ Definition normv   {m} (v: 'cV[R]_m)  : R:= \big[maxr/0]_(i < m) Rabs (v i 0%Ri)
 Definition normM   {m n} (A: 'M[R]_(m,n))   : R:= \big[maxr/0]_i (sum_abs A i).
 Definition seq_of_rV {T}[n] (x: 'rV[T]_n) := map (x ord0) (ord_enum n).
 
+(** Given a variable [i] of type [Z] or [nat], replace it everywhere with a variable [i] of type ['I_n],
+    appropriately coerced. *)
+Ltac ordify n i :=
+  let Hi := fresh "H" i in
+  let Hj := fresh "H" i in 
+  let j := fresh "i" in
+  match type of i with ?t => let t' := eval hnf in t in match t' with
+    | Z => assert (Hi: Datatypes.is_true (ssrnat.leq (S (Z.to_nat i)) n)) by lia;
+               set (j := @Ordinal n (Z.to_nat i) Hi);
+               assert (Hj : i = Z.of_nat (nat_of_ord j)) by (simpl; lia)
+    | nat =>  assert (Hi: Datatypes.is_true (ssrnat.leq (S i) n)) by lia;
+                  set (j := @Ordinal n i Hi);
+                  assert (Hj : i = nat_of_ord j) by (simpl; lia)
+   end end;
+   clearbody j; clear Hi;
+   subst i;
+   rename j into i.
 
 Ltac case_splitP j :=
   first [is_var j | fail 1 "case_splitP requires a variable, but got" j];
@@ -364,7 +381,6 @@ rewrite /sumR  (unlock bigop_unlock)
  rewrite foldr_map //.
 Qed.
 
-
 Module F.  (* Floating-point math-comp matrix and vector operations *)
 
 Section WithNAN. 
@@ -376,8 +392,14 @@ Definition sum  [n: nat] (x: 'I_n -> ftype t) : ftype t :=
 Definition dotprod [n: nat] (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n) : ftype t :=
    \big[BPLUS / pos_zero]_i (BMULT (x ord0 (rev_ord i)) (y (rev_ord i) ord0)).
 
+Definition FMA_dotprod [n: nat] (x: 'rV[ftype t]_n) (y: 'cV[ftype t]_n) : ftype t :=
+   fma_dotprod (seq_of_rV x) (seq_of_rV y^T).
+
 Definition mulmx [m n p] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,p)) :=
  \matrix_(i,k) dotprod (row i A) (col k B).
+
+Definition FMA_mulmx [m n p] (A: 'M[ftype t]_(m,n)) (B: 'M[ftype t]_(n,p)) :=
+ \matrix_(i,k) FMA_dotprod (row i A) (col k B).
 
 Definition scalemx [m n] (a: ftype t) (M: 'M[ftype t]_(m,n)) :=
   map_mx (BMULT a) M.
@@ -394,6 +416,39 @@ apply /matrixP => i j.
 case_splitP j.
  rewrite row_mxEl !mxE -col_lsubmx row_mxKl //.
  rewrite row_mxEr !mxE -col_rsubmx row_mxKr //.
+Qed.
+
+Lemma FMA_mulmx_row:
+ forall m n p1 p2 (A: 'M[ftype t]_(m,n)) (Bl: 'M_(n,p1)) (Br: 'M_(n,p2)),
+  FMA_mulmx A (row_mx Bl Br) = row_mx (FMA_mulmx A Bl) (FMA_mulmx A Br).
+Proof.
+intros.
+apply /matrixP => i j.
+case_splitP j.
+ rewrite row_mxEl !mxE -col_lsubmx row_mxKl //.
+ rewrite row_mxEr !mxE -col_rsubmx row_mxKr //.
+Qed.
+
+Lemma mulmx_col:
+ forall m1 m2 n p (Au: 'M[ftype t]_(m1,n)) (Ad: 'M[ftype t]_(m2,n))  (B: 'M_(n,p)),
+  mulmx (col_mx Au Ad) B = col_mx (mulmx Au B) (mulmx Ad B).
+Proof.
+intros.
+apply /matrixP => i j.
+case_splitP i.
+ rewrite col_mxEu !mxE -row_usubmx col_mxKu //.
+ rewrite col_mxEd !mxE -row_dsubmx col_mxKd //.
+Qed.
+
+Lemma FMA_mulmx_col:
+ forall m1 m2 n p (Au: 'M[ftype t]_(m1,n)) (Ad: 'M[ftype t]_(m2,n))  (B: 'M_(n,p)),
+  FMA_mulmx (col_mx Au Ad) B = col_mx (FMA_mulmx Au B) (FMA_mulmx Ad B).
+Proof.
+intros.
+apply /matrixP => i j.
+case_splitP i.
+ rewrite col_mxEu !mxE -row_usubmx col_mxKu //.
+ rewrite col_mxEd !mxE -row_dsubmx col_mxKd //.
 Qed.
 
 Lemma sum_sumF: forall [n] (x: 'I_n -> ftype t), sum x = sumF (map x (ord_enum n)).
@@ -434,6 +489,14 @@ intros.
  apply dotprod_dotprodF.
 Qed.
 
+Lemma FMA_mulmx_fma_dotprod:
+  forall [n] (A: 'M[ftype t]_(1,n)) (B: 'M[ftype t]_(n,1)),
+ FMA_mulmx A B = const_mx (fma_dotprod (seq_of_rV A) (seq_of_rV (trmx B))).
+Proof.
+intros.
+ unfold mulmx. apply /matrixP. move => i k. rewrite !mxE row_id col_id //.
+Qed.
+
 Definition finitemx [m n] (A: 'M[ftype t]_(m,n)) : Prop := 
    (forall i j, Binary.is_finite (A i j)).
 
@@ -454,4 +517,389 @@ Qed.
 End WithNAN.
 
 End F.
+
+Definition listlist_of_mx {T}  [m n: nat] (A: 'M[T]_(m,n)) : list (list T) :=
+  map (fun  i: 'I_m => map (A i) (ord_enum n)) (ord_enum m).
+
+Definition list_of_cV {T} [n: nat] (V: 'cV[T]_n) : list T :=
+   map (fun i => V i ord0) (ord_enum n).
+
+Definition mx_of_listlist {T} {d: T} (rows cols: nat) (mval: list (list T)) : 'M[T]_(rows,  cols) :=
+ \matrix_(i,j) seq.nth (d: T) (seq.nth nil mval i) j.
+
+Definition cV_of_list {T} {d: T} (n: nat) (vval: list T) : 'cV[T]_n :=
+  \matrix_(i,j) seq.nth (d:T) vval i.
+
+Definition matrix_cols_nat {T} (m: list (list T)) (cols: nat) := 
+    Forall (fun r => size r = cols) m.
+
+Lemma listlist_of_mx_of_listlist:
+  forall {t} {d} rows cols (mval: list (list (ftype t))),
+   rows = Datatypes.length mval ->
+   matrix_cols_nat mval cols ->
+   listlist_of_mx (@mx_of_listlist _ d rows cols mval) = mval.
+Proof.
+intros.
+unfold listlist_of_mx, mx_of_listlist.
+eapply (nth_ext _ _ nil nil).
+rewrite length_map -H. apply size_ord_enum.
+intros i Hi.
+rewrite -!nth_List_nth.
+rewrite length_map in Hi.
+change @length with @size in Hi,H.
+rewrite size_ord_enum in Hi.
+rewrite (nth_ord_enum_lemma nil mval) -H.
+f_equal.
+f_equal.
+apply FunctionalExtensionality.functional_extensionality; intro j.
+rewrite map_comp /comp.
+rewrite val_ord_enum.
+rewrite map_nth_iota. 2: lia.
+rewrite drop0.
+replace (take rows mval) with mval.
+2: rewrite H take_size //.
+rewrite (nth_ord_enum_lemma d (nth nil mval j)).
+replace (size _) with cols.
+2:{ clear i Hi.
+    red in H0. rewrite Forall_nth in H0. specialize (H0 j nil). rewrite nth_List_nth. symmetry; apply H0.
+   change @length with @size; rewrite -H. pose proof (ltn_ord j). lia.
+}
+f_equal.
+simpl.
+clear i Hi.
+rename j into i.
+apply FunctionalExtensionality.functional_extensionality; intro j.
+rewrite mxE /comp //.
+Qed.
+
+Lemma mx_of_listlist_of_mx:
+  forall {T} {d:T} rows cols (A: 'M[T]_(rows,cols)),
+   @mx_of_listlist _ d rows cols (listlist_of_mx  A) = A.
+Proof.
+intros.
+apply matrixP => i j.
+rewrite /mx_of_listlist mxE /listlist_of_mx.
+rewrite (nth_map i).
+2: rewrite size_ord_enum; apply ltn_ord.
+rewrite (nth_map j).
+2: rewrite size_ord_enum; apply ltn_ord.
+rewrite !nth_ord_enum'.
+auto.
+Qed.
+
+Lemma list_of_cV_of_list:
+  forall {T} {d:T} n (vval: list T),
+   size vval = n ->
+   list_of_cV (@cV_of_list _ d n vval) = vval.
+Proof.
+intros.
+unfold list_of_cV, cV_of_list.
+apply (nth_ext _ _ d d).
+rewrite length_map -H. apply size_ord_enum.
+intros i Hi.
+rewrite -!nth_List_nth.
+rewrite length_map in Hi.
+change @length with @size in Hi,H.
+rewrite size_ord_enum in Hi.
+rewrite (nth_ord_enum_lemma d vval) -H.
+f_equal.
+f_equal.
+(* apply FunctionalExtensionality.functional_extensionality; intro j. *)
+rewrite map_comp /comp.
+rewrite val_ord_enum.
+rewrite map_nth_iota. 2: lia.
+rewrite drop0 take_size.
+apply FunctionalExtensionality.functional_extensionality; intro j.
+rewrite mxE //.
+Qed.
+
+Lemma cV_of_list_of_cV:
+  forall {T} `{d:T} n (x: 'cV[T]_n),
+  @cV_of_list _ d n (list_of_cV x) = x.
+Proof.
+intros.
+apply matrixP => i j.
+rewrite /mx_of_listlist mxE /listlist_of_mx.
+rewrite (nth_map i).
+2: rewrite size_ord_enum; apply ltn_ord.
+rewrite !ord1.
+f_equal.
+apply nth_ord_enum'.
+Qed.
+
+Lemma matrix_rows_listlist_of_mx: forall {T} [rows cols] (A: 'M[T]_(rows,cols)),
+   size (listlist_of_mx A) = rows.
+Proof.
+intros.
+unfold listlist_of_mx. rewrite size_map. apply size_ord_enum.
+Qed.
+
+Lemma matrix_cols_listlist_of_mx: forall {T} [rows cols] (A: 'M[T]_(rows,cols)),
+  matrix_cols_nat (listlist_of_mx A) cols.
+Proof.
+intros.
+unfold matrix_cols_nat, listlist_of_mx.
+apply Forall_map, Forall_forall.
+intros; simpl.
+rewrite size_map. apply mv_mathcomp.size_ord_enum.
+Qed.
+
+Lemma size_list_of_cV: forall {T} [n] (vval: 'cV[T]_n),
+  size (list_of_cV vval) = n.
+Proof.
+intros.
+rewrite /list_of_cV size_map size_ord_enum //.
+Qed.
+
+
+Lemma nth_list_of_cV: 
+  forall {T} {d:T} [n] (vval: 'cV[T]_n) (i: 'I_n), 
+   nth d (list_of_cV vval) (nat_of_ord i) = vval i ord0.
+Proof.
+intros.
+rewrite /list_of_cV (nth_map i) ?nth_ord_enum' // size_ord_enum.
+apply ltn_ord.
+Qed.
+
+Definition list_dotprod {NAN: FPCore.Nans} {t: type} (v1 v2: list (ftype t)) : ftype t :=
+  foldl (fun s x12 => BFMA (fst x12) (snd x12) s) (Zconst t 0) (zip v1 v2) .
+
+Definition matrix_vector_mult {NAN: FPCore.Nans}{t: type} (m: list (list (ftype t))) (v: list (ftype t)) : list (ftype t) :=
+      map (fun row => list_dotprod row v) m.
+
+Lemma list_of_cV_col_mx: forall {T} n1 n2 (x: 'cV[T]_n1) (y: 'cV[T]_n2),
+  list_of_cV (col_mx x y) = list_of_cV x ++ list_of_cV y.
+Proof.
+intros.
+assert (n1 = O \/ 0< n1)%N by lia.
+destruct H.
+subst.
+- rewrite /list_of_cV /col_mx. simpl.
+  apply eq_in_map.
+ red; simpl; intros.
+ clear H.
+ rewrite mxE. 
+ change n2 with (addn O n2) in x0.
+ case_splitP x0. destruct x0; lia.
+ f_equal.
+ apply ord_inj. simpl. reflexivity.
+-
+ assert (d: T). destruct n1; try lia; apply (x ord0 ord0).
+ rewrite /list_of_cV /col_mx.
+ apply eq_from_nth with d.
+ rewrite size_cat !size_map !size_ord_enum //.
+ intros i.
+ rewrite size_map !size_ord_enum => Hi.
+ rewrite nth_cat.
+ rewrite size_map size_ord_enum.
+ rewrite (nth_map (Ordinal Hi)) ?size_ord_enum // mxE.
+ assert (nth (Ordinal Hi) (ord_enum (n1+n2)) i = Ordinal Hi).
+ change i with (nat_of_ord (Ordinal Hi)).
+ rewrite nth_ord_enum' //.
+ rewrite H0.
+ destruct (i<n1)%N eqn:?H.
++
+unfold split. simpl. destruct (ltnP i n1); try lia.
+rewrite (nth_map (Ordinal i0)).
+2: rewrite size_ord_enum //.
+change i with (nat_of_ord (Ordinal i0)).
+rewrite nth_ord_enum' //.
++
+unfold split. simpl. destruct (ltnP i n1); try lia.
+assert (is_true (i-n1 < n2)%N) by lia.
+rewrite (nth_map (Ordinal H2)).
+2: rewrite size_ord_enum //.
+change (i-n1)%nat with (nat_of_ord (Ordinal H2)).
+rewrite nth_ord_enum' //.
+f_equal.
+apply ord_inj. simpl. auto.
+Qed.
+
+Lemma map_const_len: 
+  forall {A B} (c: B) (al: list A), map (fun _ => c) al = repeat c (length al).
+Proof.
+induction al; simpl; intros; f_equal; auto.
+Qed.
+
+Lemma listlist_of_mx_col_mx: forall {T} n1 n2 m (A: 'M[T]_(n1,m)) (B: 'M[T]_(n2,m)),
+  listlist_of_mx (col_mx A B) = listlist_of_mx A ++ listlist_of_mx B.
+intros.
+assert (m = 0 \/ 0 < m)%N by lia. destruct H as [Hm | Hm]. {
+ subst m. rewrite /listlist_of_mx. change (ord_enum 0) with (@nil 'I_0). simpl.
+ rewrite !map_const_len.
+ change @length with @size. rewrite !size_ord_enum.
+ rewrite repeat_app //.
+}
+assert (n1 = O \/ 0< n1)%N by lia.
+destruct H as [Hn1 | Hn1].
+subst.
+- rewrite /list_of_cV /col_mx. simpl.
+  apply eq_in_map; intros i _.
+ apply eq_in_map; intros j _.
+ rewrite mxE. 
+ change n2 with (addn O n2) in i.
+ simpl in *.
+ case_splitP i. destruct i; lia.
+ f_equal.
+ apply ord_inj. simpl. reflexivity.
+-
+ assert (d: T). destruct n1,m; try lia; apply (A ord0 ord0).
+ rewrite /list_of_cV /col_mx.
+ apply eq_from_nth with nil.
+ rewrite size_cat !size_map !size_ord_enum //.
+ intros i.
+ rewrite size_map !size_ord_enum => Hi.
+ rewrite nth_cat.
+ rewrite size_map size_ord_enum.
+ rewrite (nth_map (Ordinal Hi)) ?size_ord_enum //.
+ apply eq_from_nth with d. {
+   rewrite size_map size_ord_enum.
+  destruct (leq (S i) n1) eqn:?H.
+  assert (HA := matrix_cols_listlist_of_mx A).
+  red in HA. rewrite Forall_nth in HA. specialize (HA i nil).
+  change @length with @size in HA.
+ rewrite matrix_rows_listlist_of_mx in HA.
+  specialize (HA ltac:(lia)).
+  rewrite -nth_List_nth in HA. auto.
+  assert (HB := matrix_cols_listlist_of_mx B).
+  red in HB. rewrite Forall_nth in HB. specialize (HB (i-n1)%nat nil).
+  change @length with @size in HB.
+ rewrite matrix_rows_listlist_of_mx in HB.
+  specialize (HB ltac:(lia)).
+  rewrite -nth_List_nth in HB. auto.
+ }
+ rewrite size_map size_ord_enum => j Hj.
+ rewrite (nth_map (Ordinal Hj)).
+ 2: rewrite size_ord_enum //.
+ change j with (nat_of_ord (Ordinal Hj)).
+ rewrite nth_ord_enum'.
+ assert (nth (Ordinal Hi) (ord_enum (n1+n2)) i = Ordinal Hi).
+ change i with (nat_of_ord (Ordinal Hi)).
+ rewrite nth_ord_enum' //.
+ rewrite H.
+ rewrite mxE.
+ destruct (i<n1)%N eqn:?H.
++
+unfold split. simpl. destruct (ltnP i n1); try lia.
+rewrite (nth_map (Ordinal i0)).
+2: rewrite size_ord_enum //.
+change i with (nat_of_ord (Ordinal i0)).
+rewrite nth_ord_enum' //.
+rewrite (nth_map (Ordinal Hj)).
+2: rewrite size_ord_enum //.
+change j with (nat_of_ord (Ordinal Hj)).
+rewrite nth_ord_enum' //.
++
+unfold split. simpl. destruct (ltnP i n1); try lia.
+assert (is_true (i-n1 < n2)%N) by lia.
+rewrite (nth_map (Ordinal H1)).
+2: rewrite size_ord_enum //.
+change (i-n1)%nat with (nat_of_ord (Ordinal H1)).
+rewrite nth_ord_enum' //.
+rewrite (nth_map (Ordinal Hj)).
+2: rewrite size_ord_enum //.
+f_equal.
+apply ord_inj. simpl. auto.
+change j with (nat_of_ord (Ordinal Hj)).
+rewrite nth_ord_enum' //.
+Qed.
+
+Lemma listlist_of_mx_inj: forall {T} [m n] (A B: 'M[T]_(m,n)),
+  listlist_of_mx A = listlist_of_mx B -> A=B.
+Proof.
+intros.
+apply matrixP. intros i j.
+assert (m=O \/ n = O \/ 0<m /\ 0<n)%N by lia.
+destruct H0; [ | destruct H0].
+subst. destruct i. lia.
+subst; destruct j; lia.
+assert (d: T) by (destruct m; destruct n; try lia; apply (A ord0 ord0)).
+assert (nth d (nth nil (listlist_of_mx A) i) j = 
+             nth d (nth nil (listlist_of_mx B) i) j).
+  rewrite H; auto.
+clear - H1.
+rewrite /listlist_of_mx in H1.
+pose proof (ltn_ord i).
+pose proof (ltn_ord j).
+rewrite !(nth_map i) in H1. 2,3: rewrite size_ord_enum; auto.
+rewrite !(nth_map j) in H1. 2,3: rewrite size_ord_enum; auto.
+rewrite !nth_ord_enum' in H1.
+auto.
+Qed.
+
+Lemma Fmulmx_matrix_vector_mult:
+ forall {NAN: FPCore.Nans}{t} rows cols (mval: list (list (ftype t))) (vval: list (ftype t)),
+   rows = size mval ->
+   cols = size vval ->
+   matrix_cols_nat mval cols ->
+   matrix_vector_mult mval vval = list_of_cV (F.FMA_mulmx (@mx_of_listlist _ (Zconst t 0) rows cols mval) 
+                                                                                        (@cV_of_list _ (Zconst t 0) cols vval)).
+Proof.
+intros.
+subst rows.
+destruct (size vval) eqn:Hcols.
+-
+destruct cols; try discriminate.
+destruct vval; try discriminate.
+clear H0 Hcols.
+assert (mval = List.repeat nil (size mval)).
+induction H1; auto. simpl. f_equal; auto. destruct x; auto; discriminate.
+rewrite H.
+set n := size mval.
+clearbody n. clear mval H H1.
+change @size with @length. rewrite repeat_length.
+induction n. reflexivity.
+simpl.
+rewrite {}IHn.
+replace (mx_of_listlist (S n) 0 (cons nil (repeat nil n))) with
+     (col_mx (@mx_of_listlist _ (Zconst t 0) 1 0 nil) (@mx_of_listlist _ (Zconst t 0) n 0 (repeat nil n))).
+2: apply /matrixP => i j; destruct j; lia.
+change (S n) with (addn 1 n).
+rewrite F.FMA_mulmx_col.
+set (u := F.FMA_mulmx _ _).
+clearbody u.
+rewrite /list_dotprod /=.
+rewrite list_of_cV_col_mx.
+rewrite {2}/list_of_cV.
+set one := ord_enum 1. compute in one. destruct idP; try lia. subst one.
+simpl.
+f_equal.
+rewrite /F.mulmx /mx_of_listlist /cV_of_list mxE //.
+-
+assert (0 < cols)%N by lia. rewrite -H0 in Hcols. clear n H0.
+induction H1; [reflexivity | ].
+simpl.
+replace (mx_of_listlist (S (size l)) cols (cons x l))
+  with (col_mx (@mx_of_listlist _ (Zconst t 0) 1 cols (cons x nil)) (@mx_of_listlist _ (Zconst t 0) (size l) cols l)).
++
+change (S ?A) with (addn 1 A).
+rewrite F.FMA_mulmx_col.
+rewrite list_of_cV_col_mx.
+replace (list_of_cV _) with [:: list_dotprod x vval].
+simpl. f_equal.
+apply IHForall.
+rewrite /list_of_cV.
+set one := ord_enum 1. compute in one. destruct idP; try lia. subst one.
+simpl. f_equal.
+rewrite mxE /F.FMA_mulmx /F.FMA_dotprod /fma_dotprod /list_dotprod.
+f_equal. f_equal.
+*  apply (@eq_from_nth _ pos_zero).
+rewrite size_seq_of_rV //.
+move => j Hj. rewrite H0 in Hj. ordify cols j.
+rewrite nth_seq_of_rV !mxE //.
+*  apply (@eq_from_nth _ pos_zero).
+rewrite size_seq_of_rV //.
+move => j Hj. rewrite Hcols in Hj. ordify cols j.
+rewrite nth_seq_of_rV !mxE //.
++
+change (S (size l)) with (addn 1 (size l)).
+apply listlist_of_mx_inj.
+rewrite listlist_of_mx_of_listlist.
+2: simpl; change @length with @size; lia.
+2: constructor; auto.
+rewrite listlist_of_mx_col_mx.
+rewrite !listlist_of_mx_of_listlist; auto.
+constructor; auto.
+Qed.
+
 
