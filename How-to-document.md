@@ -6,6 +6,6 @@
 
 3.  `make html` creates all the Coqdoc output in the html/ directory.  Browse and review these local files and edit the .v files until this looks the way you want it.
 
-4.  `make publish` sends all those html files (including index.html if you have edited it) to the Github pages site at https://verinum.org/LAProof/.  The way it does this is by committing them to the special gh-pages branch of this repo, which contains _only_ a docs directory with those HTML files.
+4.  `make publish` sends all those html files (including index.html if you have edited it) to the Github pages site at https://verinum.org/LAProof/.  The way it does this is by committing them to the special gh-pages branch of this repo, which contains _only_ a docs directory with those HTML files.  After you do `make publish`, it will take several minutes before the changes appear at verinum.org/LAProof.
 
 5.  Don't forget to git-commit and git-push all your changes in the main branch (or whatever branch you're working in).
