@@ -40,3 +40,6 @@ C/verif_densemat_cholesky.v
 C/VSU_densemat.v
 C/matrix_model.v
 C/bandmat.v
+C/verif_build_csr.v
+C/distinct.v
+C/partial_csr.v
