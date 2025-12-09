@@ -2,7 +2,7 @@
 COQDOCEXTRAFLAGS= -g --no-lib-name --index genindex --lib-subtitles --interpolate -utf8
 
 accuracy: accuracy_proofs/export.vo
-C: C/verif_alloc.vo C/verif_sparse.vo C/verif_sparse_byrows.vo C/VSU_densemat.vo
+C: C/verif_alloc.vo C/verif_sparse.vo C/verif_sparse_byrows.vo C/VSU_densemat.vo C/verif_build_csr.vo
 
 publish: html cdocs
 	cd gh-pages; git submodule update
@@ -15,7 +15,7 @@ publish: html cdocs
 
 # Quarto documentation of C programs
 LDOC= 	lua cdoc/ldoc.lua
-CDOCS= cdoc/alloc.qmd cdoc/densemat.qmd cdoc/bandmat.qmd cdoc/sparse.qmd
+CDOCS= cdoc/alloc.qmd cdoc/densemat.qmd cdoc/bandmat.qmd cdoc/sparse.qmd cdoc/build_csr.qmd
 
 cdoc/%.html: cdoc/%.qmd
 	cd cdoc; quarto render $(notdir $^) --to html --quiet
@@ -37,3 +37,4 @@ C/cholesky.v: C/include/sparse.h
 C/alloc.v: C/include/alloc.h
 C/bandmat.v: C/include/densemat.h C/include/bandmat.h
 C/densemat.v: C/include/densemat.h
+C/build_csr.v: C/include/sparse.h

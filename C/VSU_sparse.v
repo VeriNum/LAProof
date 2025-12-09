@@ -24,8 +24,6 @@ Definition SparseVSU {NAN : FPCore.Nans}: VSU nil sparse_imports ltac:(QPprog pr
 - admit. (* solve_SF_internal body_coo_quicksort. *)
 - admit. (* solve_SF_internal body_add_to_coo_matrix. *)
 - solve_SF_internal body_coo_to_csr_matrix.
-- admit. (* solve_SF_internal body_coo_less. *)
-- admit. (* solve_SF_internal body_create_coo_matrix. *)
 all: fail.
 Admitted.
 
