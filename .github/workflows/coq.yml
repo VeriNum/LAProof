@@ -31,5 +31,5 @@ jobs:
       - uses: coq-community/docker-coq-action@v1
         with:
           opam_file: 'coq-laproof.opam'
-          custom_image: mathcomp/mathcomp:${{ matrix.env.DOCKER_MATHCOMP_VERSION }}-coq-${{ matrix.env.COQ_VERSION }}
+          custom_image: mathcomp/mathcomp:${{ matrix.env.DOCKER_MATHCOMP_VERSION }}-rocq-prover-${{ matrix.env.COQ_VERSION }}
           export: CI
