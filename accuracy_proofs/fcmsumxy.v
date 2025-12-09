@@ -523,9 +523,9 @@ pose proof @cholesky.lemma_2_1 fspec fspec_eta_nonzero k a' b' (mkFS c) (mkFS bk
 repeat change (float_spec.FS_val (mkFS ?x)) with (FT2R x) in H|-*.
 rewrite LVSDP_ytilded_eq in H; auto.
 replace (\sum_i (float_spec.FS_val _ * _)) with (\sum_i (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H.
-2: apply eq_big; auto; move => i _; rewrite /a' /b' !ffunE //.
+2: apply eq_big; auto; [  move => x // | move => i _; rewrite /a' /b' !ffunE //].
 replace (\sum_i Rabs (float_spec.FS_val _ * _)) with (\sum_i Rabs (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H.
-2: apply eq_big; auto; move => i _; rewrite /a' /b' !ffunE //.
+2: apply eq_big; auto; [ move => x // | move => i _; rewrite /a' /b' !ffunE //].
 replace (float_spec.eta fspec) with eta in H.
 2: rewrite /eta /flocq_float.eta /fspec /flocq_float.flocq_float /float_spec.eta /flocq_float.eta bpow_minus1;
       simpl IZR; change (flocq_float.prec) with (fprec t); nra.

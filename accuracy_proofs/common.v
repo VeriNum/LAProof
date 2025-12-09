@@ -252,11 +252,9 @@ D <= g  (n + 1).
 Proof. unfold g. induction n; simpl; field_simplify; try nra.
 eapply Rle_trans; [apply IHn|].
 apply Rplus_le_compat_r.
-replace (D  * (1 + D ) ^ (n + 1)%coq_nat + (1 + D ) ^ (n + 1)%coq_nat)
-with 
-((1 + D ) ^ (n + 1)%coq_nat * (D   + 1)) by nra.
+replace (D * (1 + D) ^ (n + 1) + (1 + D) ^ (n + 1))
+ with ((1+D)^(n+1)*(D+1)) by nra.
 eapply Rle_trans with ((1 + D ) ^ (n + 1) * 1); try nra.
-change Init.Nat.add with addn.
 eapply Rmult_le_compat; try nra.
 { apply pow_le. apply Fourier_util.Rle_zero_pos_plus1 ; auto with commonDB. }
 apply Rcomplements.Rle_minus_l. field_simplify; auto with commonDB. 

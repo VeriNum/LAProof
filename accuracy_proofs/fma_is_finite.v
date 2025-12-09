@@ -1,5 +1,6 @@
 From LAProof.accuracy_proofs Require Import preamble common dotprod_model sum_model
                                             float_acc_lems dot_acc_lemmas sum_acc.
+Import Zorder.
 
 Section NAN.
 Context {NAN: FPCore.Nans} {t : type}.
