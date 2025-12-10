@@ -43,7 +43,7 @@ Ltac case_splitP j :=
  end.
 
 (** Example of how to use case_splitP *)
-Local Remark mul_mx_row' [R : GRing.SemiRing.type] m n p1 p2 
+Local Remark mul_mx_row' [R : pzSemiRingType] m n p1 p2 
     (A: 'M[R]_(m,n)) (Bl: 'M[R]_(n,p1)) (Br: 'M[R]_(n,p2)):
   A *m row_mx Bl Br = row_mx (A *m Bl) (A *m Br).
 Proof.
@@ -54,7 +54,7 @@ rewrite row_mxEr !mxE . apply eq_bigr. move => k _;  rewrite row_mxEr//.
 Qed.
 
 (** Example of how the mathcomp experts do this another way, from mathcomp.algebra.matrix  *)
-Local Remark mul_mx_row'' [R : GRing.SemiRing.type]  m n p1 p2 (A : 'M[R]_(m, n)) (Bl : 'M_(n, p1)) (Br : 'M_(n, p2)) :
+Local Remark mul_mx_row'' [R : pzSemiRingType]  m n p1 p2 (A : 'M[R]_(m, n)) (Bl : 'M_(n, p1)) (Br : 'M_(n, p2)) :
   A *m row_mx Bl Br = row_mx (A *m Bl) (A *m Br).
 Proof.
 apply/matrixP=> i k; rewrite !mxE.

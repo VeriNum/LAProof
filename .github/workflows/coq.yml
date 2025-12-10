@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - env: { COQ_VERSION: "8.20", DOCKER_MATHCOMP_VERSION: "2.3.0" }
+          - env: { COQ_VERSION: "9.0", DOCKER_MATHCOMP_VERSION: "2.4.0" }
 
     runs-on: ubuntu-latest
     env: ${{ matrix.env }}
@@ -24,39 +24,12 @@ jobs:
       cancel-in-progress: true
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - uses: coq-community/docker-coq-action@v1
         with:
-          custom_image: mathcomp/mathcomp:${{ matrix.env.DOCKER_MATHCOMP_VERSION }}-coq-${{ matrix.env.COQ_VERSION }}
+          opam_file: 'coq-laproof.opam'
+          custom_image: mathcomp/mathcomp:${{ matrix.env.DOCKER_MATHCOMP_VERSION }}-rocq-prover-${{ matrix.env.COQ_VERSION }}
           export: CI
-          custom_script: |
-            eval $(opam env)
-            sudo chmod -R a=u .
-            # Work around https://github.com/actions/checkout/issues/766
-            git config --global --add safe.directory "*"
-
-            echo '::group::install dependencies'
-            opam repo add coq-released https://coq.inria.fr/opam/released
-            opam repo add rocq-released https://rocq-prover.org/opam/released
-            opam update
-
-            opam install -y -v \
-            coq-mathcomp-algebra-tactics.1.2.3 \
-            coq-mathcomp-finmap.2.1.0 \
-            coq-mathcomp-classical.1.8.0 \
-            coq-mathcomp-reals.1.8.0 \
-            coq-mathcomp-reals-stdlib.1.8.0 \
-            coq-mathcomp-zify.1.5.0+2.0+8.16 \
-            coq-flocq.4.2.0 \
-            coq-interval.4.11.1 \
-            coq-coquelicot.3.4.2 \
-            coq-vcfloat.2.3 \
-            coq-vst.2.15 \
-            coq-vst-lib.2.15.1 \
-            coq-libvalidsdp.1.0.4
-            echo '::endgroup::'
-
-            make -j2

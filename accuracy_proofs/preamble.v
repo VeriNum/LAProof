@@ -13,7 +13,7 @@ From mathcomp Require Export ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
 From mathcomp Require Export fintype finfun bigop finset fingroup perm order.
 From mathcomp Require Export div ssralg countalg finalg zmodp matrix.
 From mathcomp.zify Require Export ssrZ zify.
-From mathcomp Require Export Rstruct.
+From mathcomp Require Export Rstruct. (* from coq-mathcomp-reals-stdlib *)
 
 
 Export Order.TTheory GRing.Theory ssrnum.Num.Def ssrnum.Num.Theory.
