@@ -81,6 +81,9 @@ Definition stilde [k] (c : F) (a b : F^k) : F :=
 Definition ytilded [k : nat] (c : F) (a b : F^k) (bk : F) :=
   BDIV (stilde c a b) bk.
 
+Definition ytildes [k : nat] (c : F) (a : F^k):=
+  BSQRT (stilde c a a).
+
 
 Lemma BPLUS_B2R_zero (a : ftype t):
   Binary.is_finite a ->
@@ -182,6 +185,7 @@ Definition the_FIS : float_infnan_spec.Float_infnan_spec :=
           |}.
 
 Definition F' := the_FIS.(FIS).
+
 
 Lemma FS_val_mkFS: forall x: F', float_spec.FS_val (mkFS x) = (FT2R x).
 Proof. reflexivity. Qed.
@@ -308,7 +312,115 @@ rewrite /binary_infnan.div_nan /LVSDP_NAN /FPCore.div_nan /=.
 destruct NAN; reflexivity.
 Qed.
 
+
+Lemma FS_val_fsqrt': forall x: ftype t, 
+  Binary.is_finite (BSQRT x) -> 
+  float_spec.FS_val (float_spec.fsqrt (mkFS x)) = FT2R (BSQRT x).
+intros.
+rewrite <- the_FIS.(fisqrt_spec); auto.
+simpl. f_equal. rewrite /BSQRT /UNOP /binary_infnan.fisqrt.
+f_equal.
+apply ProofIrrelevance.proof_irrelevance.
+rewrite /binary_infnan.sqrt_nan /LVSDP_NAN /FPCore.sqrt_nan /=.
+destruct NAN; reflexivity.
+rewrite /is_true -{}H /finite /= /BSQRT /UNOP /fisqrt /finite /= /binary_infnan.fisqrt.
+f_equal. f_equal.
+apply ProofIrrelevance.proof_irrelevance.
+rewrite /binary_infnan.div_nan /LVSDP_NAN /FPCore.div_nan /=.
+destruct NAN; reflexivity.
+Qed.
+
+Lemma FT2R_congr: forall x y : ftype t, feq x y -> FT2R x = FT2R y.
+Proof.
+intros.
+destruct x,y; try destruct s; try destruct s0; simpl in H; try contradiction; try reflexivity;
+destruct H as [? [? ?]]; subst; auto; try discriminate.
+Qed.
+
+Lemma FT2R_feq: forall x y: ftype t, Binary.is_finite x -> Binary.is_finite y -> FT2R x = FT2R y -> feq x y.
+Proof.
+intros.
+destruct x,y; try discriminate; repeat match goal with s: bool |- _ => destruct s; try discriminate end; try reflexivity;
+repeat match goal with
+     | H: FT2R (Binary.B754_zero _ _ _) = FT2R _ |- _ => symmetry in H; apply Float_prop.eq_0_F2R in H; discriminate H 
+     | H: FT2R _ = FT2R (Binary.B754_zero _ _ _)  |- _ => apply Float_prop.eq_0_F2R in H; discriminate H 
+     | H: FT2R _ = FT2R _ |- _ => unfold FT2R in H; apply Binary.B2R_inj in H; [inversion H; clear H; subst | reflexivity | reflexivity]
+    end;
+repeat proof_irr;
+try reflexivity.
+Qed.
+
+(*
+Lemma FT2R_BINOP_congr: forall 
+    (op : forall prec emax : Z,
+          FLX.Prec_gt_0 prec ->
+          BinarySingleNaN.Prec_lt_emax prec emax ->
+          (Binary.binary_float prec emax -> Binary.binary_float prec emax -> {x : Binary.binary_float prec emax | Binary.is_nan prec emax x = true}) ->
+          BinarySingleNaN.mode -> Binary.binary_float prec emax -> Binary.binary_float prec emax -> Binary.binary_float prec emax)
+    (NAN : forall prec emax : Z, (1 < prec)%Z -> Binary.binary_float prec emax -> Binary.binary_float prec emax -> nan_payload prec emax)
+    (x x' y y': ftype t),
+  Binary.is_finite x -> Binary.is_finite x' -> Binary.is_finite y -> Binary.is_finite y' ->
+  FT2R x = FT2R x' ->
+  FT2R y = FT2R y' ->
+  FT2R (BINOP op NAN _ x y) = FT2R (BINOP op NAN _ x' y').
+Proof.
+intros.
+apply FT2R_feq in H3; auto.
+apply FT2R_feq in H4; auto.
+apply FT2R_congr.
+Locate feq.
+
+Search BINOP feq.
+apply BINOP
+rewrite H3.
+rewrite H3 H4.
+
+
+destruct x,x',y,y'; try discriminate; repeat match goal with s: bool |- _ => destruct s; try discriminate end; try reflexivity;
+repeat match goal with
+     | H: FT2R (Binary.B754_zero _ _ _) = FT2R _ |- _ => symmetry in H; apply Float_prop.eq_0_F2R in H; discriminate H 
+     | H: FT2R _ = FT2R (Binary.B754_zero _ _ _)  |- _ => apply Float_prop.eq_0_F2R in H; discriminate H 
+     | H: FT2R _ = FT2R _ |- _ => unfold FT2R in H; apply Binary.B2R_inj in H; [inversion H; clear H; subst | reflexivity | reflexivity]
+    end;
+repeat proof_irr;
+try reflexivity.
+Search feq FT2R.
+f_equal. f_equal.
+Qed.
+*)
+
+
+Lemma FT2R_BDIV_congr: forall x x' y y': ftype t,
+  Binary.is_finite x -> Binary.is_finite x' -> Binary.is_finite y -> Binary.is_finite y' ->
+  FT2R x = FT2R x' ->
+  FT2R y = FT2R y' ->
+  FT2R (BDIV x y) = FT2R (BDIV x' y').
+Proof.
+intros.
+apply FT2R_feq in H3; auto.
+apply FT2R_feq in H4; auto.
+apply FT2R_congr.
+apply BDIV_mor; auto.
+apply feq_strict_feq; auto.
+destruct y,y'; try discriminate; try contradiction; auto.
+red. red. auto.
+Qed.
+
 End A.
+
+
+Lemma default_abs_eq: eta = float_spec.eta fspec.
+Proof.
+rewrite /eta /flocq_float.eta /fspec /flocq_float.flocq_float /float_spec.eta /flocq_float.eta bpow_minus1;
+      simpl IZR; change (flocq_float.prec) with (fprec t); nra.
+Qed.
+
+Lemma default_rel_eq: eps = float_spec.eps fspec.
+Proof.
+rewrite /eps /flocq_float.eps /fspec /flocq_float.flocq_float /float_spec.eps /flocq_float.eps
+           bpow_plus bpow_opp bpow_1.
+rewrite Rmult_comm Rmult_assoc /= Rmult_inv_r; lra.
+Qed.
 
 Lemma FS_val_ext: forall {format} x y, 
   @float_spec.FS_val format x = float_spec.FS_val y -> x = y.
@@ -344,6 +456,12 @@ destruct a,b; inversion Hfin; clear Hfin; subst; simpl; auto.
 destruct s,s0; discriminate; auto.
 Qed.
 
+Lemma BSQRT_finite_e: forall (x: ftype t) (H: Binary.is_finite (BSQRT x)), Binary.is_finite x.
+Proof.
+intros.
+destruct x; try destruct s; try discriminate; auto.
+Qed.
+
 Ltac case_splitP j := (* copied from mv_mathcomp and improved; FIXME *)
   tryif clearbody j then fail "case_splitP requires a variable, but got  a local definition" j
   else tryif is_var j then idtac else fail "case_splitP requires a variable, but got" j;
@@ -354,22 +472,6 @@ Ltac case_splitP j := (* copied from mv_mathcomp and improved; FIXME *)
  |replace j with (@rshift a b i); [ | apply ord_inj; simpl; lia]];
  clear j H; rename i into j
  end.
-(*
-Lemma fsum_l2r_rec_finite_e: forall k (c: ftype t) (a: ftype t ^ k),
-  Binary.is_finite (fsum_l2r_rec c [ffun i : 'I_k => a (rshift1 i)]) ->
-  Binary.is_finite c /\ 
-  Binary.is_finite (a ord0) /\ 
-  Binary.is_finite (fsum_l2r_rec (BPLUS c (a ord0)) a).
-
-  Binary
-a' :=
-  [ffun i => fun_of_fin
-               [ffun i0 => BOPP (fun_of_fin [ffun i1 => BMULT (fun_of_fin a i1) (fun_of_fin b i1)] i0)]
-               (lift ord0 i)] : {ffun 'I_k -> F}
-FINyt : is_true (Binary.is_finite (fsum_l2r_rec c1 a'))
-______________________________________(1/1)
-
-*)
 
 Lemma fsum_l2r_rec_finite_e: forall k (c: ftype t) (a: ftype t ^ k.+1),
   Binary.is_finite (fsum_l2r_rec c a) ->
@@ -505,6 +607,28 @@ rewrite !ffunE in H1.
 destruct (BMULT _ _); try discriminate; auto.
 Qed.
 
+
+Lemma LVSDP_ytildes_eq: forall [k] (a : F ^ k) (c: F),
+    Binary.is_finite (ytildes c a) ->
+  float_spec.FS_val (cholesky.ytildes (mkFS c) [ffun i => mkFS (fun_of_fin a i)]  ) =
+  FT2R (ytildes c a).
+Proof.
+intros * H. 
+rewrite /cholesky.ytildes /ytilded /cholesky.stilde /stilde.
+rewrite -FS_val_fsqrt'; auto.
+f_equal. f_equal.
+rewrite /ytildes /stilde in H.
+apply BSQRT_finite_e in H; auto.
+rewrite LVSDP_fcmsum_eq; auto.
+f_equal. apply eq_dffun => i.
+rewrite !ffunE.
+rewrite !FS_val_mkFS -!FS_val_fmult' //.
+destruct (fsum_l2r_rec_finite_e1 _ _ _ H).
+specialize (H1 i).
+rewrite !ffunE in H1.
+destruct (BMULT _ _); try discriminate; auto.
+Qed.
+
 Lemma LVSDP_lemma_2_1 k (a b : F^k) (c bk : F) 
    (Hbk : ~iszero bk)
    (FINbk: Binary.is_finite bk)
@@ -516,7 +640,7 @@ Proof.
 pose a' := [ffun i => mkFS (a i)].
 pose b' := [ffun i => mkFS (b i)].
 have Hbk': float_spec.FS_val (mkFS bk) <> 0. {
-  change (FT2R bk <> 0). contradict Hbk. destruct bk; auto; try discriminate.
+  contradict Hbk.
   apply iszeroR_iszeroF; auto.
 }
 pose proof @cholesky.lemma_2_1 fspec fspec_eta_nonzero k a' b' (mkFS c) (mkFS bk) Hbk'.
@@ -526,16 +650,121 @@ replace (\sum_i (float_spec.FS_val _ * _)) with (\sum_i (FT2R (fun_of_fin a i) *
 2: apply eq_big; auto; [  move => x // | move => i _; rewrite /a' /b' !ffunE //].
 replace (\sum_i Rabs (float_spec.FS_val _ * _)) with (\sum_i Rabs (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H.
 2: apply eq_big; auto; [ move => x // | move => i _; rewrite /a' /b' !ffunE //].
-replace (float_spec.eta fspec) with eta in H.
-2: rewrite /eta /flocq_float.eta /fspec /flocq_float.flocq_float /float_spec.eta /flocq_float.eta bpow_minus1;
-      simpl IZR; change (flocq_float.prec) with (fprec t); nra.
-replace (float_spec.eps fspec) with eps in H.
+rewrite default_abs_eq default_rel_eq.
 apply H.
-simpl.
-rewrite /eps /flocq_float.eps /flocq_float.prec.
-rewrite bpow_plus_1.
-fold (fprec t).
-simpl. nra.
+Qed.
+
+(*
+Definition cholesky_spec : Prop :=
+  (forall (j i : 'I_n.+1),
+     (i < j)%N ->
+     (Rt i j = ytilded (A i j)
+                       [ffun k : 'I_i => Rt (inord k) i]
+                       [ffun k : 'I_i => Rt (inord k) j]
+                       (Rt i i) :> R))
+  /\ (forall (j : 'I_n.+1),
+        (Rt j j = ytildes (A j j) [ffun k : 'I_j => Rt (inord k) j] :> R)).
+
+*)
+
+(* Definitions copied from C/matrix_model.v *)
+
+Definition subtract_loop {t} (c: ftype t) (l: seq (ftype t * ftype t)) :=
+  foldl BMINUS c (map (uncurry BMULT) l).
+
+Definition subtract_loop_jik {t}  [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
+   subtract_loop c (map (fun k' => (R k' i, R k' j)) (take k (ord_enum n))).
+
+Definition cholesky_jik_ij {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
+     (forall Hij: (i<j)%N, feq (R i j) (BDIV (subtract_loop_jik (A i j) R i j i) (R i i)))
+   /\ (forall Hij: i=j, feq (R i j)  (BSQRT (subtract_loop_jik (A i j) R i j i))).
+
+Definition cholesky_jik_spec {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
+  forall i j, cholesky_jik_ij A R i j.
+
+(*
+1 goal
+NAN : FPCore.Nans
+t : type
+n : nat
+A, R2 : 'M_n.+1
+i, j : 'I_n.+1
+H : is_true (nat_of_ord i < nat_of_ord j)%N
+______________________________________(1/1)
+Lemma fcmsum_l2r_subtract_loop: forall (c: F) (
+fcmsum_l2r (fun_of_matrix A i j)
+  [ffun i0 => BMULT (fun_of_fin [ffun k => fun_of_matrix R2 (inord (nat_of_ord k)) i] i0) (fun_of_fin [ffun k => fun_of_matrix R2 (inord (nat_of_ord k)) j] i0)] =
+subtract_loop (fun_of_matrix A i j) [seq (fun_of_matrix R2 k' i, fun_of_matrix R2 k' j) | k' <- take (nat_of_ord i) (ord_enum n.+1)]
+*)
+
+Lemma stilde_subtract_loop: forall [n] (c: F) (R: 'M_n.+1) (i j: 'I_n.+1) (Hij: (i<=j)%N),
+  stilde c [ffun k : 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j] =  
+  subtract_loop_jik c R i j i.
+Proof.
+intros.
+rewrite /stilde /subtract_loop_jik /fcmsum_l2r /subtract_loop.
+ (* . . . tedious but should be straightforward *)
+Admitted.
+
+Lemma ytilded_subtract_loop: forall n (A R: 'M[F]_n.+1) (i j: 'I_n.+1), 
+   (i<j)%N ->
+  ytilded (A i j) [ffun k: 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j] (R i i) = BDIV (subtract_loop_jik (A i j) R i j i) (R i i).
+Proof.
+intros.
+rewrite /ytilded. f_equal.
+apply stilde_subtract_loop; lia.
+Qed.
+
+Lemma ytildes_subtract_loop: forall n (A R: 'M[F]_n.+1) (i: 'I_n.+1), 
+  ytildes (A i i) [ffun k: 'I_i => R (inord (nat_of_ord k)) i] = BSQRT (subtract_loop_jik (A i i) R i i i).
+Proof.
+intros.
+rewrite /ytildes. f_equal.
+apply stilde_subtract_loop; auto.
+Qed.
+
+Lemma LVSDP_cholesky_spec: forall n (A R: 'M[F]_n.+1),
+  (forall i j, Binary.is_finite (A i j)) ->
+  (forall i j, Binary.is_finite (R i j)) ->
+  cholesky_jik_spec A R ->
+  libValidSDP.cholesky.cholesky_spec (map_mx mkFS A) (map_mx mkFS R).
+Proof.
+move => n A R HA HR H; split.
+-
+move => j i Hij; specialize (H i j). destruct H as [H _]. specialize (H Hij).
+rewrite !mxE !FS_val_mkFS.
+match goal  with |- _ = _ (_ ?X ?Y _) => set Rki := X; set Rkj := Y end.
+simpl in Rki, Rkj.
+replace Rki with   [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) i] i0)].
+2: apply eq_dffun => k; rewrite /map_mx !mxE ffunE //.
+replace Rkj with  [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) j] i0)].
+2: apply eq_dffun => k; rewrite /map_mx !mxE ffunE //.
+rewrite LVSDP_ytilded_eq; auto.
+2:{ rewrite ytilded_subtract_loop //.
+   match goal with |- is_true ?H => replace H with (Binary.is_finite (R i j)) end; auto.
+  apply is_finite_mor; auto.
+}
+apply FT2R_congr.
+rewrite H.
+rewrite ytilded_subtract_loop; auto.
+-
+move => i.
+rewrite !mxE !FS_val_mkFS.
+specialize (H i i). destruct H as [_ H]. specialize (H Logic.eq_refl).
+match goal  with |- _ = _ (_ ?X) => set Rki := X end.
+simpl in Rki.
+replace Rki with   [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) i] i0)].
+2: apply eq_dffun => k; rewrite /map_mx !mxE ffunE //.
+rewrite LVSDP_ytildes_eq; auto.
+2:{ rewrite ytildes_subtract_loop //.
+   match goal with |- is_true ?H => replace H with (Binary.is_finite (R i i)) end; auto.
+  apply is_finite_mor; auto.
+}
+apply FT2R_congr.
+rewrite H.
+rewrite ytildes_subtract_loop; auto.
 Qed.
 
 End WithNaN.
+
+
