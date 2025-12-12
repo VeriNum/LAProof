@@ -585,6 +585,22 @@ rewrite !ffunE.
 rewrite rshift1; auto.
 Qed.
 
+
+Lemma LVSDP_stilde_eq: forall [k] (a b : F ^ k) (c: F),
+    Binary.is_finite (stilde c a b) ->
+    cholesky.stilde (mkFS c) [ffun i => mkFS (fun_of_fin a i)] [ffun i => mkFS (fun_of_fin b i)] = mkFS (stilde c a b).
+Proof.
+rewrite /stilde /cholesky.stilde => k a b c Hfin.
+rewrite LVSDP_fcmsum_eq; auto.
+f_equal. apply eq_dffun => i.
+rewrite !ffunE.
+rewrite FS_val_mkFS -FS_val_fmult' //.
+destruct (fsum_l2r_rec_finite_e1 _ _ _ Hfin).
+specialize (H0 i).
+rewrite !ffunE in H0.
+destruct (BMULT _ _); try discriminate; auto.
+Qed.
+
 Lemma LVSDP_ytilded_eq: forall [k] (a b : F ^ k) (c bk: F),
     Binary.is_finite bk ->
     Binary.is_finite (ytilded c a b bk) ->
@@ -592,19 +608,13 @@ Lemma LVSDP_ytilded_eq: forall [k] (a b : F ^ k) (c bk: F),
   FT2R (ytilded c a b bk).
 Proof.
 intros * FINbk H. 
-rewrite /cholesky.ytilded /ytilded /cholesky.stilde /stilde.
+rewrite /cholesky.ytilded /ytilded in H|-*.
+(* /cholesky.stilde /stilde.*)
 rewrite -FS_val_fdiv'; auto.
 f_equal. f_equal.
-rewrite /ytilded /stilde in H.
 apply BDIV_finite_e in H; auto.
-rewrite LVSDP_fcmsum_eq; auto.
-f_equal. apply eq_dffun => i.
-rewrite !ffunE.
-rewrite FS_val_mkFS -FS_val_fmult' //.
-destruct (fsum_l2r_rec_finite_e1 _ _ _ H).
-specialize (H1 i).
-rewrite !ffunE in H1.
-destruct (BMULT _ _); try discriminate; auto.
+rewrite /ytilded in H.
+apply LVSDP_stilde_eq; auto.
 Qed.
 
 
@@ -614,19 +624,12 @@ Lemma LVSDP_ytildes_eq: forall [k] (a : F ^ k) (c: F),
   FT2R (ytildes c a).
 Proof.
 intros * H. 
-rewrite /cholesky.ytildes /ytilded /cholesky.stilde /stilde.
+rewrite /cholesky.ytildes /ytilded.
 rewrite -FS_val_fsqrt'; auto.
 f_equal. f_equal.
-rewrite /ytildes /stilde in H.
+rewrite /ytildes in H.
 apply BSQRT_finite_e in H; auto.
-rewrite LVSDP_fcmsum_eq; auto.
-f_equal. apply eq_dffun => i.
-rewrite !ffunE.
-rewrite !FS_val_mkFS -!FS_val_fmult' //.
-destruct (fsum_l2r_rec_finite_e1 _ _ _ H).
-specialize (H1 i).
-rewrite !ffunE in H1.
-destruct (BMULT _ _); try discriminate; auto.
+apply LVSDP_stilde_eq; auto.
 Qed.
 
 Lemma LVSDP_lemma_2_1 k (a b : F^k) (c bk : F) 
@@ -676,51 +679,167 @@ Definition subtract_loop_jik {t}  [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I
    subtract_loop c (map (fun k' => (R k' i, R k' j)) (take k (ord_enum n))).
 
 Definition cholesky_jik_ij {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
-     (forall Hij: (i<j)%N, feq (R i j) (BDIV (subtract_loop_jik (A i j) R i j i) (R i i)))
-   /\ (forall Hij: i=j, feq (R i j)  (BSQRT (subtract_loop_jik (A i j) R i j i))).
+     (forall Hij: (i<j)%N,  R i j = BDIV (subtract_loop_jik (A i j) R i j i) (R i i))
+   /\ (forall Hij: i=j, R i j = BSQRT (subtract_loop_jik (A i j) R i j i)).
 
 Definition cholesky_jik_spec {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
   forall i j, cholesky_jik_ij A R i j.
 
-(*
-1 goal
-NAN : FPCore.Nans
-t : type
-n : nat
-A, R2 : 'M_n.+1
-i, j : 'I_n.+1
-H : is_true (nat_of_ord i < nat_of_ord j)%N
-______________________________________(1/1)
-Lemma fcmsum_l2r_subtract_loop: forall (c: F) (
-fcmsum_l2r (fun_of_matrix A i j)
-  [ffun i0 => BMULT (fun_of_fin [ffun k => fun_of_matrix R2 (inord (nat_of_ord k)) i] i0) (fun_of_fin [ffun k => fun_of_matrix R2 (inord (nat_of_ord k)) j] i0)] =
-subtract_loop (fun_of_matrix A i j) [seq (fun_of_matrix R2 k' i, fun_of_matrix R2 k' j) | k' <- take (nat_of_ord i) (ord_enum n.+1)]
-*)
+From LAProof Require Import accuracy_proofs.mv_mathcomp.
+
+Lemma ord_enum_S: forall n, ord_enum (S n) = (@inord n 0) :: (map (@inord n \o S \o (@nat_of_ord n)) (ord_enum n)).
+Proof.
+intros.
+apply (@eq_from_nth _ ord0).
+simpl.
+rewrite size_map !size_ord_enum //.
+rewrite size_ord_enum.
+intros.
+destruct i; simpl.
+change O with (nat_of_ord (@ord0 n)).
+rewrite nth_ord_enum'.
+apply ord_inj; simpl.
+rewrite inordK; auto.
+change (S i) with (nat_of_ord (Ordinal H)).
+rewrite nth_ord_enum'.
+apply ord_inj.
+simpl.
+destruct n; simpl. lia.
+rewrite (nth_map (@ord0 n)).
+2: rewrite size_ord_enum //.
+simpl.
+assert (i<n.+1)%N by lia.
+change i with (nat_of_ord (Ordinal H0)).
+rewrite nth_ord_enum' //.
+simpl.
+rewrite inordK; lia.
+Qed.
+
+Lemma Forall_take_ord_enum: forall [n] (u: 'I_n), Forall (fun x: 'I_n => is_true (x< u)) (take u (ord_enum n)).
+Proof.
+intros.
+replace (fun x : ordinal n => is_true (@Order.lt Order.OrdinalOrder.ord_display (Order.OrdinalOrder.fintype_ordinal__canonical__Order_POrder n) x u))
+  with (fun x: ordinal n => is_true (nat_of_ord x < nat_of_ord u)).
+2:{ apply FunctionalExtensionality.functional_extensionality; intro j.
+destruct j as [j Hj]; destruct u as [u Hu]; simpl in *. reflexivity.
+}
+rewrite Forall_nth; intros.
+Search ListDef.nth nth.
+rewrite -nth_List_nth.
+change @length with @size in H.
+rewrite size_take size_ord_enum in H.
+assert (i < n /\ i<u)%N.
+  destruct (u<n)%N eqn:?H; lia.
+clear H. destruct H0.
+change i with (nat_of_ord (Ordinal H)).
+rewrite nth_take.
+rewrite nth_ord_enum'.
+simpl. lia.
+simpl; lia.
+Qed. 
 
 Lemma stilde_subtract_loop: forall [n] (c: F) (R: 'M_n.+1) (i j: 'I_n.+1) (Hij: (i<=j)%N),
-  stilde c [ffun k : 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j] =  
-  subtract_loop_jik c R i j i.
+  feq (stilde c [ffun k : 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j])
+  (subtract_loop_jik c R i j i).
 Proof.
-intros.
-rewrite /stilde /subtract_loop_jik /fcmsum_l2r /subtract_loop.
- (* . . . tedious but should be straightforward *)
-Admitted.
+rewrite /stilde /fcmsum_l2r /subtract_loop_jik /subtract_loop.
+induction n; move => c R i j Hij /=.
+-
+rewrite !ord1 /=. rewrite take0 //.
+-
+destruct (nat_of_ord i) as [ | u] eqn:?H. rewrite take0 //.
+destruct (nat_of_ord j) as [ | v] eqn:?H; [ lia |].
+simpl.
+rewrite !ffunE.
+have H3 :((n.+2=addn 1 n.+1)*(n.+2= addn 1 n.+1))%type by (split; lia).
+set c1 := BPLUS _ _.
+assert (Hu: u < n.+1). pose proof (ltn_ord j); lia.
+assert (Hv: v < n.+1). pose proof (ltn_ord j); lia.
+ordify n.+1 u.
+ordify n.+1 v.
+specialize (IHn c1 (drsubmx (castmx H3 R)) u v).
+etransitivity; [ | etransitivity; [ apply IHn; lia | ]]; clear IHn.
++
+simpl.
+match goal with |- feq ?A ?B => replace B with A; try reflexivity end.
+f_equal.
+apply eq_dffun => k.
+have Hk := ltn_ord k.
+rewrite !ffunE !lift0.
+f_equal.
+f_equal.
+rewrite drsubmxEsub !mxE castmxE /=.
+f_equal; apply ord_inj; simpl; rewrite ?inordK; try (simpl; lia).
+rewrite drsubmxEsub !mxE castmxE /=.
+f_equal; apply ord_inj; simpl; rewrite ?inordK; try (simpl; lia).
++
+rewrite (ord_enum_S n.+1).
+simpl.
+match goal with |- feq (foldl _ _ ?A) (foldl _ _ ?B) => replace B with A; [ set al := A | ] end.
+*
+clearbody al.
+set d1 := BMINUS c _.
+assert (feq c1 d1).
+symmetry; apply MINUS_PLUS_BOPP.
+clear - H1.
+clearbody c1. clearbody d1. clear - H1.
+revert c1 d1 H1; induction al; simpl; intros; auto.
+apply IHal. rewrite H1; auto.
+*
+f_equal.
+clear c1.
+rewrite  -map_take.
+rewrite -map_comp.
+assert (Forall (fun x => x < u) (take (nat_of_ord u) (ord_enum n.+1))).
+ apply Forall_take_ord_enum.
+set (al := take _ _) in H1|-*.
+clearbody al.
+induction H1; simpl; auto.
+f_equal; auto.
+rewrite !drsubmxEsub.
+rewrite castmxEsub.
+rewrite -mxsub_comp.
+rewrite /mxsub.
+rewrite  !mxE.
+f_equal; f_equal; apply ord_inj; simpl; try lia; rewrite inordK; auto;
+clear - H1 Hu; destruct x,u; simpl in *; lia.
+Qed.
 
 Lemma ytilded_subtract_loop: forall n (A R: 'M[F]_n.+1) (i j: 'I_n.+1), 
+ (forall i j, Binary.is_finite (R i j)) ->
    (i<j)%N ->
-  ytilded (A i j) [ffun k: 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j] (R i i) = BDIV (subtract_loop_jik (A i j) R i j i) (R i i).
+  feq (ytilded (A i j) [ffun k: 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j] (R i i))  (BDIV (subtract_loop_jik (A i j) R i j i) (R i i)).
 Proof.
 intros.
-rewrite /ytilded. f_equal.
+rewrite /ytilded.
+apply BDIV_mor.
 apply stilde_subtract_loop; lia.
+apply strict_feq_refl.
+apply H.
+Qed.
+
+
+
+Add Parametric Morphism: BSQRT  (* move this to vcfloat.FPStdLib and vcfloat.StdLib *)
+ with signature @feq t ==> @feq t
+ as BSQRT_mor.
+Proof.
+intros.
+destruct x; try destruct s; try discriminate; destruct y ; try destruct s; try contradiction; try reflexivity.
+destruct H; discriminate.
+destruct H; discriminate.
+destruct H as [? [? ?]].
+subst.
+proof_irr.
+reflexivity.
 Qed.
 
 Lemma ytildes_subtract_loop: forall n (A R: 'M[F]_n.+1) (i: 'I_n.+1), 
-  ytildes (A i i) [ffun k: 'I_i => R (inord (nat_of_ord k)) i] = BSQRT (subtract_loop_jik (A i i) R i i i).
+  feq (ytildes (A i i) [ffun k: 'I_i => R (inord (nat_of_ord k)) i]) (BSQRT (subtract_loop_jik (A i i) R i i i)).
 Proof.
 intros.
-rewrite /ytildes. f_equal.
-apply stilde_subtract_loop; auto.
+rewrite /ytildes.
+rewrite stilde_subtract_loop; auto.
 Qed.
 
 Lemma LVSDP_cholesky_spec: forall n (A R: 'M[F]_n.+1),
@@ -740,10 +859,7 @@ replace Rki with   [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) i] i0)].
 replace Rkj with  [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) j] i0)].
 2: apply eq_dffun => k; rewrite /map_mx !mxE ffunE //.
 rewrite LVSDP_ytilded_eq; auto.
-2:{ rewrite ytilded_subtract_loop //.
-   match goal with |- is_true ?H => replace H with (Binary.is_finite (R i j)) end; auto.
-  apply is_finite_mor; auto.
-}
+2: rewrite ytilded_subtract_loop // -H //.
 apply FT2R_congr.
 rewrite H.
 rewrite ytilded_subtract_loop; auto.
@@ -756,12 +872,9 @@ simpl in Rki.
 replace Rki with   [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) i] i0)].
 2: apply eq_dffun => k; rewrite /map_mx !mxE ffunE //.
 rewrite LVSDP_ytildes_eq; auto.
-2:{ rewrite ytildes_subtract_loop //.
-   match goal with |- is_true ?H => replace H with (Binary.is_finite (R i i)) end; auto.
-  apply is_finite_mor; auto.
-}
-apply FT2R_congr.
+2: rewrite ytildes_subtract_loop // -H //.
 rewrite H.
+apply FT2R_congr.
 rewrite ytildes_subtract_loop; auto.
 Qed.
 
