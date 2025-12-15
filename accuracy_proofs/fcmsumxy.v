@@ -19,6 +19,32 @@
 From LAProof.accuracy_proofs Require Import preamble common.
 From libValidSDP Require cholesky flocq_float float_spec float_infnan_spec flocq_float binary_infnan.
 
+
+Definition max_mantissa t : positive := Pos.pow 2 (fprecp t) - 1.
+
+Lemma digits_max_mantissa t: Z.pos (SpecFloat.digits2_pos (max_mantissa t))  = fprec t.
+Proof.
+intros.
+rewrite Digits.Zpos_digits2_pos.
+unfold max_mantissa.
+unfold fprec.
+Admitted.
+
+Lemma max_mantissa_bounded t: SpecFloat.bounded (fprec t) (femax t) (max_mantissa t) (femax t - fprec t).
+hnf.
+unfold SpecFloat.bounded.
+unfold SpecFloat.canonical_mantissa.
+unfold SpecFloat.fexp, SpecFloat.emin.
+rewrite digits_max_mantissa.
+rewrite Z.max_l; try lia.
+pose proof fprec_lt_femax t.
+pose proof fprec_gt_0 t.
+red in H0.
+lia.
+Qed.
+
+Definition Float_max t := Binary.B754_finite (fprec t) (femax t) false _ _ (max_mantissa_bounded t).
+
 Section WithNaN.
 
 Context {NAN: FPCore.Nans} {t : type}.
@@ -685,7 +711,65 @@ Definition cholesky_jik_ij {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop 
 Definition cholesky_jik_spec {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
   forall i j, cholesky_jik_ij A R i j.
 
+Definition cholesky_success {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
+   cholesky_jik_spec A R /\
+   forall i, Binary.is_finite_strict _ _ (R i i).
+
 From LAProof Require Import accuracy_proofs.mv_mathcomp.
+
+Lemma cholesky_success_R_finite:
+ forall [n] (A R: 'M[ftype t]_n),
+  A^T = A ->
+  cholesky_success A R ->
+  forall i j, (nat_of_ord i <= nat_of_ord j)%N -> Binary.is_finite (R i j).
+Proof.
+intros n A R H [H0 H1] i j H2.
+red in H1.
+assert (H1': forall i, Binary.is_finite (R i i)).
+intro k; apply is_finite_strict_finite; apply H1.
+assert ((i<j) \/ (nat_of_ord i == nat_of_ord j))%N by lia.
+destruct H3.
+2: assert (i=j) by (apply ord_inj; lia); subst j; apply (H1' i).
+destruct (H0 i j) as [? _].
+specialize (H4 H3).
+pose proof (H1' j).
+pose proof (H0 j j).
+destruct H6 as [_ ?].
+rewrite H6 in H5; auto.
+apply BSQRT_finite_e in H5.
+unfold subtract_loop_jik in H5.
+Admitted. (* should be straightforwardly provable from H5 *)
+
+Definition cholesky_bound (n: nat) := FT2R (Float_max t) - (eps * INR(2*(n-1)) + INR(n+1)*FT2R(Float_max t)).
+
+Lemma cholesky_jik_spec_backwards_finite:
+  forall n (A R: 'M[F]_n),
+  A^T = A ->
+  cholesky_jik_spec A R ->
+  (forall i j: 'I_n, i <= j -> Binary.is_finite (R i j)) ->
+  (forall i j, Binary.is_finite (A i j)).
+Proof.
+  move => n A R Hsym H FINR i j.
+  assert (Hsub: forall (x: F) al, Binary.is_finite (subtract_loop x al) -> Binary.is_finite x). {
+    clear. intros x al. revert x; induction al; simpl; intros; auto. apply IHal in H. apply float_acc_lems.BMINUS_finite_sub in H. apply H.
+  }
+  assert (H2: ((i<j) \/ (nat_of_ord i== nat_of_ord j) \/ (j<i))%N) by lia.
+  destruct H2 as [H2 | [H2 | H2]].
+-
+  destruct (H i j) as [H0 _].
+  specialize (H0 H2). 
+  specialize (FINR i j). rewrite H0 in FINR. apply BDIV_finite_e in FINR; [ | rewrite leEord; lia]. 
+  apply Hsub in FINR. auto.
+- destruct (H i j) as [_ H0].
+  assert (H1: i=j) by (apply ord_inj; lia). apply H0 in H1.
+  specialize (FINR i j). rewrite H1 in FINR. apply BSQRT_finite_e in FINR; [ | rewrite leEord; lia]. 
+  apply Hsub in FINR. auto.
+- rewrite -Hsym. rewrite mxE.
+  destruct (H j i) as [H0 _].
+  specialize (H0 H2). 
+  specialize (FINR j i). rewrite H0 in FINR. apply BDIV_finite_e in FINR; [ | rewrite leEord; lia].  
+  apply Hsub in FINR. auto.
+Qed.
 
 Lemma ord_enum_S: forall n, ord_enum (S n) = (@inord n 0) :: (map (@inord n \o S \o (@nat_of_ord n)) (ord_enum n)).
 Proof.
@@ -806,7 +890,7 @@ clear - H1 Hu; destruct x,u; simpl in *; lia.
 Qed.
 
 Lemma ytilded_subtract_loop: forall n (A R: 'M[F]_n.+1) (i j: 'I_n.+1), 
- (forall i j, Binary.is_finite (R i j)) ->
+ (forall i j: 'I_n.+1, (i<=j)%N -> Binary.is_finite (R i j)) ->
    (i<j)%N ->
   feq (ytilded (A i j) [ffun k: 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j] (R i i))  (BDIV (subtract_loop_jik (A i j) R i j i) (R i i)).
 Proof.
@@ -815,10 +899,8 @@ rewrite /ytilded.
 apply BDIV_mor.
 apply stilde_subtract_loop; lia.
 apply strict_feq_refl.
-apply H.
+apply H; auto.
 Qed.
-
-
 
 Add Parametric Morphism: BSQRT  (* move this to vcfloat.FPStdLib and vcfloat.StdLib *)
  with signature @feq t ==> @feq t
@@ -843,12 +925,14 @@ rewrite stilde_subtract_loop; auto.
 Qed.
 
 Lemma LVSDP_cholesky_spec: forall n (A R: 'M[F]_n.+1),
-  (forall i j, Binary.is_finite (A i j)) ->
-  (forall i j, Binary.is_finite (R i j)) ->
+  A^T = A ->
+  (forall i j: 'I_n.+1, (i <= j)%N -> Binary.is_finite (R i j)) ->
   cholesky_jik_spec A R ->
   libValidSDP.cholesky.cholesky_spec (map_mx mkFS A) (map_mx mkFS R).
 Proof.
-move => n A R HA HR H; split.
+move => n A R HA HR H.
+move :(cholesky_jik_spec_backwards_finite _ _ _ HA H HR). clear HA. move => HA.
+split.
 -
 move => j i Hij; specialize (H i j). destruct H as [H _]. specialize (H Hij).
 rewrite !mxE !FS_val_mkFS.
@@ -863,6 +947,7 @@ rewrite LVSDP_ytilded_eq; auto.
 apply FT2R_congr.
 rewrite H.
 rewrite ytilded_subtract_loop; auto.
+apply HR. lia.
 -
 move => i.
 rewrite !mxE !FS_val_mkFS.
@@ -876,6 +961,47 @@ rewrite LVSDP_ytildes_eq; auto.
 rewrite H.
 apply FT2R_congr.
 rewrite ytildes_subtract_loop; auto.
+apply HR; lia.
+Qed.
+
+Lemma BSQRT_nonneg: forall x:F,  
+   match BSQRT x with Binary.B754_finite _ _ false _ _ _ => true
+                      | Binary.B754_zero _ _ _ => true
+                      | Binary.B754_infinity _ _ false => true
+                      | Binary.B754_nan _ _ _ _ _ => true
+                      | _ => false 
+   end = true.
+Proof.
+intros.
+unfold BSQRT, UNOP, Binary.Bsqrt, Binary.BSN2B.
+destruct (BinarySingleNaN.Bsqrt_correct (fprec t) (femax t) (fprec_gt_0 t) (fprec_lt_femax t) BinarySingleNaN.mode_NE
+  (Binary.B2BSN _ _ x)) 
+  as [? [? ?]].
+set x' := BinarySingleNaN.Bsqrt BinarySingleNaN.mode_NE (Binary.B2BSN (fprec t) (femax t) x) in H,H0,H1|-*.
+destruct x eqn:Hx; try destruct s; simpl in *; try discriminate; auto.
+destruct x'; simpl in *; try discriminate; auto.
+rewrite H1; auto.
+Qed.
+
+Lemma LVDSP_cholesky_success: forall [n] (A R: 'M[F]_n.+1),
+  A^T = A ->
+  cholesky_success A R ->
+  libValidSDP.cholesky.cholesky_success (map_mx mkFS A) (map_mx mkFS R).
+Proof.
+intros n A R HA H.
+pose proof cholesky_success_R_finite A R HA H.
+destruct H; split.
+apply LVSDP_cholesky_spec; auto.
+intro i.
+rewrite mxE. specialize (H1 i).
+destruct (H i i) as [_ ?]. specialize (H2 (Logic.eq_refl _)).
+Search Binary.Bsqrt.
+ destruct (R i i); try discriminate H1. simpl.
+pose proof (BSQRT_nonneg (subtract_loop_jik (fun_of_matrix A i i) R i i i)).
+rewrite - H2 in H3.
+destruct s; try discriminate.
+simpl.
+apply Float_prop.F2R_gt_0; simpl. lia.
 Qed.
 
 End WithNaN.
