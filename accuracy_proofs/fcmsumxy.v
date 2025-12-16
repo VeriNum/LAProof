@@ -18,7 +18,7 @@
 
 From LAProof.accuracy_proofs Require Import preamble common.
 From libValidSDP Require cholesky flocq_float float_spec float_infnan_spec flocq_float binary_infnan.
-
+From LAProof Require accuracy_proofs.mv_mathcomp.
 
 Definition max_mantissa t : positive := Pos.pow 2 (fprecp t) - 1.
 
@@ -27,8 +27,31 @@ Proof.
 intros.
 rewrite Digits.Zpos_digits2_pos.
 unfold max_mantissa.
-unfold fprec.
-Admitted.
+rewrite Pos2Z.inj_sub.
+2: apply Pos.pow_gt_1; compute; auto.
+rewrite Pos2Z.inj_pow.
+pose proof Digits.Zdigits_correct Zaux.radix2 (2 ^ Z.pos (fprecp t) - 1).
+simpl in H.
+assert (0 < 2 ^ Z.pos (fprecp t) - 1)%Z. {
+  assert (2 ^ 0 < 2 ^ Z.pos (fprecp t))%Z; [ | lia].
+  apply Z.pow_lt_mono_r; auto; lia.
+}
+simpl; pose proof (Zaux.Zpower_pos_gt_0 2 (fprecp t) ltac:(lia)).
+rewrite Z.pow_pos_fold in H.
+rewrite Z.abs_eq in H; auto; try lia.
+clear H1.
+fold (fprec t) in H0,H|-*.
+set d := Digits.Zdigits Zaux.radix2 (2 ^ fprec t - 1) in H|-*. 
+assert (d>0)%Z. {
+ pose proof (Digits.Zdigits_le Zaux.radix2 1%Z (2 ^ fprec t - 1) ltac:(lia) ltac:(lia)). fold d in H1. simpl in H1. lia.
+}
+set (e := fprec t) in H0,H|-*.
+assert (d<e \/ d=e \/ d>e)%Z by lia.
+destruct H2 as [?| [?| ?]]; auto.
+assert (2 ^ d < 2^e)%Z. apply Z.pow_lt_mono_r; auto; try lia. lia.
+assert (2 ^ (d-1) >= 2^ e)%Z. apply Z.le_ge. apply Z.pow_le_mono_r; lia.
+lia.
+Qed.
 
 Lemma max_mantissa_bounded t: SpecFloat.bounded (fprec t) (femax t) (max_mantissa t) (femax t - fprec t).
 hnf.
@@ -145,10 +168,6 @@ apply opp_nan.
 apply sqrt_nan.
 apply fma_nan.
 Defined.
-Search (1 < fprec _)%Z.
-Search (fprec _ <? femax _)%Z.
-Search (_ < _ -> (_ <? _)=true)%Z.
-
 
 Definition mkFS (x: F) : float_spec.FS fspec  := float_spec.Build_FS_of (format_FT2R x).
 
@@ -375,46 +394,6 @@ repeat match goal with
 repeat proof_irr;
 try reflexivity.
 Qed.
-
-(*
-Lemma FT2R_BINOP_congr: forall 
-    (op : forall prec emax : Z,
-          FLX.Prec_gt_0 prec ->
-          BinarySingleNaN.Prec_lt_emax prec emax ->
-          (Binary.binary_float prec emax -> Binary.binary_float prec emax -> {x : Binary.binary_float prec emax | Binary.is_nan prec emax x = true}) ->
-          BinarySingleNaN.mode -> Binary.binary_float prec emax -> Binary.binary_float prec emax -> Binary.binary_float prec emax)
-    (NAN : forall prec emax : Z, (1 < prec)%Z -> Binary.binary_float prec emax -> Binary.binary_float prec emax -> nan_payload prec emax)
-    (x x' y y': ftype t),
-  Binary.is_finite x -> Binary.is_finite x' -> Binary.is_finite y -> Binary.is_finite y' ->
-  FT2R x = FT2R x' ->
-  FT2R y = FT2R y' ->
-  FT2R (BINOP op NAN _ x y) = FT2R (BINOP op NAN _ x' y').
-Proof.
-intros.
-apply FT2R_feq in H3; auto.
-apply FT2R_feq in H4; auto.
-apply FT2R_congr.
-Locate feq.
-
-Search BINOP feq.
-apply BINOP
-rewrite H3.
-rewrite H3 H4.
-
-
-destruct x,x',y,y'; try discriminate; repeat match goal with s: bool |- _ => destruct s; try discriminate end; try reflexivity;
-repeat match goal with
-     | H: FT2R (Binary.B754_zero _ _ _) = FT2R _ |- _ => symmetry in H; apply Float_prop.eq_0_F2R in H; discriminate H 
-     | H: FT2R _ = FT2R (Binary.B754_zero _ _ _)  |- _ => apply Float_prop.eq_0_F2R in H; discriminate H 
-     | H: FT2R _ = FT2R _ |- _ => unfold FT2R in H; apply Binary.B2R_inj in H; [inversion H; clear H; subst | reflexivity | reflexivity]
-    end;
-repeat proof_irr;
-try reflexivity.
-Search feq FT2R.
-f_equal. f_equal.
-Qed.
-*)
-
 
 Lemma FT2R_BDIV_congr: forall x x' y y': ftype t,
   Binary.is_finite x -> Binary.is_finite x' -> Binary.is_finite y -> Binary.is_finite y' ->
@@ -715,7 +694,21 @@ Definition cholesky_success {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
    cholesky_jik_spec A R /\
    forall i, Binary.is_finite_strict _ _ (R i i).
 
-From LAProof Require Import accuracy_proofs.mv_mathcomp.
+Lemma subtract_loop_finite_e: forall (c: ftype t) (al: seq (ftype t * ftype t)), 
+  Binary.is_finite (subtract_loop c al) ->
+  Binary.is_finite c /\ forallb (fun p => Binary.is_finite (fst p) && Binary.is_finite (snd p)) al.
+Proof.
+ intros c al; revert c; induction al as [ | [x y] al] ; intros.
+ - split; auto.
+ - unfold subtract_loop in H.  simpl in H. 
+  apply IHal in H.
+  destruct H.
+  apply float_acc_lems.BMINUS_finite_sub in H. destruct H; auto.
+  split; auto.
+  simpl. apply BMULT_finite_e in H1. destruct H1. rewrite H1 H2. apply H0.
+Qed.
+
+Import mv_mathcomp.
 
 Lemma cholesky_success_R_finite:
  forall [n] (A R: 'M[ftype t]_n),
@@ -738,7 +731,35 @@ destruct H6 as [_ ?].
 rewrite H6 in H5; auto.
 apply BSQRT_finite_e in H5.
 unfold subtract_loop_jik in H5.
-Admitted. (* should be straightforwardly provable from H5 *)
+apply subtract_loop_finite_e in H5.
+destruct H5 as [_ H5].
+red in H5. rewrite -> forallb_forall in H5.
+specialize (H5 (R i j, R i j)).
+simpl in H5.
+assert (Binary.is_finite (fun_of_matrix R i j) && Binary.is_finite (fun_of_matrix R i j) = true).
+2: rewrite Bool.andb_true_iff in H7; destruct H7; auto.
+apply H5.
+clear - H3.
+rewrite map_take.
+set f := (fun k' : ordinal n => pair (fun_of_matrix R k' j) (fun_of_matrix R k' j)).
+change (pair _ _) with (f i).
+clearbody f.
+pose proof (ltn_ord j).
+replace (f i) with  (ListDef.nth (nat_of_ord i) (take (nat_of_ord j) (map f (ord_enum n))) (Zconst t 0, Zconst t 0)).
+apply nth_In.
+change @length with @size.
+rewrite size_take.
+rewrite size_map.
+rewrite size_ord_enum.
+rewrite H.
+lia.
+rewrite -nth_List_nth.
+rewrite nth_take; auto.
+rewrite (nth_map i).
+rewrite nth_ord_enum' //.
+rewrite size_ord_enum.
+lia.
+Qed.
 
 Definition cholesky_bound (n: nat) := FT2R (Float_max t) - (eps * INR(2*(n-1)) + INR(n+1)*FT2R(Float_max t)).
 
@@ -751,8 +772,8 @@ Lemma cholesky_jik_spec_backwards_finite:
 Proof.
   move => n A R Hsym H FINR i j.
   assert (Hsub: forall (x: F) al, Binary.is_finite (subtract_loop x al) -> Binary.is_finite x). {
-    clear. intros x al. revert x; induction al; simpl; intros; auto. apply IHal in H. apply float_acc_lems.BMINUS_finite_sub in H. apply H.
-  }
+   intros. apply subtract_loop_finite_e in H0. apply H0.
+ }
   assert (H2: ((i<j) \/ (nat_of_ord i== nat_of_ord j) \/ (j<i))%N) by lia.
   destruct H2 as [H2 | [H2 | H2]].
 -
@@ -808,7 +829,6 @@ replace (fun x : ordinal n => is_true (@Order.lt Order.OrdinalOrder.ord_display 
 destruct j as [j Hj]; destruct u as [u Hu]; simpl in *. reflexivity.
 }
 rewrite Forall_nth; intros.
-Search ListDef.nth nth.
 rewrite -nth_List_nth.
 change @length with @size in H.
 rewrite size_take size_ord_enum in H.
@@ -995,7 +1015,6 @@ apply LVSDP_cholesky_spec; auto.
 intro i.
 rewrite mxE. specialize (H1 i).
 destruct (H i i) as [_ ?]. specialize (H2 (Logic.eq_refl _)).
-Search Binary.Bsqrt.
  destruct (R i i); try discriminate H1. simpl.
 pose proof (BSQRT_nonneg (subtract_loop_jik (fun_of_matrix A i i) R i i i)).
 rewrite - H2 in H3.
