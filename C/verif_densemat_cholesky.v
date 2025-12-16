@@ -5,6 +5,7 @@
 
  For explanation see the prologue of [LAProof.C.spec_densemat] *)
 From VST.floyd Require Import proofauto VSU.
+From LAProof.accuracy_proofs Require Import solve_model.
 From LAProof.C Require Import densemat spec_alloc spec_densemat floatlib matrix_model.
 From vcfloat Require Import FPStdCompCert FPStdLib.
 Require Import VSTlib.spec_math VSTlib.spec_malloc.

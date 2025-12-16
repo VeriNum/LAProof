@@ -9,6 +9,7 @@
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.
 From VSTlib Require Import spec_math spec_malloc.
+From LAProof.accuracy_proofs Require Import solve_model.
 From LAProof.C Require Import densemat spec_alloc floatlib matrix_model.
 Require Import Coq.Classes.RelationClasses.
 
