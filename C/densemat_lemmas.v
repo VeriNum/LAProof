@@ -32,7 +32,7 @@ Definition densemat_E : funspecs := [].
 Definition densemat_imported_specs : funspecs := 
    [free_spec'] (* subset of MallocASI *)
   ++ [surely_malloc_spec'; double_clear_spec] (* subset of allocASI *)
-  ++ [fma_spec; sqrt_spec]. (* subset of MathASI *)
+  ++ [fma_spec; sqrt_spec; frexp_spec]. (* subset of MathASI *)
 Definition densemat_internal_specs : funspecs := densematASI.
 Definition Gprog :=  densemat_imported_specs ++ densemat_internal_specs.
 
@@ -49,6 +49,17 @@ Instance change_composite_env_alloc' :
   change_composite_env CompSpecs spec_alloc.CompSpecs.
 Proof.
    make_cs_preserve CompSpecs spec_alloc.CompSpecs.
+Qed.
+
+Instance change_composite_env_empty: change_composite_env emptyCS CompSpecs.
+Proof.
+   make_cs_preserve emptyCS CompSpecs.
+Qed.
+ 
+
+Instance change_composite_env_empty': change_composite_env CompSpecs emptyCS.
+Proof.
+   make_cs_preserve CompSpecs emptyCS.
 Qed.
 
 (** * Many useful supporting lemmas about [column_major], [ordinal], [ord_enum], etc. *)

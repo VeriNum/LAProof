@@ -16,7 +16,7 @@
 *)
 
 
-From LAProof.accuracy_proofs Require Import preamble common.
+From LAProof.accuracy_proofs Require Import preamble common solve_model float_acc_lems.
 From libValidSDP Require cholesky flocq_float float_spec float_infnan_spec flocq_float binary_infnan.
 From LAProof Require accuracy_proofs.mv_mathcomp.
 
@@ -444,6 +444,7 @@ intros.
 destruct x, y; try destruct s; try destruct s0; try discriminate; auto.
 Qed.
 
+(*
 Lemma BMULT_finite_e : (* copied from float_acc_lemmas, FIXME *)
  forall (a b : ftype t) (Hfin : Binary.is_finite (BMULT  a b)),
  Binary.is_finite a  /\ Binary.is_finite b.
@@ -460,6 +461,7 @@ unfold BPLUS, BINOP; intros.
 destruct a,b; inversion Hfin; clear Hfin; subst; simpl; auto.
 destruct s,s0; discriminate; auto.
 Qed.
+*)
 
 Lemma BSQRT_finite_e: forall (x: ftype t) (H: Binary.is_finite (BSQRT x)), Binary.is_finite x.
 Proof.
@@ -662,104 +664,7 @@ rewrite default_abs_eq default_rel_eq.
 apply H.
 Qed.
 
-(*
-Definition cholesky_spec : Prop :=
-  (forall (j i : 'I_n.+1),
-     (i < j)%N ->
-     (Rt i j = ytilded (A i j)
-                       [ffun k : 'I_i => Rt (inord k) i]
-                       [ffun k : 'I_i => Rt (inord k) j]
-                       (Rt i i) :> R))
-  /\ (forall (j : 'I_n.+1),
-        (Rt j j = ytildes (A j j) [ffun k : 'I_j => Rt (inord k) j] :> R)).
-
-*)
-
-(* Definitions copied from C/matrix_model.v *)
-
-Definition subtract_loop {t} (c: ftype t) (l: seq (ftype t * ftype t)) :=
-  foldl BMINUS c (map (uncurry BMULT) l).
-
-Definition subtract_loop_jik {t}  [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
-   subtract_loop c (map (fun k' => (R k' i, R k' j)) (take k (ord_enum n))).
-
-Definition cholesky_jik_ij {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
-     (forall Hij: (i<j)%N,  R i j = BDIV (subtract_loop_jik (A i j) R i j i) (R i i))
-   /\ (forall Hij: i=j, R i j = BSQRT (subtract_loop_jik (A i j) R i j i)).
-
-Definition cholesky_jik_spec {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
-  forall i j, cholesky_jik_ij A R i j.
-
-Definition cholesky_success {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
-   cholesky_jik_spec A R /\
-   forall i, Binary.is_finite_strict _ _ (R i i).
-
-Lemma subtract_loop_finite_e: forall (c: ftype t) (al: seq (ftype t * ftype t)), 
-  Binary.is_finite (subtract_loop c al) ->
-  Binary.is_finite c /\ forallb (fun p => Binary.is_finite (fst p) && Binary.is_finite (snd p)) al.
-Proof.
- intros c al; revert c; induction al as [ | [x y] al] ; intros.
- - split; auto.
- - unfold subtract_loop in H.  simpl in H. 
-  apply IHal in H.
-  destruct H.
-  apply float_acc_lems.BMINUS_finite_sub in H. destruct H; auto.
-  split; auto.
-  simpl. apply BMULT_finite_e in H1. destruct H1. rewrite H1 H2. apply H0.
-Qed.
-
 Import mv_mathcomp.
-
-Lemma cholesky_success_R_finite:
- forall [n] (A R: 'M[ftype t]_n),
-  A^T = A ->
-  cholesky_success A R ->
-  forall i j, (nat_of_ord i <= nat_of_ord j)%N -> Binary.is_finite (R i j).
-Proof.
-intros n A R H [H0 H1] i j H2.
-red in H1.
-assert (H1': forall i, Binary.is_finite (R i i)).
-intro k; apply is_finite_strict_finite; apply H1.
-assert ((i<j) \/ (nat_of_ord i == nat_of_ord j))%N by lia.
-destruct H3.
-2: assert (i=j) by (apply ord_inj; lia); subst j; apply (H1' i).
-destruct (H0 i j) as [? _].
-specialize (H4 H3).
-pose proof (H1' j).
-pose proof (H0 j j).
-destruct H6 as [_ ?].
-rewrite H6 in H5; auto.
-apply BSQRT_finite_e in H5.
-unfold subtract_loop_jik in H5.
-apply subtract_loop_finite_e in H5.
-destruct H5 as [_ H5].
-red in H5. rewrite -> forallb_forall in H5.
-specialize (H5 (R i j, R i j)).
-simpl in H5.
-assert (Binary.is_finite (fun_of_matrix R i j) && Binary.is_finite (fun_of_matrix R i j) = true).
-2: rewrite Bool.andb_true_iff in H7; destruct H7; auto.
-apply H5.
-clear - H3.
-rewrite map_take.
-set f := (fun k' : ordinal n => pair (fun_of_matrix R k' j) (fun_of_matrix R k' j)).
-change (pair _ _) with (f i).
-clearbody f.
-pose proof (ltn_ord j).
-replace (f i) with  (ListDef.nth (nat_of_ord i) (take (nat_of_ord j) (map f (ord_enum n))) (Zconst t 0, Zconst t 0)).
-apply nth_In.
-change @length with @size.
-rewrite size_take.
-rewrite size_map.
-rewrite size_ord_enum.
-rewrite H.
-lia.
-rewrite -nth_List_nth.
-rewrite nth_take; auto.
-rewrite (nth_map i).
-rewrite nth_ord_enum' //.
-rewrite size_ord_enum.
-lia.
-Qed.
 
 Definition cholesky_bound (n: nat) := FT2R (Float_max t) - (eps * INR(2*(n-1)) + INR(n+1)*FT2R(Float_max t)).
 

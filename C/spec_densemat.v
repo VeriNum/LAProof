@@ -492,10 +492,10 @@ Definition densematn_cfactor_spec :=
           forall i j, isSome (mirror_UT M i j))
     PARAMS (p; Vint (Int.repr n))
     SEP (densematn sh M p)
- POST [ tvoid ] let '(existT _ n M) := X in
+ POST [ tint ] let '(existT _ n M) := X in
    EX R: 'M_n,
     PROP (cholesky_jik_spec (map_mx optfloat_to_float (mirror_UT M)) R)
-    RETURN ()
+    RETURN (Vint (Int.repr (Zcholesky_return (cholesky_return R))))
     SEP (densematn sh (joinLU M (map_mx Some R)) p).
 
 Definition densemat_cfactor_spec :=
@@ -506,10 +506,10 @@ Definition densemat_cfactor_spec :=
           forall i j, isSome (mirror_UT M i j))
     PARAMS (p)
     SEP (densemat sh M p)
- POST [ tvoid ] let '(existT _ n M) := X in
+ POST [ tint ] let '(existT _ n M) := X in
    EX R: 'M_n,
     PROP (cholesky_jik_spec (map_mx optfloat_to_float (mirror_UT M)) R)
-    RETURN ()
+    RETURN (Vint (Int.repr (Zcholesky_return (cholesky_return R))))
     SEP (densemat sh (joinLU M (map_mx Some R)) p).
 
 Definition densematn_csolve_spec :=

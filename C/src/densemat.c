@@ -96,16 +96,22 @@ void densemat_print(densemat_t vm)
  * major representation in which the upper triangle represents the upper
  * triangle of an SPD matrix; the lower triangle is ignored.  On output,
  * the upper triangle of the matrix argument is overwritten by the
- * Cholesky factor.  We will error out if we encounter a negative diagonal
- * (in violation of the assumed positive definiteness).
+ * Cholesky factor.
+ *
+ * Return values:
+ *  1 if positive definite (resulting diagonal all finite and positive)
+ *  0 if positive semidefinite (resulting diagonal all finite and nonnegative) but not positive definite 
+ *  -1 if error
  * 
  * We will not bother to show the wrapper around the `densematn` version.
  */
-void densematn_cfactor(double* A, int n)
+int densematn_cfactor(double* A, int n)
 { 
   /* sdot method */
   int i,j,k;
   double s;
+  double err=1.0;
+  int scratch;
   for (j=0; j<n; j++) {
      for (i=0; i<j; i++) {
        s = densematn_get(A,n,i,j);
@@ -118,8 +124,13 @@ void densematn_cfactor(double* A, int n)
          double rkj = densematn_get(A,n,k,j);
      	 s = s - rkj*rkj;
      }
-     densematn_set(A,n,j,j, sqrt(s));
+     s = sqrt(s);
+     err *= frexp(s,&scratch);
+     densematn_set(A,n,j,j, s);
   }
+  if (err==0.0) return 0;
+  if (0.0*err==0.0) return 1;
+  return -1;
 }
 
 //ldoc off
@@ -210,9 +221,9 @@ void densematn_cfactor_block(double *A, int n, int b, int l) {
    }
 }
 
-void densemat_cfactor(densemat_t A) {
+int densemat_cfactor(densemat_t A) {
     assert(A->m == A->n);
-    densematn_cfactor(A->data, A->m);
+    return densematn_cfactor(A->data, A->m);
 }
 
 //ldoc on

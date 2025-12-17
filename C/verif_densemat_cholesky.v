@@ -28,22 +28,39 @@ Open Scope logic.
 
 (** * [densemat_cfactor] verification: Cholesky factorization *)
 
+
+Lemma Zconst1eq1: Zconst the_type 1 = 1%F64.
+Admitted.
+
+Definition cholesky_return' [n] (j: 'I_(S n)) (R: 'M[ftype the_type]_n) : ftype the_type := 
+   seq.foldl BMULT (Zconst the_type 1) (map (fun k => fst (BFREXP (R k k))) (seq.take j (ord_enum n))).
+
+Lemma cholesky_return'_e: forall n (R: 'M_n) (n': 'I_(S n)), 
+     n = nat_of_ord n' -> cholesky_return' n' R = cholesky_return R.
+Admitted.
+
 Lemma body_densematn_cfactor: semax_body Vprog Gprog f_densematn_cfactor densematn_cfactor_spec.
 Proof.
 start_function.
+subst MORE_COMMANDS; unfold abbreviate; canonicalize_float_constants.
 rename X into M.
 assert_PROP (0< n <= Int.max_signed) by entailer!.
 pose (A := map_mx optfloat_to_float (mirror_UT M)).
 assert (Datatypes.is_true (ssrnat.leq 1 n)) by lia.
 pose (zero := @Ordinal n 0 H1).
+forward.
 forward_for_simple_bound (Z.of_nat n) 
   (EX j':Z, EX j: 'I_(S n), EX R: 'M[ftype the_type]_n,
       PROP(j'=j; cholesky_jik_upto zero j A R)
-      LOCAL(temp _n (Vint (Int.repr n)); temp _A p)
-      SEP(densematn sh (joinLU M (map_mx Some R)) p))%assert.
+      LOCAL(temp _n (Vint (Int.repr n)); lvar _scratch tint v_scratch; temp _A p;
+                   temp _err (Vfloat (cholesky_return' j R)))
+      SEP(data_at_ Tsh tint v_scratch; densematn sh (joinLU M (map_mx Some R)) p))%assert.
 - Exists (lshift1 zero) A.
-  entailer!!.
-  apply cholesky_jik_upto_zero; auto.
+  entailer!!; [ split | ].
+ +  apply cholesky_jik_upto_zero; auto.
+ + unfold cholesky_return'. simpl. rewrite seq.take0. simpl.
+    f_equal. apply Zconst1eq1.
+ +
   apply derives_refl'; f_equal.
   subst A.
   clear - H.
@@ -60,8 +77,9 @@ Intros. subst j'.
 forward_for_simple_bound (Z.of_nat j) 
   (EX i':Z, EX i: 'I_n, EX R: 'M[ftype the_type]_n,
       PROP(i' = Z.of_nat i; cholesky_jik_upto i j A R)
-      LOCAL(temp _j (Vint (Int.repr j)); temp _n (Vint (Int.repr n)); temp _A p)
-      SEP(densematn sh (joinLU M (map_mx Some R)) p))%assert.
+      LOCAL(temp _j (Vint (Int.repr j)); temp _n (Vint (Int.repr n)); lvar _scratch tint v_scratch;  temp _A p; 
+                    temp _err (Vfloat (cholesky_return' j R)))
+      SEP(data_at_ Tsh tint v_scratch; densematn sh (joinLU M (map_mx Some R)) p))%assert.
  + Exists (@Ordinal n O ltac:(clear - H2; lia)) R.
    entailer!!.
  + clear H4 R.  rename R0 into R.
@@ -77,8 +95,9 @@ forward_for_simple_bound (Z.of_nat j)
       PROP(k'=Z.of_nat k; cholesky_jik_upto i (lshift1 j) A R)
       LOCAL(temp _s (val_of_float (subtract_loop_jik (A i j) R i j k) );
             temp _i (Vint (Int.repr i)); temp _j (Vint (Int.repr j)); 
-            temp _n (Vint (Int.repr n)); temp _A p)
-      SEP(densematn sh (joinLU M (map_mx Some R)) p))%assert.
+            temp _n (Vint (Int.repr n));  lvar _scratch tint v_scratch; temp _A p;
+                    temp _err (Vfloat (cholesky_return' (lshift1 j) R)))
+      SEP(data_at_ Tsh tint v_scratch; densematn sh (joinLU M (map_mx Some R)) p))%assert.
     pose proof (ltn_ord i); lia.
   * Exists zero. entailer!!. f_equal. unfold subtract_loop_jik. simpl. rewrite seq.take0.
     destruct (H5 i j) as [_ [_ [_ H8]]]. rewrite H8; auto.
@@ -114,8 +133,10 @@ forward_for_simple_bound (Z.of_nat j)
     assert (Datatypes.is_true (ssrnat.leq (S (S i)) n)) by (pose proof ltn_ord j; lia).
     pose (i1 := @Ordinal n _ H7).
     Exists i1 (update_mx R i j rij).
-    entailer!!. split. subst i1. simpl.  lia.
+    entailer!!. split3. subst i1. simpl.  lia.
     apply update_i_lt_j; auto. lia.
+    f_equal. unfold cholesky_return'. f_equal.
+    f_equal; extensionality k; unfold update_mx; rewrite mxE; repeat destruct (Nat.eq_dec _ _); auto; lia.
     apply derives_refl'. f_equal.
      apply matrixP. intros i' j'.
      unfold update_mx, joinLU, map_mx.
@@ -133,8 +154,9 @@ forward_for_simple_bound (Z.of_nat j)
       PROP(k' = Z.of_nat k)
       LOCAL(temp _s (val_of_float (subtract_loop_jik (A i i) R i i k) );
             temp _j (Vint (Int.repr i)); 
-            temp _n (Vint (Int.repr n)); temp _A p)
-      SEP(densematn sh (joinLU M (map_mx Some R)) p)).
+            temp _n (Vint (Int.repr n));   lvar _scratch tint v_scratch; temp _A p;
+            temp _err (Vfloat (cholesky_return' (lshift1 i) R)))
+      SEP(data_at_ Tsh tint v_scratch; densematn sh (joinLU M (map_mx Some R)) p)).
   * Exists zero. entailer!!. unfold subtract_loop_jik. simpl. rewrite seq.take0.
     f_equal. destruct (H4 i i) as [_ [_ [? ?]]]. symmetry; apply H6; lia.
   * Intros. subst i0.
@@ -155,12 +177,35 @@ forward_for_simple_bound (Z.of_nat j)
    is resolved. *)
  unfold BSQRT, UNOP. f_equal. extensionality x. simpl. f_equal. apply proof_irr.
    }
+    set (s := BSQRT _).
+    forward_call (s, v_scratch, Tsh).
+    forward.
     forward_densematn_set  (joinLU M (map_mx Some R)) i i p sh (BSQRT (subtract_loop_jik (A i i) R i i i)).
     assert (Datatypes.is_true (ssrnat.leq (S (S i)) (S n))) by (lia).
     Exists (@Ordinal (S n) (S i) H6).
     Exists (update_mx R i i (BSQRT (subtract_loop_jik (A i i) R i i i))).
-    entailer!!. split. simpl. lia.
-    apply cholesky_jik_upto_newrow; auto.   
+    entailer!!. split3. simpl. lia.
+    apply cholesky_jik_upto_newrow; auto.
+    f_equal. unfold cholesky_return'.  simpl.
+    rewrite (take_snoc i) by (rewrite size_ord_enum; simpl; lia).
+   rewrite seq.map_cat. rewrite seq.foldl_cat. simpl.
+   change BMULT with Float.mul. f_equal. f_equal.
+   change @seq.map with @map.
+   apply map_ext_in. intros. unfold update_mx.
+   rewrite mxE.
+   assert (nat_of_ord a < nat_of_ord i). {
+     clear - H7. apply (In_nth _ _ i) in H7. destruct H7 as [k [? ?]].
+     rewrite <-mv_mathcomp.nth_List_nth in H0.
+     change @length with @seq.size in H. rewrite seq.size_take, size_ord_enum in H.
+     assert (k < nat_of_ord i) by (destruct (ssrnat.leq (S (nat_of_ord i)) n) eqn:?H; lia).
+     rewrite seq.nth_take in H0 by lia. subst a.
+     pose proof (ltn_ord i).
+     mv_mathcomp.ordify n k.
+     rewrite nth_ord_enum'; auto. 
+   }
+   repeat destruct (Nat.eq_dec _ _); try lia. simpl. auto.
+   unfold update_mx; rewrite mxE.
+    rewrite nth_ord_enum'. destruct (Nat.eq_dec _ _); try lia. auto.
     apply derives_refl'. f_equal.
     set (a := BSQRT _). clearbody a.
     clear.
@@ -168,12 +213,15 @@ forward_for_simple_bound (Z.of_nat j)
     unfold update_mx, joinLU, map_mx; rewrite !mxE.
     repeat destruct (Nat.eq_dec _ _); simpl in *; auto.
     replace (ssrnat.leq _ _) with true by lia; auto.
- - Intros n' R. Exists R.
-   entailer!!. fold A.
-   intros i j.
-   destruct (H3 i j) as [H4 _].
-   apply H4.
-   pose proof (ltn_ord j).  lia.
+ - Intros n' R.
+   assert (cholesky_jik_spec A R). {
+      intros i j; destruct (H3 i j) as [H4 _]; apply H4; pose proof (ltn_ord j); lia.
+  }
+  rewrite cholesky_return'_e by lia.
+  forward_if; [ | forward_if]; forward; Exists R; fold A; entailer!!.
+  + f_equal. f_equal. destruct (cholesky_return R); try destruct s; try discriminate; auto.
+  + f_equal. f_equal. destruct (cholesky_return R); try destruct s; try discriminate; auto.
+  + f_equal. f_equal. destruct (cholesky_return R); try destruct s; try discriminate; auto.
 Qed.
 
 Lemma body_densemat_cfactor: semax_body Vprog Gprog f_densemat_cfactor densemat_cfactor_spec.
@@ -190,7 +238,9 @@ entailer!!.
 forward.
 pose (X := existT _ n M  :  {n & 'M[option (ftype the_type)]_n}).
 forward_call (sh,X,offset_val densemat_data_offset p); clear X.
-Intros R. Exists R.
+Intros R.
+forward.
+Exists R.
 entailer!!.
 Qed.
 
