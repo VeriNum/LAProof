@@ -16,8 +16,57 @@
 *)
 
 
-From LAProof.accuracy_proofs Require Import preamble common.
+From LAProof.accuracy_proofs Require Import preamble common solve_model float_acc_lems.
 From libValidSDP Require cholesky flocq_float float_spec float_infnan_spec flocq_float binary_infnan.
+From LAProof Require accuracy_proofs.mv_mathcomp.
+
+Definition max_mantissa t : positive := Pos.pow 2 (fprecp t) - 1.
+
+Lemma digits_max_mantissa t: Z.pos (SpecFloat.digits2_pos (max_mantissa t))  = fprec t.
+Proof.
+intros.
+rewrite Digits.Zpos_digits2_pos.
+unfold max_mantissa.
+rewrite Pos2Z.inj_sub.
+2: apply Pos.pow_gt_1; compute; auto.
+rewrite Pos2Z.inj_pow.
+pose proof Digits.Zdigits_correct Zaux.radix2 (2 ^ Z.pos (fprecp t) - 1).
+simpl in H.
+assert (0 < 2 ^ Z.pos (fprecp t) - 1)%Z. {
+  assert (2 ^ 0 < 2 ^ Z.pos (fprecp t))%Z; [ | lia].
+  apply Z.pow_lt_mono_r; auto; lia.
+}
+simpl; pose proof (Zaux.Zpower_pos_gt_0 2 (fprecp t) ltac:(lia)).
+rewrite Z.pow_pos_fold in H.
+rewrite Z.abs_eq in H; auto; try lia.
+clear H1.
+fold (fprec t) in H0,H|-*.
+set d := Digits.Zdigits Zaux.radix2 (2 ^ fprec t - 1) in H|-*. 
+assert (d>0)%Z. {
+ pose proof (Digits.Zdigits_le Zaux.radix2 1%Z (2 ^ fprec t - 1) ltac:(lia) ltac:(lia)). fold d in H1. simpl in H1. lia.
+}
+set (e := fprec t) in H0,H|-*.
+assert (d<e \/ d=e \/ d>e)%Z by lia.
+destruct H2 as [?| [?| ?]]; auto.
+assert (2 ^ d < 2^e)%Z. apply Z.pow_lt_mono_r; auto; try lia. lia.
+assert (2 ^ (d-1) >= 2^ e)%Z. apply Z.le_ge. apply Z.pow_le_mono_r; lia.
+lia.
+Qed.
+
+Lemma max_mantissa_bounded t: SpecFloat.bounded (fprec t) (femax t) (max_mantissa t) (femax t - fprec t).
+hnf.
+unfold SpecFloat.bounded.
+unfold SpecFloat.canonical_mantissa.
+unfold SpecFloat.fexp, SpecFloat.emin.
+rewrite digits_max_mantissa.
+rewrite Z.max_l; try lia.
+pose proof fprec_lt_femax t.
+pose proof fprec_gt_0 t.
+red in H0.
+lia.
+Qed.
+
+Definition Float_max t := Binary.B754_finite (fprec t) (femax t) false _ _ (max_mantissa_bounded t).
 
 Section WithNaN.
 
@@ -81,6 +130,9 @@ Definition stilde [k] (c : F) (a b : F^k) : F :=
 Definition ytilded [k : nat] (c : F) (a b : F^k) (bk : F) :=
   BDIV (stilde c a b) bk.
 
+Definition ytildes [k : nat] (c : F) (a : F^k):=
+  BSQRT (stilde c a a).
+
 
 Lemma BPLUS_B2R_zero (a : ftype t):
   Binary.is_finite a ->
@@ -116,10 +168,6 @@ apply opp_nan.
 apply sqrt_nan.
 apply fma_nan.
 Defined.
-Search (1 < fprec _)%Z.
-Search (fprec _ <? femax _)%Z.
-Search (_ < _ -> (_ <? _)=true)%Z.
-
 
 Definition mkFS (x: F) : float_spec.FS fspec  := float_spec.Build_FS_of (format_FT2R x).
 
@@ -182,6 +230,7 @@ Definition the_FIS : float_infnan_spec.Float_infnan_spec :=
           |}.
 
 Definition F' := the_FIS.(FIS).
+
 
 Lemma FS_val_mkFS: forall x: F', float_spec.FS_val (mkFS x) = (FT2R x).
 Proof. reflexivity. Qed.
@@ -308,7 +357,75 @@ rewrite /binary_infnan.div_nan /LVSDP_NAN /FPCore.div_nan /=.
 destruct NAN; reflexivity.
 Qed.
 
+
+Lemma FS_val_fsqrt': forall x: ftype t, 
+  Binary.is_finite (BSQRT x) -> 
+  float_spec.FS_val (float_spec.fsqrt (mkFS x)) = FT2R (BSQRT x).
+intros.
+rewrite <- the_FIS.(fisqrt_spec); auto.
+simpl. f_equal. rewrite /BSQRT /UNOP /binary_infnan.fisqrt.
+f_equal.
+apply ProofIrrelevance.proof_irrelevance.
+rewrite /binary_infnan.sqrt_nan /LVSDP_NAN /FPCore.sqrt_nan /=.
+destruct NAN; reflexivity.
+rewrite /is_true -{}H /finite /= /BSQRT /UNOP /fisqrt /finite /= /binary_infnan.fisqrt.
+f_equal. f_equal.
+apply ProofIrrelevance.proof_irrelevance.
+rewrite /binary_infnan.div_nan /LVSDP_NAN /FPCore.div_nan /=.
+destruct NAN; reflexivity.
+Qed.
+
+Lemma FT2R_congr: forall x y : ftype t, feq x y -> FT2R x = FT2R y.
+Proof.
+intros.
+destruct x,y; try destruct s; try destruct s0; simpl in H; try contradiction; try reflexivity;
+destruct H as [? [? ?]]; subst; auto; try discriminate.
+Qed.
+
+Lemma FT2R_feq: forall x y: ftype t, Binary.is_finite x -> Binary.is_finite y -> FT2R x = FT2R y -> feq x y.
+Proof.
+intros.
+destruct x,y; try discriminate; repeat match goal with s: bool |- _ => destruct s; try discriminate end; try reflexivity;
+repeat match goal with
+     | H: FT2R (Binary.B754_zero _ _ _) = FT2R _ |- _ => symmetry in H; apply Float_prop.eq_0_F2R in H; discriminate H 
+     | H: FT2R _ = FT2R (Binary.B754_zero _ _ _)  |- _ => apply Float_prop.eq_0_F2R in H; discriminate H 
+     | H: FT2R _ = FT2R _ |- _ => unfold FT2R in H; apply Binary.B2R_inj in H; [inversion H; clear H; subst | reflexivity | reflexivity]
+    end;
+repeat proof_irr;
+try reflexivity.
+Qed.
+
+Lemma FT2R_BDIV_congr: forall x x' y y': ftype t,
+  Binary.is_finite x -> Binary.is_finite x' -> Binary.is_finite y -> Binary.is_finite y' ->
+  FT2R x = FT2R x' ->
+  FT2R y = FT2R y' ->
+  FT2R (BDIV x y) = FT2R (BDIV x' y').
+Proof.
+intros.
+apply FT2R_feq in H3; auto.
+apply FT2R_feq in H4; auto.
+apply FT2R_congr.
+apply BDIV_mor; auto.
+apply feq_strict_feq; auto.
+destruct y,y'; try discriminate; try contradiction; auto.
+red. red. auto.
+Qed.
+
 End A.
+
+
+Lemma default_abs_eq: eta = float_spec.eta fspec.
+Proof.
+rewrite /eta /flocq_float.eta /fspec /flocq_float.flocq_float /float_spec.eta /flocq_float.eta bpow_minus1;
+      simpl IZR; change (flocq_float.prec) with (fprec t); nra.
+Qed.
+
+Lemma default_rel_eq: eps = float_spec.eps fspec.
+Proof.
+rewrite /eps /flocq_float.eps /fspec /flocq_float.flocq_float /float_spec.eps /flocq_float.eps
+           bpow_plus bpow_opp bpow_1.
+rewrite Rmult_comm Rmult_assoc /= Rmult_inv_r; lra.
+Qed.
 
 Lemma FS_val_ext: forall {format} x y, 
   @float_spec.FS_val format x = float_spec.FS_val y -> x = y.
@@ -327,6 +444,7 @@ intros.
 destruct x, y; try destruct s; try destruct s0; try discriminate; auto.
 Qed.
 
+(*
 Lemma BMULT_finite_e : (* copied from float_acc_lemmas, FIXME *)
  forall (a b : ftype t) (Hfin : Binary.is_finite (BMULT  a b)),
  Binary.is_finite a  /\ Binary.is_finite b.
@@ -343,6 +461,13 @@ unfold BPLUS, BINOP; intros.
 destruct a,b; inversion Hfin; clear Hfin; subst; simpl; auto.
 destruct s,s0; discriminate; auto.
 Qed.
+*)
+
+Lemma BSQRT_finite_e: forall (x: ftype t) (H: Binary.is_finite (BSQRT x)), Binary.is_finite x.
+Proof.
+intros.
+destruct x; try destruct s; try discriminate; auto.
+Qed.
 
 Ltac case_splitP j := (* copied from mv_mathcomp and improved; FIXME *)
   tryif clearbody j then fail "case_splitP requires a variable, but got  a local definition" j
@@ -354,22 +479,6 @@ Ltac case_splitP j := (* copied from mv_mathcomp and improved; FIXME *)
  |replace j with (@rshift a b i); [ | apply ord_inj; simpl; lia]];
  clear j H; rename i into j
  end.
-(*
-Lemma fsum_l2r_rec_finite_e: forall k (c: ftype t) (a: ftype t ^ k),
-  Binary.is_finite (fsum_l2r_rec c [ffun i : 'I_k => a (rshift1 i)]) ->
-  Binary.is_finite c /\ 
-  Binary.is_finite (a ord0) /\ 
-  Binary.is_finite (fsum_l2r_rec (BPLUS c (a ord0)) a).
-
-  Binary
-a' :=
-  [ffun i => fun_of_fin
-               [ffun i0 => BOPP (fun_of_fin [ffun i1 => BMULT (fun_of_fin a i1) (fun_of_fin b i1)] i0)]
-               (lift ord0 i)] : {ffun 'I_k -> F}
-FINyt : is_true (Binary.is_finite (fsum_l2r_rec c1 a'))
-______________________________________(1/1)
-
-*)
 
 Lemma fsum_l2r_rec_finite_e: forall k (c: ftype t) (a: ftype t ^ k.+1),
   Binary.is_finite (fsum_l2r_rec c a) ->
@@ -483,6 +592,22 @@ rewrite !ffunE.
 rewrite rshift1; auto.
 Qed.
 
+
+Lemma LVSDP_stilde_eq: forall [k] (a b : F ^ k) (c: F),
+    Binary.is_finite (stilde c a b) ->
+    cholesky.stilde (mkFS c) [ffun i => mkFS (fun_of_fin a i)] [ffun i => mkFS (fun_of_fin b i)] = mkFS (stilde c a b).
+Proof.
+rewrite /stilde /cholesky.stilde => k a b c Hfin.
+rewrite LVSDP_fcmsum_eq; auto.
+f_equal. apply eq_dffun => i.
+rewrite !ffunE.
+rewrite FS_val_mkFS -FS_val_fmult' //.
+destruct (fsum_l2r_rec_finite_e1 _ _ _ Hfin).
+specialize (H0 i).
+rewrite !ffunE in H0.
+destruct (BMULT _ _); try discriminate; auto.
+Qed.
+
 Lemma LVSDP_ytilded_eq: forall [k] (a b : F ^ k) (c bk: F),
     Binary.is_finite bk ->
     Binary.is_finite (ytilded c a b bk) ->
@@ -490,19 +615,28 @@ Lemma LVSDP_ytilded_eq: forall [k] (a b : F ^ k) (c bk: F),
   FT2R (ytilded c a b bk).
 Proof.
 intros * FINbk H. 
-rewrite /cholesky.ytilded /ytilded /cholesky.stilde /stilde.
+rewrite /cholesky.ytilded /ytilded in H|-*.
+(* /cholesky.stilde /stilde.*)
 rewrite -FS_val_fdiv'; auto.
 f_equal. f_equal.
-rewrite /ytilded /stilde in H.
 apply BDIV_finite_e in H; auto.
-rewrite LVSDP_fcmsum_eq; auto.
-f_equal. apply eq_dffun => i.
-rewrite !ffunE.
-rewrite FS_val_mkFS -FS_val_fmult' //.
-destruct (fsum_l2r_rec_finite_e1 _ _ _ H).
-specialize (H1 i).
-rewrite !ffunE in H1.
-destruct (BMULT _ _); try discriminate; auto.
+rewrite /ytilded in H.
+apply LVSDP_stilde_eq; auto.
+Qed.
+
+
+Lemma LVSDP_ytildes_eq: forall [k] (a : F ^ k) (c: F),
+    Binary.is_finite (ytildes c a) ->
+  float_spec.FS_val (cholesky.ytildes (mkFS c) [ffun i => mkFS (fun_of_fin a i)]  ) =
+  FT2R (ytildes c a).
+Proof.
+intros * H. 
+rewrite /cholesky.ytildes /ytilded.
+rewrite -FS_val_fsqrt'; auto.
+f_equal. f_equal.
+rewrite /ytildes in H.
+apply BSQRT_finite_e in H; auto.
+apply LVSDP_stilde_eq; auto.
 Qed.
 
 Lemma LVSDP_lemma_2_1 k (a b : F^k) (c bk : F) 
@@ -516,7 +650,7 @@ Proof.
 pose a' := [ffun i => mkFS (a i)].
 pose b' := [ffun i => mkFS (b i)].
 have Hbk': float_spec.FS_val (mkFS bk) <> 0. {
-  change (FT2R bk <> 0). contradict Hbk. destruct bk; auto; try discriminate.
+  contradict Hbk.
   apply iszeroR_iszeroF; auto.
 }
 pose proof @cholesky.lemma_2_1 fspec fspec_eta_nonzero k a' b' (mkFS c) (mkFS bk) Hbk'.
@@ -526,16 +660,274 @@ replace (\sum_i (float_spec.FS_val _ * _)) with (\sum_i (FT2R (fun_of_fin a i) *
 2: apply eq_big; auto; [  move => x // | move => i _; rewrite /a' /b' !ffunE //].
 replace (\sum_i Rabs (float_spec.FS_val _ * _)) with (\sum_i Rabs (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H.
 2: apply eq_big; auto; [ move => x // | move => i _; rewrite /a' /b' !ffunE //].
-replace (float_spec.eta fspec) with eta in H.
-2: rewrite /eta /flocq_float.eta /fspec /flocq_float.flocq_float /float_spec.eta /flocq_float.eta bpow_minus1;
-      simpl IZR; change (flocq_float.prec) with (fprec t); nra.
-replace (float_spec.eps fspec) with eps in H.
+rewrite default_abs_eq default_rel_eq.
 apply H.
+Qed.
+
+Import mv_mathcomp.
+
+Definition cholesky_bound (n: nat) := FT2R (Float_max t) - (eps * INR(2*(n-1)) + INR(n+1)*FT2R(Float_max t)).
+
+Lemma cholesky_jik_spec_backwards_finite:
+  forall n (A R: 'M[F]_n),
+  A^T = A ->
+  cholesky_jik_spec A R ->
+  (forall i j: 'I_n, i <= j -> Binary.is_finite (R i j)) ->
+  (forall i j, Binary.is_finite (A i j)).
+Proof.
+  move => n A R Hsym H FINR i j.
+  assert (Hsub: forall (x: F) al, Binary.is_finite (subtract_loop x al) -> Binary.is_finite x). {
+   intros. apply subtract_loop_finite_e in H0. apply H0.
+ }
+  assert (H2: ((i<j) \/ (nat_of_ord i== nat_of_ord j) \/ (j<i))%N) by lia.
+  destruct H2 as [H2 | [H2 | H2]].
+-
+  destruct (H i j) as [H0 _].
+  specialize (H0 H2). 
+  specialize (FINR i j). rewrite H0 in FINR. apply BDIV_finite_e in FINR; [ | rewrite leEord; lia]. 
+  apply Hsub in FINR. auto.
+- destruct (H i j) as [_ H0].
+  assert (H1: i=j) by (apply ord_inj; lia). apply H0 in H1.
+  specialize (FINR i j). rewrite H1 in FINR. apply BSQRT_finite_e in FINR; [ | rewrite leEord; lia]. 
+  apply Hsub in FINR. auto.
+- rewrite -Hsym. rewrite mxE.
+  destruct (H j i) as [H0 _].
+  specialize (H0 H2). 
+  specialize (FINR j i). rewrite H0 in FINR. apply BDIV_finite_e in FINR; [ | rewrite leEord; lia].  
+  apply Hsub in FINR. auto.
+Qed.
+
+Lemma ord_enum_S: forall n, ord_enum (S n) = (@inord n 0) :: (map (@inord n \o S \o (@nat_of_ord n)) (ord_enum n)).
+Proof.
+intros.
+apply (@eq_from_nth _ ord0).
 simpl.
-rewrite /eps /flocq_float.eps /flocq_float.prec.
-rewrite bpow_plus_1.
-fold (fprec t).
-simpl. nra.
+rewrite size_map !size_ord_enum //.
+rewrite size_ord_enum.
+intros.
+destruct i; simpl.
+change O with (nat_of_ord (@ord0 n)).
+rewrite nth_ord_enum'.
+apply ord_inj; simpl.
+rewrite inordK; auto.
+change (S i) with (nat_of_ord (Ordinal H)).
+rewrite nth_ord_enum'.
+apply ord_inj.
+simpl.
+destruct n; simpl. lia.
+rewrite (nth_map (@ord0 n)).
+2: rewrite size_ord_enum //.
+simpl.
+assert (i<n.+1)%N by lia.
+change i with (nat_of_ord (Ordinal H0)).
+rewrite nth_ord_enum' //.
+simpl.
+rewrite inordK; lia.
+Qed.
+
+Lemma Forall_take_ord_enum: forall [n] (u: 'I_n), Forall (fun x: 'I_n => is_true (x< u)) (take u (ord_enum n)).
+Proof.
+intros.
+replace (fun x : ordinal n => is_true (@Order.lt Order.OrdinalOrder.ord_display (Order.OrdinalOrder.fintype_ordinal__canonical__Order_POrder n) x u))
+  with (fun x: ordinal n => is_true (nat_of_ord x < nat_of_ord u)).
+2:{ apply FunctionalExtensionality.functional_extensionality; intro j.
+destruct j as [j Hj]; destruct u as [u Hu]; simpl in *. reflexivity.
+}
+rewrite Forall_nth; intros.
+rewrite -nth_List_nth.
+change @length with @size in H.
+rewrite size_take size_ord_enum in H.
+assert (i < n /\ i<u)%N.
+  destruct (u<n)%N eqn:?H; lia.
+clear H. destruct H0.
+change i with (nat_of_ord (Ordinal H)).
+rewrite nth_take.
+rewrite nth_ord_enum'.
+simpl. lia.
+simpl; lia.
+Qed. 
+
+Lemma stilde_subtract_loop: forall [n] (c: F) (R: 'M_n.+1) (i j: 'I_n.+1) (Hij: (i<=j)%N),
+  feq (stilde c [ffun k : 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j])
+  (subtract_loop_jik c R i j i).
+Proof.
+rewrite /stilde /fcmsum_l2r /subtract_loop_jik /subtract_loop.
+induction n; move => c R i j Hij /=.
+-
+rewrite !ord1 /=. rewrite take0 //.
+-
+destruct (nat_of_ord i) as [ | u] eqn:?H. rewrite take0 //.
+destruct (nat_of_ord j) as [ | v] eqn:?H; [ lia |].
+simpl.
+rewrite !ffunE.
+have H3 :((n.+2=addn 1 n.+1)*(n.+2= addn 1 n.+1))%type by (split; lia).
+set c1 := BPLUS _ _.
+assert (Hu: u < n.+1). pose proof (ltn_ord j); lia.
+assert (Hv: v < n.+1). pose proof (ltn_ord j); lia.
+ordify n.+1 u.
+ordify n.+1 v.
+specialize (IHn c1 (drsubmx (castmx H3 R)) u v).
+etransitivity; [ | etransitivity; [ apply IHn; lia | ]]; clear IHn.
++
+simpl.
+match goal with |- feq ?A ?B => replace B with A; try reflexivity end.
+f_equal.
+apply eq_dffun => k.
+have Hk := ltn_ord k.
+rewrite !ffunE !lift0.
+f_equal.
+f_equal.
+rewrite drsubmxEsub !mxE castmxE /=.
+f_equal; apply ord_inj; simpl; rewrite ?inordK; try (simpl; lia).
+rewrite drsubmxEsub !mxE castmxE /=.
+f_equal; apply ord_inj; simpl; rewrite ?inordK; try (simpl; lia).
++
+rewrite (ord_enum_S n.+1).
+simpl.
+match goal with |- feq (foldl _ _ ?A) (foldl _ _ ?B) => replace B with A; [ set al := A | ] end.
+*
+clearbody al.
+set d1 := BMINUS c _.
+assert (feq c1 d1).
+symmetry; apply MINUS_PLUS_BOPP.
+clear - H1.
+clearbody c1. clearbody d1. clear - H1.
+revert c1 d1 H1; induction al; simpl; intros; auto.
+apply IHal. rewrite H1; auto.
+*
+f_equal.
+clear c1.
+rewrite  -map_take.
+rewrite -map_comp.
+assert (Forall (fun x => x < u) (take (nat_of_ord u) (ord_enum n.+1))).
+ apply Forall_take_ord_enum.
+set (al := take _ _) in H1|-*.
+clearbody al.
+induction H1; simpl; auto.
+f_equal; auto.
+rewrite !drsubmxEsub.
+rewrite castmxEsub.
+rewrite -mxsub_comp.
+rewrite /mxsub.
+rewrite  !mxE.
+f_equal; f_equal; apply ord_inj; simpl; try lia; rewrite inordK; auto;
+clear - H1 Hu; destruct x,u; simpl in *; lia.
+Qed.
+
+Lemma ytilded_subtract_loop: forall n (A R: 'M[F]_n.+1) (i j: 'I_n.+1), 
+ (forall i j: 'I_n.+1, (i<=j)%N -> Binary.is_finite (R i j)) ->
+   (i<j)%N ->
+  feq (ytilded (A i j) [ffun k: 'I_i => R (inord (nat_of_ord k)) i] [ffun k => R (inord (nat_of_ord k)) j] (R i i))  (BDIV (subtract_loop_jik (A i j) R i j i) (R i i)).
+Proof.
+intros.
+rewrite /ytilded.
+apply BDIV_mor.
+apply stilde_subtract_loop; lia.
+apply strict_feq_refl.
+apply H; auto.
+Qed.
+
+Add Parametric Morphism: BSQRT  (* move this to vcfloat.FPStdLib and vcfloat.StdLib *)
+ with signature @feq t ==> @feq t
+ as BSQRT_mor.
+Proof.
+intros.
+destruct x; try destruct s; try discriminate; destruct y ; try destruct s; try contradiction; try reflexivity.
+destruct H; discriminate.
+destruct H; discriminate.
+destruct H as [? [? ?]].
+subst.
+proof_irr.
+reflexivity.
+Qed.
+
+Lemma ytildes_subtract_loop: forall n (A R: 'M[F]_n.+1) (i: 'I_n.+1), 
+  feq (ytildes (A i i) [ffun k: 'I_i => R (inord (nat_of_ord k)) i]) (BSQRT (subtract_loop_jik (A i i) R i i i)).
+Proof.
+intros.
+rewrite /ytildes.
+rewrite stilde_subtract_loop; auto.
+Qed.
+
+Lemma LVSDP_cholesky_spec: forall n (A R: 'M[F]_n.+1),
+  A^T = A ->
+  (forall i j: 'I_n.+1, (i <= j)%N -> Binary.is_finite (R i j)) ->
+  cholesky_jik_spec A R ->
+  libValidSDP.cholesky.cholesky_spec (map_mx mkFS A) (map_mx mkFS R).
+Proof.
+move => n A R HA HR H.
+move :(cholesky_jik_spec_backwards_finite _ _ _ HA H HR). clear HA. move => HA.
+split.
+-
+move => j i Hij; specialize (H i j). destruct H as [H _]. specialize (H Hij).
+rewrite !mxE !FS_val_mkFS.
+match goal  with |- _ = _ (_ ?X ?Y _) => set Rki := X; set Rkj := Y end.
+simpl in Rki, Rkj.
+replace Rki with   [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) i] i0)].
+2: apply eq_dffun => k; rewrite /map_mx !mxE ffunE //.
+replace Rkj with  [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) j] i0)].
+2: apply eq_dffun => k; rewrite /map_mx !mxE ffunE //.
+rewrite LVSDP_ytilded_eq; auto.
+2: rewrite ytilded_subtract_loop // -H //.
+apply FT2R_congr.
+rewrite H.
+rewrite ytilded_subtract_loop; auto.
+apply HR. lia.
+-
+move => i.
+rewrite !mxE !FS_val_mkFS.
+specialize (H i i). destruct H as [_ H]. specialize (H Logic.eq_refl).
+match goal  with |- _ = _ (_ ?X) => set Rki := X end.
+simpl in Rki.
+replace Rki with   [ffun i0 => mkFS ([ffun k: 'I_i => R (inord k) i] i0)].
+2: apply eq_dffun => k; rewrite /map_mx !mxE ffunE //.
+rewrite LVSDP_ytildes_eq; auto.
+2: rewrite ytildes_subtract_loop // -H //.
+rewrite H.
+apply FT2R_congr.
+rewrite ytildes_subtract_loop; auto.
+apply HR; lia.
+Qed.
+
+Lemma BSQRT_nonneg: forall x:F,  
+   match BSQRT x with Binary.B754_finite _ _ false _ _ _ => true
+                      | Binary.B754_zero _ _ _ => true
+                      | Binary.B754_infinity _ _ false => true
+                      | Binary.B754_nan _ _ _ _ _ => true
+                      | _ => false 
+   end = true.
+Proof.
+intros.
+unfold BSQRT, UNOP, Binary.Bsqrt, Binary.BSN2B.
+destruct (BinarySingleNaN.Bsqrt_correct (fprec t) (femax t) (fprec_gt_0 t) (fprec_lt_femax t) BinarySingleNaN.mode_NE
+  (Binary.B2BSN _ _ x)) 
+  as [? [? ?]].
+set x' := BinarySingleNaN.Bsqrt BinarySingleNaN.mode_NE (Binary.B2BSN (fprec t) (femax t) x) in H,H0,H1|-*.
+destruct x eqn:Hx; try destruct s; simpl in *; try discriminate; auto.
+destruct x'; simpl in *; try discriminate; auto.
+rewrite H1; auto.
+Qed.
+
+Lemma LVDSP_cholesky_success: forall [n] (A R: 'M[F]_n.+1),
+  A^T = A ->
+  cholesky_success A R ->
+  libValidSDP.cholesky.cholesky_success (map_mx mkFS A) (map_mx mkFS R).
+Proof.
+intros n A R HA H.
+pose proof cholesky_success_R_finite A R HA H.
+destruct H; split.
+apply LVSDP_cholesky_spec; auto.
+intro i.
+rewrite mxE. specialize (H1 i).
+destruct (H i i) as [_ ?]. specialize (H2 (Logic.eq_refl _)).
+ destruct (R i i); try discriminate H1. simpl.
+pose proof (BSQRT_nonneg (subtract_loop_jik (fun_of_matrix A i i) R i i i)).
+rewrite - H2 in H3.
+destruct s; try discriminate.
+simpl.
+apply Float_prop.F2R_gt_0; simpl. lia.
 Qed.
 
 End WithNaN.
+
+

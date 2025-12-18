@@ -9,6 +9,7 @@
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.
 From VSTlib Require Import spec_math spec_malloc.
+From LAProof.accuracy_proofs Require Import solve_model.
 From LAProof.C Require Import densemat spec_alloc floatlib matrix_model.
 Require Import Coq.Classes.RelationClasses.
 
@@ -491,10 +492,10 @@ Definition densematn_cfactor_spec :=
           forall i j, isSome (mirror_UT M i j))
     PARAMS (p; Vint (Int.repr n))
     SEP (densematn sh M p)
- POST [ tvoid ] let '(existT _ n M) := X in
+ POST [ tint ] let '(existT _ n M) := X in
    EX R: 'M_n,
     PROP (cholesky_jik_spec (map_mx optfloat_to_float (mirror_UT M)) R)
-    RETURN ()
+    RETURN (Vint (Int.repr (Zcholesky_return (cholesky_return R))))
     SEP (densematn sh (joinLU M (map_mx Some R)) p).
 
 Definition densemat_cfactor_spec :=
@@ -505,10 +506,10 @@ Definition densemat_cfactor_spec :=
           forall i j, isSome (mirror_UT M i j))
     PARAMS (p)
     SEP (densemat sh M p)
- POST [ tvoid ] let '(existT _ n M) := X in
+ POST [ tint ] let '(existT _ n M) := X in
    EX R: 'M_n,
     PROP (cholesky_jik_spec (map_mx optfloat_to_float (mirror_UT M)) R)
-    RETURN ()
+    RETURN (Vint (Int.repr (Zcholesky_return (cholesky_return R))))
     SEP (densemat sh (joinLU M (map_mx Some R)) p).
 
 Definition densematn_csolve_spec :=
@@ -546,6 +547,22 @@ Definition densemat_csolve_spec :=
                        (backward_subst (map_mx optfloat_to_float M)
                           (forward_subst (trmx (map_mx optfloat_to_float M)) x)))
            xp).
+
+Definition densematn_cfactor_and_solve_spec :=
+ DECLARE _densematn_cfactor_and_solve
+ WITH shA: share, sh: share, X: {n & 'M[option (ftype the_type)]_n * 'cV[ftype the_type]_n}%type,
+      p: val, xp: val
+ PRE [ tptr the_ctype, tptr the_ctype, tint ] let '(existT _ n (A,x)) := X in
+    PROP (writable_share shA; writable_share sh;
+                 forall i j, isSome (mirror_UT A i j))
+    PARAMS (p; xp; Vint (Int.repr n))
+    SEP (densematn shA A p; densematn sh (map_mx Some x) xp)
+ POST [ tvoid ] let '(existT _ n (A,x)) := X in
+    EX R: 'M_n,
+    PROP (cholesky_success (map_mx optfloat_to_float (mirror_UT A)) R)
+    RETURN ()
+    SEP (densematn shA (joinLU A (map_mx Some R)) p;
+              densematn sh (map_mx Some (backward_subst  R (forward_subst R^T x))) xp).
 
 Definition densematn_dotprod_spec :=
  DECLARE _densematn_dotprod
@@ -651,6 +668,7 @@ Definition densematASI : funspecs := [
    densemat_lufactor_spec; densematn_lufactor_spec;
    densemat_csolve_spec; densematn_csolve_spec;
    densemat_cfactor_spec; densematn_cfactor_spec;
+   densematn_cfactor_and_solve_spec;
    densemat_lusolveT_spec; densematn_lusolveT_spec;
    blocksolve_spec; subtractoff_spec; densematn_cfactor_block_spec; densematn_cfactor_outer_spec;
    densematn_dotprod_spec; densemat_dotprod_spec;

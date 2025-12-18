@@ -1,6 +1,7 @@
 (**  * LAProof.C.densemat_lemmas: Supporting lemmas for VST proofs of functions on dense matrices. *)
 
 From VST.floyd Require Import proofauto VSU.
+From LAProof.accuracy_proofs Require Import solve_model.
 From LAProof.C Require Import densemat spec_alloc spec_densemat floatlib matrix_model.
 From vcfloat Require Import FPStdCompCert FPStdLib.
 Require Import VSTlib.spec_math VSTlib.spec_malloc.
@@ -30,8 +31,8 @@ Open Scope logic.
 Definition densemat_E : funspecs := [].
 Definition densemat_imported_specs : funspecs := 
    [free_spec'] (* subset of MallocASI *)
-  ++ [surely_malloc_spec'; double_clear_spec] (* subset of allocASI *)
-  ++ [fma_spec; sqrt_spec]. (* subset of MathASI *)
+  ++ [exit_spec; surely_malloc_spec'; double_clear_spec] (* subset of allocASI *)
+  ++ [fma_spec; sqrt_spec; frexp_spec]. (* subset of MathASI *)
 Definition densemat_internal_specs : funspecs := densematASI.
 Definition Gprog :=  densemat_imported_specs ++ densemat_internal_specs.
 
@@ -48,6 +49,17 @@ Instance change_composite_env_alloc' :
   change_composite_env CompSpecs spec_alloc.CompSpecs.
 Proof.
    make_cs_preserve CompSpecs spec_alloc.CompSpecs.
+Qed.
+
+Instance change_composite_env_empty: change_composite_env emptyCS CompSpecs.
+Proof.
+   make_cs_preserve emptyCS CompSpecs.
+Qed.
+ 
+
+Instance change_composite_env_empty': change_composite_env CompSpecs emptyCS.
+Proof.
+   make_cs_preserve CompSpecs emptyCS.
 Qed.
 
 (** * Many useful supporting lemmas about [column_major], [ordinal], [ord_enum], etc. *)

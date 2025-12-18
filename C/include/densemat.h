@@ -29,10 +29,11 @@ void densematn_print(double* data, int m, int n);
 void densemat_print(densemat_t data);
 
 // Cholesky factorization and solve (uses only upper triangular)
-void densematn_cfactor(double* A, int n);
+int densematn_cfactor(double* A, int n);
 void densematn_csolve(double* R, double* x, int n);
-void densemat_cfactor(densemat_t A);
+int densemat_cfactor(densemat_t A);
 void densemat_csolve(densemat_t R, double* x);
+void densematn_cfactor_and_solve(double *A, double *x, int n);
 
 // LU factorization and solve
 void densematn_lufactor(int* ipiv, double* A, int n);

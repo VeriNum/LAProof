@@ -11,9 +11,10 @@ Require Import VST.floyd.functional_base.
 
 (** Other useful imported libraries. *)
 Import ListNotations.
-Require Import Permutation.
+From Stdlib Require Import Permutation.
 Require Import vcfloat.FPStdLib.
-Require Import vcfloat.FPStdCompCert.
+(*Require Import vcfloat.FPStdCompCert.*)
+Require Import LAProof.accuracy_proofs.solve_model.
 
 (** In contrast to certain other modules (e.g., [C.spec_densemat]
   where we [Require] mathcomp but carefully don't [Import] most of it), 
@@ -30,34 +31,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 (* end show *)
-
-(** * MathComp matrices over a nonring *)
-
-(** Most MathComp matrix operations, such as matrix multiplication, are parameterized
-  over a Ring or Field structure.  When you do the dot-products in a matrix multiply, it
-  doesn't matter what order you add up the element products, because addition in a Ring
-  is associative-commutative.  But our functional models of matrix algorithms are in floating point,
-  which is not a Ring or Field because (for example) addition is not associative.
-
-  MathComp handles this by having some matrix operations (such as transpose [tr_mx]
-  and the very definition of a  [@matrix _ _ _] (notated as ['M[_]_(_,_)]) be parameterized
-  only over a [Type] when they don't need a Ring structure; it is only the operators whose
-  natural mathematics need additional properties, that require a Ring or Field.
-
-  That means we can use natural MathComp operations such as blocking and transpose
-  on floating-point matrices ['M[ftype t]_(m,n)] but we cannot use MathComp's matrix multiply
-   [mulmx].   Instead, if we multiply floating-point matrices, we must define it ourselves in
-  a way that specifies exactly what order of operations is done, or (if a relation instead of a
-  function) what order(s) are permitted.
-
-  The definition [update_mx] is an example of an operation that naturally does not require
-  a Ring structure.  The definition [subtract_loop], below, is an example of the other kind; 
-  we can't use MathComp's dot-product to define it, so we write a definition that explicitly
-  specifies the order of additions. 
- *)
-
-Definition update_mx {T} [m n] (M: 'M[T]_(m,n)) (i: 'I_m) (j: 'I_n) (x: T) : 'M[T]_(m,n) :=
-    \matrix_(i',j') if  andb (Nat.eq_dec i' i) (Nat.eq_dec j' j) then x else M i' j'.
 
 Definition neg_zero {t}: ftype t := Binary.B754_zero (fprec t) (femax t) true.
 
@@ -98,28 +71,10 @@ intros.
   lia.
 Qed.
 
-
-(** * Functional model of Cholesky decomposition (jik algorithm) *)
-(** The next three definitions, up to [cholesky_jik_spec], are adapted from
-  similar definitions in coq-libvalidsdp by P. Roux et al. *)
-
-Definition subtract_loop {t} (c: ftype t) (l: seq (ftype t * ftype t)) :=
-  foldl BMINUS c (map (uncurry BMULT) l).
-
-Definition subtract_loop_jik {t}  [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
-   subtract_loop c (map (fun k' => (R k' i, R k' j)) (take k (ord_enum n))).
-
-Definition cholesky_jik_ij {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
-     (forall Hij: (i<j)%N, R i j = BDIV (subtract_loop_jik (A i j) R i j i) (R i i))  
-   /\ (forall Hij: i=j, R i j = BSQRT (subtract_loop_jik (A i j) R i j i)).
-
-Definition cholesky_jik_spec {t} [n: nat] (A R: 'M[ftype t]_n) : Prop :=
-  forall i j, cholesky_jik_ij A R i j.
-
 (** When we have run the "Cholesky jik algorithm" only up to iteration (i,j),
    the matrix is only initialized above row i, and in row i up to column j, so we
   need this subrelation in our loop invariant. *)
-Definition cholesky_jik_upto {t} [n] (imax: 'I_n) (jmax : 'I_n.+1) (A R : 'M[ftype t]_n) : Prop :=
+Definition cholesky_jik_upto {NAN: FPCore.Nans}{t} [n] (imax: 'I_n) (jmax : 'I_n.+1) (A R : 'M[ftype t]_n) : Prop :=
   forall (i j: 'I_n),
       ((j<jmax)%N -> cholesky_jik_ij A R i j)
    /\ (nat_of_ord j = nat_of_ord jmax -> (i<imax)%N -> cholesky_jik_ij A R i j)
@@ -131,59 +86,63 @@ Definition cholesky_jik_upto {t} [n] (imax: 'I_n) (jmax : 'I_n.+1) (A R : 'M[fty
  have this alternate presentation that permits any order of summation. *)
 
 (* BEGIN adapted from iterative_methods/sparse/sparse_model.v *)
-Inductive sum_any {t}: forall (v: list (ftype t)) (s: ftype t), Prop :=
+Inductive sum_any  {NAN: FPCore.Nans}{t}: forall (v: list (ftype t)) (s: ftype t), Prop :=
 | Sum_Any_0: sum_any nil (Zconst t 0)
 | Sum_Any_1: forall x y, feq x y -> sum_any [x] y
 | Sum_Any_split: forall al bl a b c, sum_any al a -> sum_any bl b -> feq (BPLUS a b) c -> sum_any (al++bl) c
 | Sum_Any_perm: forall al bl s, Permutation al bl -> sum_any al s -> sum_any bl s.
 (* END copied form iterative_methods/sparse/sparse_model.v *)
 
-Definition subtract_loop_any {t} [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t -> Prop :=
+Definition subtract_loop_any  {NAN: FPCore.Nans}{t} [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t -> Prop :=
   sum_any (c :: map (fun k' => BOPP (BMULT (R k' i) (R k' j))) (take k (ord_enum n))).
 
-Definition cholesky_jik_ij_any {t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
+Definition cholesky_jik_ij_any  {NAN: FPCore.Nans}{t} [n: nat] (A R: 'M[ftype t]_n) (i j: 'I_n) : Prop :=
      ((i < j)%N -> exists x, subtract_loop_any (A i j) R i j i x /\ R i j = BDIV x (R i i))
    /\ (i=j -> exists x, subtract_loop_any (A i j) R i j i x /\ R i j = BSQRT x).
-
 
 Module AlternatePresentations.
 (* This module discusses other possible presentations of the subtract loop. *)
 
-Definition subtract_loop_ffuns' {t} [n: nat] (c: ftype t) (a b: (ftype t)^n) : ftype t :=
+Section WithNaN.
+
+Context {NAN: FPCore.Nans} {t : type}.
+
+Definition subtract_loop_ffuns' [n: nat] (c: ftype t) (a b: (ftype t)^n) : ftype t :=
    foldl BMINUS c (map (uncurry BMULT) (zip (image a 'I_n) (image b 'I_n))).
 
-Definition subtract_loop_ffuns {t} [n: nat] (c: ftype t) (a b: (ftype t)^n) : ftype t :=
+Definition subtract_loop_ffuns [n: nat] (c: ftype t) (a b: (ftype t)^n) : ftype t :=
    foldl BMINUS c (map (fun k => BMULT (a k) (b k)) (ord_enum n)).
 
-Remark subtract_loop_ffuns_ffuns' {t} [n] c a b:
-       @subtract_loop_ffuns t n c a b = subtract_loop_ffuns' c a b.
+Remark subtract_loop_ffuns_ffuns' [n] c a b:
+       @subtract_loop_ffuns n c a b = subtract_loop_ffuns' c a b.
 Proof.
 rewrite /subtract_loop_ffuns /subtract_loop_ffuns' /image_mem enum_mem_ordinal zip_map -map_comp //.
 Qed.
 
-Definition subtract_loop_alt {t} [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
+Definition subtract_loop_alt [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
    subtract_loop_ffuns c [ffun k': 'I_k => R (widen_ik k') i] [ffun k': 'I_k => R (widen_ik k') j].
 
-Definition subtract_loop_listpairs {t} (c: ftype t) (l: seq (ftype t * ftype t)) :=
+Definition subtract_loop_listpairs (c: ftype t) (l: seq (ftype t * ftype t)) :=
   foldl BMINUS c (map (uncurry BMULT) l).
 
-Definition subtract_loop_original {t} [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
+Definition subtract_loop_original [n] (c: ftype t) (R: 'M[ftype t]_n) (i j k: 'I_n) : ftype t :=
   foldl BMINUS c (map (fun k' => BMULT (R k' i) (R k' j)) (take k (ord_enum n))).
 
-Remark subtract_loop_jik_original {t} [n] c R i j k:
-   @subtract_loop_jik t n c R i j k = @subtract_loop_original t n c R i j k.
+Remark subtract_loop_jik_original [n] c R i j k:
+   @subtract_loop_jik _ _ n c R i j k = @subtract_loop_original n c R i j k.
 Proof.
 rewrite /subtract_loop_jik /subtract_loop /subtract_loop_listpairs -map_comp //.
 Qed.
 
-Remark subtract_loop_alt_original {t} [n] c R i j k:
-    @subtract_loop_alt t n c R i j k = @subtract_loop_original t n c R i j k.
+Remark subtract_loop_alt_original  [n] c R i j k:
+    @subtract_loop_alt n c R i j k = @subtract_loop_original n c R i j k.
 Proof.
 rewrite /subtract_loop_alt /subtract_loop_original /subtract_loop_ffuns take_ord_enum -map_comp.
 f_equal.
 apply eq_in_map => x _.
 rewrite /comp !ffunE //.
 Qed.
+End WithNaN.
 
 End AlternatePresentations.
 
@@ -230,13 +189,13 @@ Definition lshift1 [n: nat] (k: ordinal n) : ordinal (S n)
 
 
 Lemma update_i_lt_j:
-  forall {t} n (i j: 'I_n) (A R: 'M[ftype t]_n)
+  forall  {NAN: FPCore.Nans} {t} n (i j: 'I_n) (A R: 'M[ftype t]_n)
    (Hij: (i < j)%N)
    (i1: 'I_n)
    (Hi1: nat_of_ord i1 = S i),
    cholesky_jik_upto i (lshift1 j) A R ->
    let rij := BDIV (subtract_loop_jik (A i j) R i j i) (R i i) in
-    @cholesky_jik_upto t n i1 (lshift1 j) A (update_mx R i j rij).
+    @cholesky_jik_upto _ t n i1 (lshift1 j) A (update_mx R i j rij).
 Proof.
 intros * Hij i1 Hi1 H1 rij i' j'.
 subst rij.
@@ -374,7 +333,7 @@ f_equal; auto.
 Qed.
 
 Lemma subtract_another:
-  forall {t} n (i j k: 'I_n) (A R: 'M[ftype t]_n)
+  forall  {NAN: FPCore.Nans} {t} n (i j k: 'I_n) (A R: 'M[ftype t]_n)
     (Hij: (i <= j)%N) 
     (Hkj: (k < j)%N)
     (k1: 'I_n)
@@ -396,13 +355,13 @@ Qed.
 (* END copied from iterative_methods/cholesky/verif_cholesky.v *)
 
 Lemma cholesky_jik_upto_zero:
-  forall t n (A: 'M[ftype t]_n) (zero: 'I_n), nat_of_ord zero=O -> cholesky_jik_upto zero (lshift1 zero) A A.
+  forall  {NAN: FPCore.Nans}  t n (A: 'M[ftype t]_n) (zero: 'I_n), nat_of_ord zero=O -> cholesky_jik_upto zero (lshift1 zero) A A.
 Proof.
 intros i j; split; [ | split3]; simpl; try lia; auto.
 Qed.
 
 Lemma cholesky_jik_upto_newrow:
- forall t n (j: 'I_n) (A R: 'M[ftype t]_n),
+ forall  {NAN: FPCore.Nans} t n (j: 'I_n) (A R: 'M[ftype t]_n),
   cholesky_jik_upto j (lshift1 j) A R ->
   cholesky_jik_upto (@Ordinal n 0 (leq_ltn_trans (leq0n j) (ltn_ord j)))
      (@Ordinal n.+1 (j.+1)%N (ltn_ord j)) A (update_mx R j j (BSQRT (subtract_loop_jik (A j j) R j j j))).
@@ -461,39 +420,6 @@ split; [ | split3]; intros; try split; hnf; intros; try lia.
 - unfold update_mx. rewrite !mxE. simpl in *. clear H5.
   repeat destruct (Nat.eq_dec _ _); try lia; apply H3; lia.
 Qed.
-
-(** Functional models of forward substitution and back substitution *)
-
-
-Goal forall {t} [n] (L: 'M[ftype t]_n) (x: 'cV[ftype t]_n) (i: 'I_n),
-  foldl BMINUS (x i ord0)
-           (map (fun j => BMULT (L i j) (x j ord0)) (take i (ord_enum n))) =
-  subtract_loop (x i ord0) (map (fun j => (L i j, x j ord0)) (take i (ord_enum n))).
-Proof.
-intros.
-rewrite /subtract_loop -map_comp //.
-Qed.
-
-Definition forward_subst_step {t: type} [n: nat] 
-         (L: 'M[ftype t]_n) (x: 'cV[ftype t]_n) (i: 'I_n) 
-     : 'cV_n  :=
-   update_mx x i ord0
-    (BDIV (subtract_loop (x i ord0) (map (fun j => (L i j, x j ord0)) (take i (ord_enum n))))
-          (L i i)).
-
-Definition forward_subst [t: type] [n]
-         (L: 'M[ftype t]_n) (x: 'cV[ftype t]_n) : 'cV_n :=
-  foldl (forward_subst_step L) x (ord_enum n).
-
-Definition backward_subst_step {t: type} [n: nat]
-         (U: 'M[ftype t]_n) (x: 'cV[ftype t]_n) (i: 'I_n) : 'cV_n :=
-    update_mx x i ord0
-      (BDIV (subtract_loop (x i ord0) (map (fun j => (U i j, x j ord0)) (drop (i+1) (ord_enum n))))
-         (U i i)).
-
-Definition backward_subst {t: type} [n: nat]
-         (U: 'M[ftype t]_n) (x: 'cV[ftype t]_n) : 'cV[ftype t]_n :=
-     foldl (backward_subst_step U) x (rev (ord_enum n)).
 
 (** * Definitions for manipulating triangular matrices *)
 
