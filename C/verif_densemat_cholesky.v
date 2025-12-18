@@ -28,16 +28,21 @@ Open Scope logic.
 
 (** * [densemat_cfactor] verification: Cholesky factorization *)
 
-
-Lemma Zconst1eq1: Zconst the_type 1 = 1%F64.
-Admitted.
-
 Definition cholesky_return' [n] (j: 'I_(S n)) (R: 'M[ftype the_type]_n) : ftype the_type := 
    seq.foldl BMULT (Zconst the_type 1) (map (fun k => fst (BFREXP (R k k))) (seq.take j (ord_enum n))).
 
 Lemma cholesky_return'_e: forall n (R: 'M_n) (n': 'I_(S n)), 
      n = nat_of_ord n' -> cholesky_return' n' R = cholesky_return R.
-Admitted.
+Proof.
+intros.
+unfold cholesky_return', cholesky_return.
+replace (nat_of_ord n') with (seq.size (ord_enum n)).
+ 2: rewrite size_ord_enum, <- H; auto.
+rewrite seq.take_size.
+clear n' H.
+set (u := Zconst _ _). clearbody u.
+revert u; induction (ord_enum n); simpl; intros; auto.
+Qed.
 
 Lemma body_densematn_cfactor: semax_body Vprog Gprog f_densematn_cfactor densematn_cfactor_spec.
 Proof.
@@ -59,7 +64,7 @@ forward_for_simple_bound (Z.of_nat n)
   entailer!!; [ split | ].
  +  apply cholesky_jik_upto_zero; auto.
  + unfold cholesky_return'. simpl. rewrite seq.take0. simpl.
-    f_equal. apply Zconst1eq1.
+    f_equal. apply B754_finite_ext.
  +
   apply derives_refl'; f_equal.
   subst A.

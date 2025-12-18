@@ -204,10 +204,24 @@ Qed.
 
 
 Lemma rev_List_rev: forall t (al: list t), rev al = List.rev al.
-Admitted.
+Proof.
+intros.
+symmetry; apply rev_alt.
+Qed.
 
 Lemma BFREXP_finite_e: forall [t] (x: ftype t), Binary.is_finite (fst (BFREXP x)) -> Binary.is_finite x.
-Admitted.
+Proof.
+intros.
+destruct x; try discriminate; auto.
+Qed.
+
+Lemma BFREXP_finite_strict_e: forall [t] (x: ftype t), 
+     Binary.is_finite_strict _ _ (fst (BFREXP x)) -> Binary.is_finite_strict _ _ x.
+Proof.
+intros.
+destruct x; try discriminate; auto.
+Qed.
+
 
 Lemma Bmult_R0 (f a: ftype t) :
 Binary.is_finite (BMULT f a) ->
@@ -241,133 +255,47 @@ Proof.
   subst s; reflexivity.
 Qed.
 
+Lemma BMULT_finite_strict_e: forall x y: ftype t, Binary.is_finite_strict _ _ (BMULT x y) ->
+      Binary.is_finite_strict _ _ x /\ Binary.is_finite_strict _ _ y.
+Proof.
+intros.
+destruct x; try destruct s; destruct y; try destruct s; try discriminate; simpl; auto.
+Qed.
+
 Lemma cholesky_return_success:
-  (2 < femax t)%Z ->
   forall [n] (A R: 'M[ftype t]_n),
     cholesky_jik_spec A R ->
     Zcholesky_return (cholesky_return R) = 1%Z ->
     cholesky_success A R.
 Proof.
-intros Hemax2 n A R H H0.
+intros n A R H H0.
 split; auto.
 unfold cholesky_return in H0.
-pose isSqrt (x: ftype t) := Binary.is_finite x -> BCMP Gt true (Zconst t 0) x = false.
-assert (Hpos: forall i, isSqrt (R i i)). {
-  move => i. destruct (H i i) as [_ ?]. rewrite H1 //.
-  set x := subtract_loop_jik _ _ _ _ _. clearbody x. clear.
-   move => H.
-  apply SQRT_nonneg; auto.
-  apply BSQRT_finite_e in H; auto.
-}
-intro.
 assert (Forall (fun i =>  Binary.is_finite_strict _ _ (R i i)) (ord_enum n)).
 2:{
-rewrite Forall_forall in H1. apply H1.
-apply /Iter.In_mem.
-apply mem_ord_enum.
+rewrite Forall_forall in H1. intro; apply H1.
+apply /Iter.In_mem. apply mem_ord_enum.
 }
 rewrite -(revK (ord_enum n)) in H0|-*.
 rewrite foldl_rev in H0.
 set al := rev (ord_enum n) in H0|-*.
 clearbody al.
 set f := (fun x => _) in H0.
-set z := foldr _ _ _ in H0.
-assert (Binary.is_finite z /\ (FT2R z <> 0)%Re). {
-  destruct z; try destruct s; try discriminate H0.
-  simpl. split; auto.
-  unfold Defs.F2R; simpl.
-  intro Hx; apply Rmult_integral in Hx; destruct Hx. apply eq_IZR_R0 in H1. discriminate.
-  pose proof (bpow_gt_0 Zaux.radix2 e); lra.
-  split; auto. simpl.
-  apply Rgt_not_eq.
-  apply Rmult_pos_pos.
-  unfold IZR.
-  apply IPR_gt_0. apply bpow_gt_0.
-}
-clear - H1 Hpos Hemax2.
-destruct H1; subst z.
+assert (Binary.is_finite_strict _ _ (foldr f (Zconst t 1) al)) 
+   by (clear - H0;  destruct (foldr f (Zconst t 1) al); try discriminate H0; auto).
+clear - H1.
 rewrite rev_List_rev.
 apply Forall_rev.
 induction al; constructor.
 -
-simpl in H, H0.
-rewrite {1}/f in H.
-rewrite {1}/f in H0.
-apply BMULT_finite_e in H. destruct H.
-apply BFREXP_finite_e in H1.
-destruct (R a a); try discriminate; auto.
-destruct (Bmult_R0 (foldr f (Zconst t 1) al)  (BFREXP (Binary.B754_zero (fprec t) (femax t) s)).1).
-destruct (BMULT _ _); simpl in H0; auto; try lra.
-reflexivity.
-rewrite H2 in H0. simpl in H0. lra.
-rewrite H2 in H0; simpl in H0; lra.
+simpl in H1.
+apply BMULT_finite_strict_e in H1. destruct H1.
+apply BFREXP_finite_strict_e in H0. auto.
 -
 apply IHal.
-simpl in H.
-apply BMULT_finite_e in H. destruct H; auto.
-simpl in H0.
-rewrite {1}/f in H0.
-simpl in H.
-set x := foldr _ _ _ in H,H0|-*.
-specialize (Hpos a).
-rewrite /f in H.
-set y := R a a in Hpos,H0,H|-*.
-clear - Hpos H0 H Hemax2.
-red in Hpos.
-apply BMULT_finite_e in H; destruct H.
-specialize (Hpos (BFREXP_finite_e _ H1)).
-destruct y; try destruct s; try discriminate.
-set y := Binary.B754_zero (fprec t) (femax t) true in Hpos,H0,H1.
-+
-change (fst _) with y in H0.
-destruct (Bmult_R0 x y).
-destruct (BMULT x y); simpl in H0; try lra; reflexivity.
-reflexivity.
-rewrite H2 in H0; simpl in H0; lra.
-rewrite H2 in H0; simpl in H0; lra.
-+
-destruct x; try destruct s; simpl in H0|-*; try discriminate; try lra.
-+
-clear H1 Hpos.
-clearbody x.
-clear - H0 H Hemax2.
-rewrite /BFREXP in H0.
-destruct (Binary.Bfrexp_correct _ _ _ Hemax2 (Binary.B754_finite (fprec t) (femax t) false m e e0) (Logic.eq_refl _))
-  as [_ [? _]].
-set y := Binary.B754_finite (fprec t) (femax t) false m e e0 in H0,H1.
-set z := fst _ in H1,H0|-*.
-clearbody z.
-assert (0 < Binary.B2R _ _ y)%Re. {
-  subst y; simpl. apply Float_prop.F2R_gt_0.  simpl.  lia.
-}
-rewrite H1 in H2.
-assert (0 < bpow Zaux.radix2 (Binary.Bfrexp (fprec t) (femax t) (fprec_gt_0 t) y).2)%Re.
- apply bpow_gt_0. 
-assert (0 < Binary.B2R _ _ z)%Re. nra.
-assert (Binary.is_finite z).
-  clear - H4; destruct z; try destruct s; simpl in H4; try lra; reflexivity.
-clear - H0 H4 H H5.
-unfold BMULT, BINOP in H0.
-pose proof (Binary.Bmult_correct (fprec t) (femax t) (fprec_gt_0 t) (fprec_lt_femax t)
-        (FPCore.mult_nan (fprec t) (femax t) (fprec_gt_one t)) BinarySingleNaN.mode_NE x z).
-set u := Binary.Bmult _ _ _ _ _ _ _ _ in H0,H1.
-clearbody u.
-destruct (Rlt_bool _ _) in H1.
-*
-destruct H1 as [? [? ?]].
-rewrite H H5 in H2. simpl in H2.
-clear - H2 H0 H3 H4 H H1.
-specialize (H3 ltac:(destruct u; try destruct s; try discriminate; auto)).
-intro.
-unfold FT2R in H5. rewrite H5 in H1.
-rewrite Rmult_0_l in H1. simpl in H1.
-rewrite Generic_fmt.round_0 in H1.
-unfold FT2R in H0. rewrite H1 in H0. lra.
-*
-unfold Binary.binary_overflow, BinarySingleNaN.binary_overflow in H1.
-simpl in H1.
-destruct u; try destruct s; simpl in H0; try lra; try discriminate.
+apply BMULT_finite_strict_e in H1. apply H1.
 Qed.
+
 
 End WithNaN.
 
