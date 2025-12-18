@@ -453,3 +453,29 @@ pose (X := existT _ n (M,x) : {n & 'M[option (ftype the_type)]_n * 'cV[ (ftype t
 forward_call (rsh,sh,X, offset_val densemat_data_offset p, xp); clear X.
 entailer!!.
 Qed.
+
+Lemma body_densematn_cfactor_and_solve: semax_body Vprog Gprog 
+        f_densematn_cfactor_and_solve densematn_cfactor_and_solve_spec.
+Proof.
+start_function.
+pose (X := existT _ n A  :  {n & 'M[option (ftype the_type)]_n}).
+forward_call (shA,X,p); clear X.
+Intros R.
+forward_if (Zcholesky_return(cholesky_return R)=1%Z).
+- forward_call. contradiction.
+- forward. entailer!!. 
+  destruct (cholesky_return R); try discriminate.
+  destruct s,m; try discriminate; reflexivity.
+- (* After the if statement *)
+pose (X := existT _ n ((joinLU A (map_mx Some R)),x)  :  {n & 'M[option (ftype the_type)]_n * 'cV[ftype the_type]_n}%type).
+forward_call (shA,sh,X,p,xp); clear X.
++ clear - H. intros. specialize (H i j). unfold mirror_UT, joinLU, map_mx, trmx in *. rewrite !mxE.  rewrite !mxE in H.
+  destruct (ssrnat.leq (nat_of_ord i) (nat_of_ord j)) eqn:?H. hnf; auto.
+  destruct (ssrnat.leq (nat_of_ord j) (nat_of_ord i)) eqn:?H; hnf; auto.
++ Exists R. entailer!!.
+   eapply cholesky_return_success; auto.
+   rewrite (backward_subst_UT _ R); [ rewrite (forward_subst_LT _ (R^T)); [ auto | ] | ].
+  * intros. unfold map_mx, joinLU, trmx. rewrite !mxE. rewrite H2. auto.
+  * intros. unfold map_mx, joinLU, trmx. rewrite !mxE. rewrite H2. auto.
+Qed.
+

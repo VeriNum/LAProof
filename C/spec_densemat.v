@@ -548,6 +548,22 @@ Definition densemat_csolve_spec :=
                           (forward_subst (trmx (map_mx optfloat_to_float M)) x)))
            xp).
 
+Definition densematn_cfactor_and_solve_spec :=
+ DECLARE _densematn_cfactor_and_solve
+ WITH shA: share, sh: share, X: {n & 'M[option (ftype the_type)]_n * 'cV[ftype the_type]_n}%type,
+      p: val, xp: val
+ PRE [ tptr the_ctype, tptr the_ctype, tint ] let '(existT _ n (A,x)) := X in
+    PROP (writable_share shA; writable_share sh;
+                 forall i j, isSome (mirror_UT A i j))
+    PARAMS (p; xp; Vint (Int.repr n))
+    SEP (densematn shA A p; densematn sh (map_mx Some x) xp)
+ POST [ tvoid ] let '(existT _ n (A,x)) := X in
+    EX R: 'M_n,
+    PROP (cholesky_success (map_mx optfloat_to_float (mirror_UT A)) R)
+    RETURN ()
+    SEP (densematn shA (joinLU A (map_mx Some R)) p;
+              densematn sh (map_mx Some (backward_subst  R (forward_subst R^T x))) xp).
+
 Definition densematn_dotprod_spec :=
  DECLARE _densematn_dotprod
  WITH  shA: share, shB: share, X: {m & {n & {p & ('M[ftype the_type]_(m,n) * 'M[ftype the_type]_(n,p)) * ('I_m * 'I_p)}}}%type,
@@ -652,6 +668,7 @@ Definition densematASI : funspecs := [
    densemat_lufactor_spec; densematn_lufactor_spec;
    densemat_csolve_spec; densematn_csolve_spec;
    densemat_cfactor_spec; densematn_cfactor_spec;
+   densematn_cfactor_and_solve_spec;
    densemat_lusolveT_spec; densematn_lusolveT_spec;
    blocksolve_spec; subtractoff_spec; densematn_cfactor_block_spec; densematn_cfactor_outer_spec;
    densematn_dotprod_spec; densemat_dotprod_spec;

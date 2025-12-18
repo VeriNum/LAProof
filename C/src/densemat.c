@@ -262,6 +262,17 @@ void densemat_csolve(densemat_t R, double* x)
 
 //ldoc on
 /**
+ * This function demonstrates how to combine Cholesky factor + test result + Cholesky solve.
+ */
+
+void densematn_cfactor_and_solve(double *A, double *x, int n) {
+  int result = densematn_cfactor(A, n);
+  if (result != 1) exit(37);  /* 37 is error code for non-pos.def. matrix */
+  densematn_csolve(A,x,n);
+}
+
+
+/**
  * ## LU factorization and solve
  * 
  * Even if the system matrices in a finite element code are SPD, the

@@ -73,6 +73,7 @@ Definition densematVSU: @VSU NullExtension.Espec
     - solve_SF_internal body_densematn_csolve.
     - solve_SF_internal body_densemat_cfactor.
     - solve_SF_internal body_densematn_cfactor.
+    - solve_SF_internal body_densematn_cfactor_and_solve.
     - solve_SF_internal body_densematn_dotprod.
     - solve_SF_internal body_densemat_dotprod.
     - solve_SF_internal body_densematn_mult.

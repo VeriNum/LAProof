@@ -296,6 +296,74 @@ apply IHal.
 apply BMULT_finite_strict_e in H1. apply H1.
 Qed.
 
+Lemma backward_subst_UT: forall  [n] (R1 R2 : 'M[ftype t]_n) (x: 'cV[ftype t]_n),
+    (forall i j: 'I_n, (i <= j)%N -> R1 i j = R2 i j) -> 
+    backward_subst R1 x = backward_subst R2 x.
+Proof.
+intros n R1 R2 x Hij.
+unfold backward_subst.
+rewrite !foldl_rev.
+f_equal.
+apply FunctionalExtensionality.functional_extensionality; intro i.
+unfold backward_subst_step.
+apply FunctionalExtensionality.functional_extensionality; intro z.
+f_equal.
+rewrite -Hij; [ | lia].
+f_equal.
+f_equal.
+apply map_ext_in; intros.
+rewrite Hij; auto.
+assert (in_mem a (mem (drop (addn (nat_of_ord i) 1) (ord_enum n)))).
+apply /Iter.In_mem; auto.
+apply (nth_index i) in H0.
+set k := (index _ _) in H0.
+rewrite nth_drop in H0.
+set u := (_ + _ +  k)%nat in H0.
+assert (u > nat_of_ord i) by lia.
+clearbody u.
+assert (u < n \/ u >= n)%nat by lia.
+destruct H2.
+ordify n u.
+rewrite nth_ord_enum' in H0. subst. lia.
+rewrite nth_default in H0. subst; lia.
+rewrite size_ord_enum. lia.
+Qed.
+
+Lemma forward_subst_LT: forall  [n] (R1 R2 : 'M[ftype t]_n) (x: 'cV[ftype t]_n),
+    (forall i j: 'I_n, (i >= j)%N -> R1 i j = R2 i j) -> 
+    forward_subst R1 x = forward_subst R2 x.
+Proof.
+intros n R1 R2 x Hij.
+unfold forward_subst.
+f_equal.
+apply FunctionalExtensionality.functional_extensionality; intro i.
+unfold forward_subst_step.
+apply FunctionalExtensionality.functional_extensionality; intro z.
+f_equal.
+rewrite -Hij; [ | lia].
+f_equal.
+f_equal.
+apply map_ext_in; intros.
+rewrite Hij; auto.
+assert (in_mem a (mem (take (nat_of_ord z) (ord_enum n)))).
+apply /Iter.In_mem; auto.
+apply (nth_index z) in H0.
+pose proof index_size a (take (nat_of_ord z) (ord_enum n)).
+rewrite size_take  size_ord_enum ltn_ord in H1.
+clear H.
+set k := (index _ _) in H0,H1.
+clearbody k.
+subst a.
+assert (k < nat_of_ord z \/ k = nat_of_ord z)%N by lia.
+destruct H.
+rewrite nth_take; auto.
+pose proof ltn_ord z.
+ordify n k.
+rewrite nth_ord_enum'. lia.
+rewrite nth_default. lia.
+rewrite size_take. rewrite size_ord_enum.
+rewrite ltn_ord. subst. lia.
+Qed.
 
 End WithNaN.
 

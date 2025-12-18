@@ -33,6 +33,7 @@ int densematn_cfactor(double* A, int n);
 void densematn_csolve(double* R, double* x, int n);
 int densemat_cfactor(densemat_t A);
 void densemat_csolve(densemat_t R, double* x);
+void densematn_cfactor_and_solve(double *A, double *x, int n);
 
 // LU factorization and solve
 void densematn_lufactor(int* ipiv, double* A, int n);

@@ -31,7 +31,7 @@ Open Scope logic.
 Definition densemat_E : funspecs := [].
 Definition densemat_imported_specs : funspecs := 
    [free_spec'] (* subset of MallocASI *)
-  ++ [surely_malloc_spec'; double_clear_spec] (* subset of allocASI *)
+  ++ [exit_spec; surely_malloc_spec'; double_clear_spec] (* subset of allocASI *)
   ++ [fma_spec; sqrt_spec; frexp_spec]. (* subset of MathASI *)
 Definition densemat_internal_specs : funspecs := densematASI.
 Definition Gprog :=  densemat_imported_specs ++ densemat_internal_specs.
