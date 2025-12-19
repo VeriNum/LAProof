@@ -23,6 +23,9 @@ cdoc/%.html: cdoc/%.qmd
 cdoc/%.qmd: C/include/%.h C/src/%.c
 	$(LDOC) -highlight c -p quarto -o $@ $^
 
+cdoc/build_csr.qmd: C/include/sparse.h C/src/build_csr.c
+	$(LDOC) -highlight c -p quarto -o $@ C/src/build_csr.c
+
 cdocs: $(patsubst %.qmd,%.html,$(CDOCS))
 
 

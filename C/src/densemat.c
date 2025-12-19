@@ -262,7 +262,11 @@ void densemat_csolve(densemat_t R, double* x)
 
 //ldoc on
 /**
- * This function demonstrates how to combine Cholesky factor + test result + Cholesky solve.
+ * The next function demonstrates how to combine Cholesky factor + Cholesky solve.
+ * Initial values of A and x are matrix A and vector b.
+ * First, run Cholesky factorization to replace matrix A with matrix R;
+ * test the return value to make sure the factorization succeeded;
+ * Then run csolve to replace the contents of x with a solution to Ax=b.
  */
 
 void densematn_cfactor_and_solve(double *A, double *x, int n) {

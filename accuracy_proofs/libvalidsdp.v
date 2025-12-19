@@ -886,6 +886,21 @@ destruct x'; simpl in *; try discriminate; auto.
 rewrite H1; auto.
 Qed.
 
+(** ** Main Cholesky equivalence theorem *)
+(** The predicate [cholesky_success A R] states that matrix R is the
+  result of running the inner-product-form Cholesky decomposition of
+  matrix A, _and_ the resulting diagonal is all positive.
+  Furthermore, we have proofs that if the C function [densemat_cfactor]
+  returns 1, then [cholesky_success] holds.
+   [LibValidSDP.cholesky.cholesky_success] is a similar predicate
+  (but in libValidSDP's characterization of floating point).  
+   LibValidSDP has accuracy theorems, for example if cholesky_success holds,
+  then [R^T R] is close to [A].
+
+  This theorem [LVSDP_cholesky_success] states that LAProof's version of
+  [cholesky_success] implies LibValidSDP's version, and therefore we can
+  use libValidSDP's accuracy theorems. *)
+ 
 Lemma LVDSP_cholesky_success: forall [n] (A R: 'M[F]_n.+1),
   A^T = A ->
   cholesky_success A R ->
