@@ -22,11 +22,11 @@
 </div>
 
 <div class="doc">
-<a id="lab25"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
+<a id="lab28"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
 
 <div class="paragraph"> </div>
 
-<a id="lab26"></a><h1 class="section">Prologue.</h1>
+<a id="lab29"></a><h1 class="section">Prologue.</h1>
 
 
 <div class="paragraph"> </div>
@@ -35,10 +35,11 @@
 </div>
 <div class="code">
 <span class="id" title="keyword">From</span> <span class="id" title="var">VST.floyd</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">proofauto</span> <span class="id" title="library">VSU</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.accuracy_proofs</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.accuracy_proofs.solve_model.html#"><span class="id" title="library">solve_model</span></a>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.C</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.C.densemat.html#"><span class="id" title="library">densemat</span></a> <a class="idref" href="LAProof.C.spec_alloc.html#"><span class="id" title="library">spec_alloc</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#"><span class="id" title="library">spec_densemat</span></a> <a class="idref" href="LAProof.C.floatlib.html#"><span class="id" title="library">floatlib</span></a> <a class="idref" href="LAProof.C.matrix_model.html#"><span class="id" title="library">matrix_model</span></a>.<br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">vcfloat</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">FPStdCompCert</span> <span class="id" title="library">FPStdLib</span>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">VSTlib.spec_math</span> <span class="id" title="library">VSTlib.spec_malloc</span>.<br/>
-<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/doc/V8.20.1/stdlib//Coq.Classes.RelationClasses.html#"><span class="id" title="library">Coq.Classes.RelationClasses</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Coq.Classes.RelationClasses</span>.<br/>
 
 <br/>
 <span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span>  <span class="id" title="library">ssreflect</span> <span class="id" title="library">ssrbool</span> <span class="id" title="library">ssrfun</span> <span class="id" title="library">eqtype</span> <span class="id" title="library">ssrnat</span> <span class="id" title="library">seq</span> <span class="id" title="library">choice</span>.<br/>
@@ -60,10 +61,18 @@
 </div>
 
 <div class="doc">
-<a id="lab27"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_cfactor</span></span> verification: Cholesky factorization</h1>
+<a id="lab30"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_cfactor</span></span> verification: Cholesky factorization</h1>
 
 </div>
 <div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="cholesky_return'" class="idref" href="#cholesky_return'"><span class="id" title="definition">cholesky_return'</span></a> [<a id="n:1" class="idref" href="#n:1"><span class="id" title="binder">n</span></a>] (<a id="j:2" class="idref" href="#j:2"><span class="id" title="binder">j</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">I_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#n:1"><span class="id" title="variable">n</span></a><span class="id" title="notation">)</span>) (<a id="R:3" class="idref" href="#R:3"><span class="id" title="binder">R</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a><span class="id" title="notation">]</span><span class="id" title="notation">_n</span>) : <span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a> := <br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="definition">seq.foldl</span> <span class="id" title="definition">BMULT</span> (<span class="id" title="definition">Zconst</span> <a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a> 1) (<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Lists.ListDef.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="keyword">fun</span> <a id="k:4" class="idref" href="#k:4"><span class="id" title="binder">k</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> (<a class="idref" href="LAProof.accuracy_proofs.solve_model.html#BFREXP"><span class="id" title="definition">BFREXP</span></a> (<a class="idref" href="LAProof.C.verif_densemat_cholesky.html#R:3"><span class="id" title="variable">R</span></a> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#k:4"><span class="id" title="variable">k</span></a> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#k:4"><span class="id" title="variable">k</span></a>))) (<span class="id" title="definition">seq.take</span> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#j:2"><span class="id" title="variable">j</span></a> (<span class="id" title="definition">ord_enum</span> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#n:1"><span class="id" title="variable">n</span></a>))).<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cholesky_return'_e" class="idref" href="#cholesky_return'_e"><span class="id" title="lemma">cholesky_return'_e</span></a>: <span class="id" title="keyword">∀</span> <a id="n:5" class="idref" href="#n:5"><span class="id" title="binder">n</span></a> (<a id="R:6" class="idref" href="#R:6"><span class="id" title="binder">R</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">M_n</span>) (<a id="n':7" class="idref" href="#n':7"><span class="id" title="binder">n'</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">I_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#n:5"><span class="id" title="variable">n</span></a><span class="id" title="notation">)</span>), <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.C.verif_densemat_cholesky.html#n:5"><span class="id" title="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">nat_of_ord</span> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#n':7"><span class="id" title="variable">n'</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#cholesky_return'"><span class="id" title="definition">cholesky_return'</span></a> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#n':7"><span class="id" title="variable">n'</span></a> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#R:6"><span class="id" title="variable">R</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="LAProof.accuracy_proofs.solve_model.html#cholesky_return"><span class="id" title="definition">cholesky_return</span></a> <a class="idref" href="LAProof.C.verif_densemat_cholesky.html#R:6"><span class="id" title="variable">R</span></a>.<br/>
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <a id="body_densematn_cfactor" class="idref" href="#body_densematn_cfactor"><span class="id" title="lemma">body_densematn_cfactor</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densematn_cfactor"><span class="id" title="definition">f_densematn_cfactor</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densematn_cfactor_spec"><span class="id" title="definition">densematn_cfactor_spec</span></a>.<br/>
@@ -75,7 +84,7 @@
 </div>
 
 <div class="doc">
-<a id="lab28"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_csolve</span></span> verification: Cholesky solve by forward substitution and back substitution</h1>
+<a id="lab31"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_csolve</span></span> verification: Cholesky solve by forward substitution and back substitution</h1>
 
 </div>
 <div class="code">
@@ -85,6 +94,12 @@
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <a id="body_densemat_csolve" class="idref" href="#body_densemat_csolve"><span class="id" title="lemma">body_densemat_csolve</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densemat_csolve"><span class="id" title="definition">f_densemat_csolve</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_csolve_spec"><span class="id" title="definition">densemat_csolve_spec</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="body_densematn_cfactor_and_solve" class="idref" href="#body_densematn_cfactor_and_solve"><span class="id" title="lemma">body_densematn_cfactor_and_solve</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.C.densemat.html#f_densematn_cfactor_and_solve"><span class="id" title="definition">f_densematn_cfactor_and_solve</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densematn_cfactor_and_solve_spec"><span class="id" title="definition">densematn_cfactor_and_solve_spec</span></a>.<br/>
+
+<br/>
 </div>
 </div>
 

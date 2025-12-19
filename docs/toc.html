@@ -33,25 +33,33 @@
 <h2><a href="LAProof.accuracy_proofs.vec_op_acc.html">LAProof.accuracy_proofs.vec_op_acc</a></h2>
 <h2><a href="LAProof.accuracy_proofs.gemm_acc.html">LAProof.accuracy_proofs.gemm_acc</a></h2>
 <h2><a href="LAProof.accuracy_proofs.export.html">LAProof.accuracy_proofs.export</a></h2>
-<h2><a href="LAProof.accuracy_proofs.fcmsumxy.html">LAProof.accuracy_proofs.fcmsumxy</a></h2>
+<h2><a href="LAProof.accuracy_proofs.libvalidsdp.html">LAProof.accuracy_proofs.libvalidsdp</a></h2>
 <ul class="doclist">
-<li><a href="LAProof.accuracy_proofs.fcmsumxy.html#lab1">Importing a proof from libValidSDP into LAProof</a>
+<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab1">Importing a proof from libValidSDP into LAProof</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab2">Demonstrations and applications</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab3">Main Cholesky equivalence theorem</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="LAProof.accuracy_proofs.solve_model.html">LAProof.accuracy_proofs.solve_model: models of Cholesky decomposition and triangular solve</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.solve_model.html#lab4">MathComp matrices over a nonring</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.solve_model.html#lab5">Functional model of Cholesky decomposition (jik algorithm)</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.floatlib.html">LAProof.C.floatlib</a></h2>
 <h2><a href="LAProof.C.sparse_model.html">LAProof.C.sparse_model</a></h2>
 <h2><a href="LAProof.C.sparse.html">LAProof.C.sparse</a></h2>
-<h2><a href="LAProof.C.spec_sparse.html">LAProof.C.spec_sparse: VST specifications of functions on sparse matrices.</a></h2>
-<ul class="doclist">
-<li><ul class="doclist">
-<li><a href="LAProof.C.spec_sparse.html#lab2">Corresponds to C program <span class="inlinecode"><span class="id" title="var">sparse.h</span></span> and <span class="inlinecode"><span class="id" title="var">sparse.c</span></span></a>
-
-</li>
-</ul>
-
-</li>
-</ul>
+<h2><a href="LAProof.C.spec_sparse.html">LAProof.C.spec_sparse</a></h2>
 <h2><a href="LAProof.C.verif_sparse.html">LAProof.C.verif_sparse</a></h2>
 <h2><a href="LAProof.C.verif_sparse_byrows.html">LAProof.C.verif_sparse_byrows</a></h2>
 <h2><a href="LAProof.C.VSU_sparse.html">LAProof.C.VSU_sparse</a></h2>
@@ -64,141 +72,139 @@
 <h2><a href="LAProof.C.spec_densemat.html">LAProof.C.spec_densemat: VST specifications of functions on dense matrices.</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.spec_densemat.html#lab3">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.h</span></span> and <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.spec_densemat.html#lab6">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.h</span></span> and <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab4">Abstracting the floating-point precision</a>
+<li><a href="LAProof.C.spec_densemat.html#lab7">Abstracting the floating-point precision</a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab5">Conversions between floats, float-options, and <span class="inlinecode"><span class="id" title="var">val</span></span></a>
+<li><a href="LAProof.C.spec_densemat.html#lab8">Conversions between floats, float-options, and <span class="inlinecode"><span class="id" title="var">val</span></span></a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab6">Representation predicates for dense matrices</a>
+<li><a href="LAProof.C.spec_densemat.html#lab9">Representation predicates for dense matrices</a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab7">Function specifications (funspecs)</a>
+<li><a href="LAProof.C.spec_densemat.html#lab10">Function specifications (funspecs)</a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab8">Not-yet-specified functions</a>
+<li><a href="LAProof.C.spec_densemat.html#lab11">Not-yet-specified functions</a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab9">Building the "Abstract Specification Interface", the list of funspecs for this module</a>
+<li><a href="LAProof.C.spec_densemat.html#lab12">Building the "Abstract Specification Interface", the list of funspecs for this module</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.densemat_lemmas.html">LAProof.C.densemat_lemmas: Supporting lemmas for VST proofs of functions on dense matrices.</a></h2>
 <ul class="doclist">
-<li><a href="LAProof.C.densemat_lemmas.html#lab10">VSU definitions</a>
+<li><a href="LAProof.C.densemat_lemmas.html#lab13">VSU definitions</a>
 
 </li>
-<li><a href="LAProof.C.densemat_lemmas.html#lab11">Many useful supporting lemmas about <span class="inlinecode"><span class="id" title="var">column_major</span></span>, <span class="inlinecode"><span class="id" title="var">ordinal</span></span>, <span class="inlinecode"><span class="id" title="var">ord_enum</span></span>, etc.</a>
+<li><a href="LAProof.C.densemat_lemmas.html#lab14">Many useful supporting lemmas about <span class="inlinecode"><span class="id" title="var">column_major</span></span>, <span class="inlinecode"><span class="id" title="var">ordinal</span></span>, <span class="inlinecode"><span class="id" title="var">ord_enum</span></span>, etc.</a>
 
 </li>
-<li><a href="LAProof.C.densemat_lemmas.html#lab12">Tactics for calling matrix subscripting functions</a>
+<li><a href="LAProof.C.densemat_lemmas.html#lab15">Tactics for calling matrix subscripting functions</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.verif_densemat.html">LAProof.C.verif_densemat: VST proofs of functions on dense matrices.</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.verif_densemat.html#lab13">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.verif_densemat.html#lab16">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab14">Prologue.</a>
+<li><a href="LAProof.C.verif_densemat.html#lab17">Prologue.</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab15"><span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab18"><span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab16"><span class="inlinecode"><span class="id" title="var">densemat_free</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab19"><span class="inlinecode"><span class="id" title="var">densemat_free</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab17">Unpacking dependently typed WITH components</a>
+<li><a href="LAProof.C.verif_densemat.html#lab20">Unpacking dependently typed WITH components</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab18"><span class="inlinecode"><span class="id" title="var">densemat_clear</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab21"><span class="inlinecode"><span class="id" title="var">densemat_clear</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab19"><span class="inlinecode"><span class="id" title="var">densemat_get</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab22"><span class="inlinecode"><span class="id" title="var">densemat_get</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab20"><span class="inlinecode"><span class="id" title="var">densemat_set</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab23"><span class="inlinecode"><span class="id" title="var">densemat_set</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab21"><span class="inlinecode"><span class="id" title="var">densemat_addto</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab24"><span class="inlinecode"><span class="id" title="var">densemat_addto</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab22"><span class="inlinecode"><span class="id" title="var">data_norm</span></span> and <span class="inlinecode"><span class="id" title="var">densemat_norm</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab25"><span class="inlinecode"><span class="id" title="var">data_norm</span></span> and <span class="inlinecode"><span class="id" title="var">densemat_norm</span></span> verification</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.verif_densemat_mult.html">LAProof.C.verif_densemat_mult: VST proofs dense matrix multiply functions</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.verif_densemat_mult.html#lab23">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.verif_densemat_mult.html#lab26">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.verif_densemat_mult.html#lab24">Prologue.</a>
+<li><a href="LAProof.C.verif_densemat_mult.html#lab27">Prologue.</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.verif_densemat_cholesky.html">LAProof.C.verif_densemat_cholesky: VST proofs of Cholesky functions on dense matrices.</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.verif_densemat_cholesky.html#lab25">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.verif_densemat_cholesky.html#lab28">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.verif_densemat_cholesky.html#lab26">Prologue.</a>
+<li><a href="LAProof.C.verif_densemat_cholesky.html#lab29">Prologue.</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat_cholesky.html#lab27"><span class="inlinecode"><span class="id" title="var">densemat_cfactor</span></span> verification: Cholesky factorization</a>
+<li><a href="LAProof.C.verif_densemat_cholesky.html#lab30"><span class="inlinecode"><span class="id" title="var">densemat_cfactor</span></span> verification: Cholesky factorization</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat_cholesky.html#lab28"><span class="inlinecode"><span class="id" title="var">densemat_csolve</span></span> verification: Cholesky solve by forward substitution and back substitution</a>
+<li><a href="LAProof.C.verif_densemat_cholesky.html#lab31"><span class="inlinecode"><span class="id" title="var">densemat_csolve</span></span> verification: Cholesky solve by forward substitution and back substitution</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.VSU_densemat.html">LAProof.C.VSU_densemat: Packaging the [densematVSU], the Verified Software Unit</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.VSU_densemat.html#lab29">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.VSU_densemat.html#lab32">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.VSU_densemat.html#lab30">Prologue.</a>
+<li><a href="LAProof.C.VSU_densemat.html#lab33">Prologue.</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.matrix_model.html">LAProof.C.matrix_model: Functional models of matrix operations</a></h2>
 <ul class="doclist">
-<li><a href="LAProof.C.matrix_model.html#lab31">Prologue: typical imports for MathComp floating-point matrix functional models</a>
+<li><a href="LAProof.C.matrix_model.html#lab34">Prologue: typical imports for MathComp floating-point matrix functional models</a>
 
 </li>
-<li><a href="LAProof.C.matrix_model.html#lab32">MathComp matrices over a nonring</a>
-
-</li>
-<li><a href="LAProof.C.matrix_model.html#lab33">Functional model of Cholesky decomposition (jik algorithm)</a>
-
-</li>
-<li><a href="LAProof.C.matrix_model.html#lab34">Definitions for manipulating triangular matrices</a>
+<li><a href="LAProof.C.matrix_model.html#lab35">Definitions for manipulating triangular matrices</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.bandmat.html">LAProof.C.bandmat</a></h2>
+<h2><a href="LAProof.C.build_csr.html">LAProof.C.build_csr</a></h2>
+<h2><a href="LAProof.C.verif_build_csr.html">LAProof.C.verif_build_csr</a></h2>
+<h2><a href="LAProof.C.distinct.html">LAProof.C.distinct</a></h2>
+<h2><a href="LAProof.C.partial_csr.html">LAProof.C.partial_csr</a></h2>
 </div>
 <hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
 </div>
