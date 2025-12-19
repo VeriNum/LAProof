@@ -10,9 +10,11 @@
      to use the [format] abstraction globally, because then we couldn't distinguish infinities from NaNs.
   Because it is proved (in module libvalidsdp.flocq_float) that the IEEE floats are an instance of
   a legal format, one can import theorems from libValidSDP into LAProof (though not vice versa).
+
   This module is a demonstration of how to do that.  The theorem in libValidSDP is 
      [cholesky.lemma_2_1], and it is imported here as [LVSDP_lemma_2_1].
- 
+
+   In addition, there are proofs relating libValidSDP's definitions of Cholesky decomposition to LAProof's.
 *)
 
 
@@ -444,41 +446,16 @@ intros.
 destruct x, y; try destruct s; try destruct s0; try discriminate; auto.
 Qed.
 
-(*
-Lemma BMULT_finite_e : (* copied from float_acc_lemmas, FIXME *)
- forall (a b : ftype t) (Hfin : Binary.is_finite (BMULT  a b)),
- Binary.is_finite a  /\ Binary.is_finite b.
-Proof.
-unfold BMULT, BINOP; intros.
-destruct a,b; inversion Hfin; clear Hfin; subst; auto.
-Qed.
-
-Lemma BPLUS_finite_e : (* copied from float_acc_lemmas, FIXME *)
- forall (a b : ftype t) (Hfin : Binary.is_finite (BPLUS  a b)),
- Binary.is_finite a  /\  Binary.is_finite b.
-Proof.
-unfold BPLUS, BINOP; intros.
-destruct a,b; inversion Hfin; clear Hfin; subst; simpl; auto.
-destruct s,s0; discriminate; auto.
-Qed.
-*)
-
 Lemma BSQRT_finite_e: forall (x: ftype t) (H: Binary.is_finite (BSQRT x)), Binary.is_finite x.
 Proof.
 intros.
 destruct x; try destruct s; try discriminate; auto.
 Qed.
 
-Ltac case_splitP j := (* copied from mv_mathcomp and improved; FIXME *)
-  tryif clearbody j then fail "case_splitP requires a variable, but got  a local definition" j
-  else tryif is_var j then idtac else fail "case_splitP requires a variable, but got" j;
- match type of j with 'I_(addn ?a ?b) =>
-  let i := fresh "j" in let H := fresh in 
-  destruct (splitP j) as [i H | i H];
- [replace j with (@lshift a b i); [ | apply ord_inj; simpl; lia]
- |replace j with (@rshift a b i); [ | apply ord_inj; simpl; lia]];
- clear j H; rename i into j
- end.
+(** ** Demonstrations and applications *)
+
+(** Everything abovbe is preamble.  Now we demonstrate how to relate libValidSDP definitions
+   to corresponding LAProof definitions, and how to import libValidSDP theorems into LAProof. *)
 
 Lemma fsum_l2r_rec_finite_e: forall k (c: ftype t) (a: ftype t ^ k.+1),
   Binary.is_finite (fsum_l2r_rec c a) ->
@@ -510,7 +487,7 @@ assert (k.+2 = 1+k.+1)%nat by lia.
 pose i' := cast_ord H4 i.
 rewrite -(cast_ordK H4 i) -/i'.
 clearbody i'.
-case_splitP i'.
+mv_mathcomp.case_splitP i'.
 replace (cast_ord (esym H4) (lshift k.+1 i')) with (@ord0 k.+1); auto.
 apply ord_inj; simpl. destruct i'. simpl. lia.
 specialize (H1 i').
@@ -663,6 +640,7 @@ replace (\sum_i Rabs (float_spec.FS_val _ * _)) with (\sum_i Rabs (FT2R (fun_of_
 rewrite default_abs_eq default_rel_eq.
 apply H.
 Qed.
+
 
 Import mv_mathcomp.
 

@@ -33,7 +33,8 @@ Ltac ordify n i :=
    rename j into i.
 
 Ltac case_splitP j :=
-  first [is_var j | fail 1 "case_splitP requires a variable, but got" j];
+  tryif clearbody j then fail "case_splitP requires a variable, but got  a local definition" j
+  else tryif is_var j then idtac else fail "case_splitP requires a variable, but got" j;
  match type of j with 'I_(addn ?a ?b) =>
   let i := fresh "j" in let H := fresh in 
   destruct (splitP j) as [i H | i H];
