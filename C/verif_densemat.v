@@ -449,3 +449,21 @@ rewrite Zlength_column_major by lia.
   rewrite val_of_optfloat_column_major.
   entailer!!.
 Qed.
+
+Lemma body_densematn_print: semax_body Vprog Gprog f_densematn_print densematn_print_spec.
+Proof.
+start_function.
+Admitted.
+
+Lemma body_densemat_print: semax_body Vprog Gprog f_densemat_print densemat_print_spec.
+Proof.
+start_function.
+rename X into M.
+forward.
+forward.
+pose (X := existT _ (m,n) M : {mn & 'M[ftype the_type]_(fst mn, snd mn)}).
+forward_call (X, offset_val densemat_data_offset p, sh); clear X.
+unfold densemat.
+entailer!!.
+Qed.
+

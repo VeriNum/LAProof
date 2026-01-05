@@ -620,6 +620,29 @@ Definition densemat_mult_spec :=
   SEP (densemat shA (map_mx Some A) pA; densemat shB (map_mx Some B) pB; 
             densemat shC (map_mx Some (F.mulmx A B)) pC).
 
+Definition densematn_print_spec :=
+  DECLARE _densematn_print
+  WITH X: {mn & 'M[ftype the_type]_(fst mn, snd mn)}, p: val, sh: share
+  PRE [ tptr the_ctype, tint, tint ] let '(existT _ (m,n) M) := X in
+    PROP(readable_share sh) 
+    PARAMS (p; Vint (Int.repr m); Vint (Int.repr n))
+    SEP(densematn sh (map_mx Some M) p)
+  POST [ tvoid ] let '(existT _ (m,n) M) := X in
+    PROP () 
+    RETURN () 
+    SEP(densematn sh (map_mx Some M) p).
+
+Definition densemat_print_spec :=
+  DECLARE _densemat_print
+  WITH X: {mn & 'M[ftype the_type]_(fst mn, snd mn)}, p: val, sh: share
+  PRE [ tptr densemat_t ] let '(existT _ (m,n) M) := X in 
+    (PROP(readable_share sh) 
+    PARAMS (p)
+    SEP(densemat sh (map_mx Some M)  p))
+   POST [ tvoid ] let '(existT _ (m,n) M) := X in 
+    PROP () 
+    RETURN () 
+    SEP(densemat sh (map_mx Some M) p).
 
 (** * Not-yet-specified functions *)
 
@@ -627,10 +650,6 @@ Definition densemat_lujac_spec : ident*funspec :=
  (_densemat_lujac, vacuous_funspec (Internal f_densemat_lujac)).
 Definition densematn_lujac_spec : ident*funspec := 
  (_densematn_lujac, vacuous_funspec (Internal f_densematn_lujac)).
-Definition densematn_print_spec : ident*funspec := 
- (_densematn_print, vacuous_funspec (Internal f_densematn_print)).
-Definition densemat_print_spec : ident*funspec := 
- (_densemat_print, vacuous_funspec (Internal f_densemat_print)).
 Definition densemat_lusolve_spec : ident*funspec := 
  (_densemat_lusolve, vacuous_funspec (Internal f_densemat_lusolve)).
 Definition densematn_lusolve_spec : ident*funspec := 
