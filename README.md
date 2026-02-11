@@ -28,4 +28,7 @@ LAProof 2.0beta1 is based more directly on MathComp; that is, matrix and vector 
 Developers of this software should probably confirm that their opam library installations are consistent with ./coq-laproof.opam
 by running,
 
+opam switch create rocq9.0 4.14.2   # (the last argument is which version of ocaml)
+opam install rocqide    # optional, if you use rocqide
 opam install --deps-only ./coq-laproof.opam
+
