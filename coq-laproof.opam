@@ -36,13 +36,15 @@ install: [
   [ make "-j%{jobs}%" "install" ]
 ]
 depends: [
-  "coq" {>= "9.0"}
+  "rocq-runtime" {>= "9.0~"}  # coq-compcert.3.16 requires <9.1
+  "coq-menhirlib" {= "20250912"}  # to work around https://gitlab.inria.fr/fpottier/menhir/-/issues/84
+  "coq-compcert" {= "3.16"}
   "coq-flocq"
   "coq-interval"
   "coq-coquelicot"
   "coq-vcfloat" {>= "2.3~"}
-  "coq-mathcomp-ssreflect" {>= "2.4.0~"}
-  "coq-mathcomp-algebra"
+  "coq-mathcomp-ssreflect" {>= "2.5.0~"}
+  "coq-mathcomp-algebra" {>= "2.5.0~"}
   "coq-mathcomp-analysis"
   "coq-mathcomp-algebra-tactics"
   "coq-mathcomp-reals-stdlib"
@@ -52,6 +54,6 @@ depends: [
   "coq-libvalidsdp" {>= "1.1.1"}
 ]
 tags: [
-  "date:2025-02-11"
+  "date:2026-02-11"
   "logpath:LAProof"
 ]

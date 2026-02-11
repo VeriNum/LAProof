@@ -25,31 +25,6 @@ Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
 
-(* BEGIN workaround for VST issue #814, until we can install VST 2.16 which fixes it. *)
-Ltac new_simpl_fst_snd :=
-  match goal with |- context[@fst ident funspec ?A] =>
-     let j := eval hnf in A in 
-     match j with (?x,?y) => 
-      try change (fst A) with x;
-      try change (snd A) with y
-     end
-    end.
-
-Ltac SF_vacuous ::=
- try new_simpl_fst_snd;
- match goal with |- SF _ _ _ (vacuous_funspec _) => idtac end;
- match goal with H: @eq compspecs _ _ |- _ => rewrite <- H end;
-red; red; repeat simple apply conj;
-[ reflexivity (* id_in_list ... *)
-| repeat apply Forall_cons; (* Forall complete_type fn_vars *)
-  try apply Forall_nil; reflexivity
-| repeat constructor; simpl; rep_lia (* var_sizes_ok *)
-| reflexivity (* fn_callconv ... *)
-| split3; [reflexivity | reflexivity | intros; apply semax_vacuous] (* semax_body *)
-| eexists; split; compute; reflexivity (* genv_find_func *)
-].
-(* END workaround for VST issue #814 *)
-
 Definition densematVSU: @VSU NullExtension.Espec
          densemat_E densemat_imported_specs 
          ltac:(QPprog prog) densematASI (fun _ => TT).
