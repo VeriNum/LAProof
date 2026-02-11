@@ -703,6 +703,87 @@ Qed.
 Instance CoordBPO {t: type}: BPO.BoolPreOrder (@coord_le t) :=
  {| BPO.BO := CoordBO; BPO.PO := CoordPO |}.
 
+Record coog_matrix := {
+  coog_rows: Z;
+  coog_cols: Z;
+  coog_entries: list (Z * Z)
+}.
+(* Arguments coog_matrix t : clear implicits. *)
+
+Definition coog_matrix_wellformed (coog : coog_matrix) :=
+  (0 <= coog_rows coog /\ 0 <= coog_cols coog) /\
+  Forall (fun e => 0 <= fst e < coog_rows coog /\ 0 <= snd e < coog_cols coog)
+    (coog_entries coog).
+
+Definition coog_matrix_equiv (a b : coog_matrix) :=
+  coog_rows a = coog_rows b /\ coog_cols a = coog_cols b /\
+  Permutation (coog_entries a) (coog_entries b).
+
+Lemma coog_matrix_wellformed_equiv (a b : coog_matrix) :
+  coog_matrix_equiv a b -> coog_matrix_wellformed a -> coog_matrix_wellformed b.
+Proof.
+  intros. 
+  unfold coog_matrix_wellformed in *. destruct H0.
+  unfold coog_matrix_equiv in H. destruct H as [? [? ?]].
+  split.
+  + rewrite <-H, <-H2. exact H0.
+  + apply Permutation_Forall with (coog_entries a); auto.
+    rewrite <-H, <-H2. exact H1.
+Qed.
+
+Lemma coog_matrix_equiv_refl:
+  forall (a : coog_matrix), coog_matrix_equiv a a.
+Proof.
+  intros. unfold coog_matrix_equiv.
+  split; [|split]; auto.
+Qed.
+
+Lemma coog_matrix_equiv_symm:
+  forall (a b : coog_matrix), coog_matrix_equiv a b -> coog_matrix_equiv b a.
+Proof.
+  intros. unfold coog_matrix_equiv in *.
+  destruct H as [? [? ?]].
+  split; [|split]; auto.
+  apply Permutation_sym; auto.
+Qed.
+
+Lemma coog_matrix_equiv_trans:
+  forall (a b c : coog_matrix), coog_matrix_equiv a b -> coog_matrix_equiv b c -> coog_matrix_equiv a c.
+Proof.
+  unfold coog_matrix_equiv. intros.
+  destruct H as [? [? ?]]. destruct H0 as [? [? ?]].
+  split; [|split].
+  + rewrite H; auto.
+  + rewrite H1; auto.
+  + eapply Permutation_trans; [apply H2 | apply H4].
+Qed.
+
+Definition coord2_le (a b : Z*Z) : Prop :=
+  fst a < fst b 
+  \/ fst a = fst b /\ snd a <= snd b.
+
+Definition coord2_leb (a b : Z*Z) : bool :=
+  orb (fst a <? fst b) 
+      (andb (fst a =? fst b) (snd a <=? snd b)).
+
+Lemma reflect_coord2_le a b : reflect (coord2_le a b) (coord2_leb a b).
+Proof.
+  destruct (coord2_leb a b) eqn:H; [constructor 1 | constructor 2];
+  unfold coord2_leb, coord2_le in *; lia.
+Qed.
+
+Instance Coord2BO : BoolOrder coord2_le :=
+  {| test := coord2_leb; test_spec := reflect_coord2_le |}.
+
+Instance Coord2PO : PreOrder coord2_le.
+Proof.
+constructor.
+- intro. unfold complement, coord2_le; simpl. lia.
+- intros ? ? ? *. unfold coord2_le; simpl; lia.
+Qed.
+
+Instance Coord2BPO : BPO.BoolPreOrder coord2_le := 
+  {| BPO.BO := Coord2BO; BPO.PO := Coord2PO |}.
 
   
 
