@@ -2,6 +2,7 @@ C/sparse.v
 C/alloc.v
 C/bandmat.v
 C/build_csr.v
+C/build_csr2.v
 C/cholesky.v
 C/densemat.v
 Makefile.coq
