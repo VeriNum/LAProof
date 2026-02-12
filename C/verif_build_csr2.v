@@ -487,7 +487,8 @@ Proof.
   set (coog'_matrix := Build_coog_matrix rows cols coog').
   forward_call (sh, coog'_matrix, p, pcolind, prowptr, gv).
   { simpl. entailer!!. }
-
+  { subst k. unfold coog_entries. simpl.
+Admitted.
 
 
 
