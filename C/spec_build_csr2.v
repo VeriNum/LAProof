@@ -255,5 +255,5 @@ Definition surely_malloc_spec :=
 Definition Build_CSR2_ASI : funspecs := [
   surely_malloc_spec; swap_spec; coog_quicksort_spec; 
   coog_count_spec; start_coog_spec; add_to_coog_spec;
-  coog_to_csrg_spec
+  coog_to_csrg_aux_spec; coog_to_csrg_spec
 ].

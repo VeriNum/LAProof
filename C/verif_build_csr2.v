@@ -453,6 +453,50 @@ Proof.
   forward_call (sh, coog, p, 0, n).
   Intros coog'.
   assert (Zlength coog' = n).
+  { subst n. apply Permutation_Zlength. apply Permutation_sym. exact H3. }
+  forward_call (sh, coog', p).
+  { subst n. entailer!!. simpl. rewrite H5. reflexivity. }
+  { rewrite H5. entailer!!. }
+  { subst n. split.
+    + inversion H. simpl in H6, H7. 
+      pose proof (@Permutation_Forall _ rowcol_range).
+      unfold Morphisms.Proper, Morphisms.respectful in H8.
+      specialize (H8 coog coog' H3). apply H8.
+      unfold rowcol_range. rewrite Forall_forall. intros.
+      rewrite Forall_forall in H7.
+      destruct x as [r c].
+      specialize (H7 (r, c) H9). simpl in *. rep_lia.
+    + rewrite <-H5 in H4. 
+      replace (0 + Zlength coog') with (Zlength coog') in H4 by lia.
+      autorewrite with sublist in H4. exact H4. } 
+  set (k := count_distinct coog').
+  assert (0 <= k <= n).
+  { subst k n. rewrite <-H5. pose proof (count_distinct_bound coog'). lia. }  
+  forward_call (tarray tuint k, gv).
+  { entailer!!. simpl. f_equal. f_equal. f_equal. rep_lia. }
+  { simpl. rep_lia.  }
+  Intros pcolind.
+  forward_call (tarray tuint (rows+1), gv).
+  { subst n. entailer!!. simpl. f_equal. f_equal. f_equal. 
+    rewrite Z.mul_comm. f_equal. inversion H. simpl in H7. 
+    replace (Z.max 0 (rows + 1)) with (rows + 1) by rep_lia.
+    rewrite Int.unsigned_repr_eq.
+    apply Z.mod_small. rep_lia. }
+  { simpl. rep_lia. }
+  Intros prowptr.
+  set (coog'_matrix := Build_coog_matrix rows cols coog').
+  forward_call (sh, coog'_matrix, p, pcolind, prowptr, gv).
+  { simpl. entailer!!. }
+
+
+
+
+
+  start_function.
+  set (n := Zlength coog).
+  forward_call (sh, coog, p, 0, n).
+  Intros coog'.
+  assert (Zlength coog' = n).
   { subst n. apply Permutation_Zlength. apply Permutation_sym. auto. }
   forward_call (sh, coog', p).
   { subst n. entailer!!. simpl. rewrite H5. auto. }
