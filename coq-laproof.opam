@@ -44,7 +44,7 @@ depends: [
   "coq-coquelicot"
   "coq-vcfloat" {>= "2.3~"}
   "coq-mathcomp-ssreflect" {>= "2.5.0~"}
-  "coq-mathcomp-algebra" {>= "2.5.0~"}
+  "coq-mathcomp-algebra"
   "coq-mathcomp-analysis"
   "coq-mathcomp-algebra-tactics"
   "coq-mathcomp-reals-stdlib"

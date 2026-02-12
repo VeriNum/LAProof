@@ -181,8 +181,7 @@ apply /RleP; auto with commonDB.
 apply /RleP; auto with commonDB.
 -
 rewrite /normv.
-first [ (* mathcomp 2.5 *) apply (@bigmax_le orderedzmod.ring_display); auto; apply /RleP; auto with commonDB
-       | (*mathcomp  2.4 *) apply bigmax_le => [|i _]; auto;  apply /RleP; auto with commonDB ].
+apply :bigmax_le; [apply /RleP | ]; auto with commonDB .
 Qed.
 
 End WithNAN.
