@@ -229,10 +229,10 @@ Proof.
       temp _rc p;
       temp _n (Vint (Int.repr (Zlength (coog_entries coog))));
       temp _rows (Vint (Int.repr (coog_rows coog))))
-    SEP (data_at sh (Tarray (Tstruct _rowcol noattr) (n) noattr)
+    SEP (data_at sh2 (Tarray (Tstruct _rowcol noattr) (n) noattr)
       (map Zpair_to_valpair (coog_entries coog)) p;
-      data_at sh (tarray tuint k) COLIND pc;
-      data_at sh (tarray tuint (coog_rows coog + 1)) ROWPTR pr;
+      data_at sh1 (tarray tuint k) COLIND pc;
+      data_at sh1 (tarray tuint (coog_rows coog + 1)) ROWPTR pr;
       spec_malloc.mem_mgr gv))%assert.
   { (* entering the loop *)
     Exists 0. Exists (-1). Exists 0. 
@@ -349,8 +349,8 @@ Proof.
           temp _row_ptr pr; temp _col_ind pc; 
           temp _rc p; temp _n (Vint (Int.repr (Zlength (coog_entries coog)))); 
           temp _rows (Vint (Int.repr (coog_rows coog))))
-        SEP (data_at sh (Tarray (Tstruct _rowcol noattr) n noattr) (map Zpair_to_valpair (coog_entries coog)) p;
-          data_at sh (tarray tuint k) COLIND pc; data_at sh (tarray tuint (coog_rows coog + 1)) ROWPTR pr; 
+        SEP (data_at sh2 (Tarray (Tstruct _rowcol noattr) n noattr) (map Zpair_to_valpair (coog_entries coog)) p;
+          data_at sh1 (tarray tuint k) COLIND pc; data_at sh1 (tarray tuint (coog_rows coog + 1)) ROWPTR pr; 
           spec_malloc.mem_mgr gv))%assert.
       { (* entering while loop *)
         Exists r. Exists ROWPTR. entailer!!.
@@ -423,8 +423,8 @@ Proof.
     LOCAL (temp _i (Vint (Int.repr n)); temp _l (Vint (Int.repr l)); temp _r (Vint (Int.repr r));
       temp _c (Vint (Int.repr c)); temp _row_ptr pr; temp _col_ind pc; temp _rc p;
       temp _n (Vint (Int.repr (Zlength (coog_entries coog)))); temp _rows (Vint (Int.repr (coog_rows coog))))
-    SEP (data_at sh (Tarray (Tstruct _rowcol noattr) n noattr) (map Zpair_to_valpair (coog_entries coog)) p;
-      data_at sh (tarray tuint k) COLIND pc; data_at sh (tarray tuint (coog_rows coog + 1)) ROWPTR pr; 
+    SEP (data_at sh2 (Tarray (Tstruct _rowcol noattr) n noattr) (map Zpair_to_valpair (coog_entries coog)) p;
+      data_at sh1 (tarray tuint k) COLIND pc; data_at sh1 (tarray tuint (coog_rows coog + 1)) ROWPTR pr; 
       spec_malloc.mem_mgr gv))%assert.
   { (* entering the loop *)
     Exists r. Exists ROWPTR. entailer!!.
@@ -485,9 +485,100 @@ Proof.
   { simpl. rep_lia. }
   Intros prowptr.
   set (coog'_matrix := Build_coog_matrix rows cols coog').
-  forward_call (sh, coog'_matrix, p, pcolind, prowptr, gv).
+  forward_call (Ews, sh, coog'_matrix, p, pcolind, prowptr, gv).
   { simpl. entailer!!. }
-  { subst k. unfold coog_entries. simpl.
+  { split3. 
+    + unfold coog'_matrix. unfold coog_matrix_wellformed in H.
+      constructor. simpl in H|-*. rep_lia.
+      simpl in H|-*. destruct H.
+      pose proof (@Permutation_Forall _ (fun e : Z * Z => 0 <= fst e < rows /\ 0 <= snd e < cols)).
+      unfold Morphisms.Proper in H8. unfold Morphisms.respectful in H8.
+      apply (H8 coog coog' H3 H7).
+    + unfold coog'_matrix. simpl in *. lia. 
+    + replace (0 + n) with (Zlength coog') in H4 by list_solve. 
+      unfold coog'_matrix; simpl.
+      replace (sublist 0 (Zlength coog') coog') with coog' in H4 by list_solve. apply H4. } 
+  Intros RC. destruct RC as (ROWPTR, COLIND). simpl in H7.
+  forward_call (Tstruct _csr_matrix noattr, gv).
+  Intros q.
+  forward_call (tarray tdouble k, gv).
+  { simpl. entailer!!. rewrite Z.mul_comm. reflexivity. }
+  { simpl. rep_lia. }
+  Intros csrval.
+  forward. forward. forward. forward. forward. forward.  
+  inversion H7. Exists coog' csr q. entailer!!.
+  { unfold coog_upto in partial_CSRG_coog_csr. simpl in *.
+    replace (sublist 0 (Zlength coog') coog') with coog' in partial_CSRG_coog_csr by list_solve.
+    auto. }
+  unfold csrg_token. Exists csrval pcolind prowptr. 
+  unfold csrg_rep. Exists csrval pcolind prowptr.
+  simpl. entailer!!.
+
+  simpl in *.
+  assert (Hvalsk: Zlength (csr_vals csr) = k).
+  { subst k. inversion partial_CSRG_coog_csr. rewrite coog_csr_vals.
+    simpl. replace (sublist 0 (Zlength coog') coog') with coog' by list_solve. reflexivity. }
+  rewrite Hvalsk.
+  assert (Hrows: csr_rows csr = rows).
+  { inversion partial_CSRG_coog_csr. rewrite <- coog_csr_rows. unfold coog_upto. auto. }
+  rewrite Hrows.
+  assert (Hcolindk : Zlength (csr_col_ind csr) = k).
+  { subst k.  inversion partial_CSRG_coog_csr. inversion partial_CSRG_wf.
+    rewrite <- CSR_wf_vals. auto. }
+  assert (Hcols: csr_cols csr = cols).
+  { inversion partial_CSRG_coog_csr. rewrite <- coog_csr_cols. unfold coog_upto. auto. }
+  assert (Hrplen : Zlength (csr_row_ptr csr) = rows + 1).
+  { rewrite <- Hrows. inversion partial_CSRG_wf.
+
+  assert (HCOLIND: COLIND = map Vint (map Int.repr (csr_col_ind csr))).
+  { replace COLIND with (sublist 0 (Zlength (csr_col_ind csr)) COLIND) by list_solve. 
+    rewrite partial_CSRG_colind. list_solve. }
+  (* assert (HROWPTR: ROWPTR = map Vint (map Int.repr (csr_row_ptr csr))).
+  { replace ROWPTR with (sublist 0 (rows + 1) ROWPTR) by list_solve. 
+    rewrite partial_CSRG_rowptr. admit. } *)
+
+  (* transform the same variables first*)
+  (* getting rid of the P * (P -* Q) *)
+  rewrite (wand_eq _ (csrg_rep' Ews csr csrval pcolind prowptr q)
+    (spec_malloc.malloc_token Ews t_csr q *
+     spec_malloc.malloc_token Ews (tarray tdouble (Zlength (csr_vals csr))) csrval *
+     spec_malloc.malloc_token Ews (tarray tuint (Zlength (csr_vals csr))) pcolind *
+     spec_malloc.malloc_token Ews (tarray tuint (csr_rows csr + 1)) prowptr)).
+  2:{ rewrite Hvalsk. apply pred_ext.
+  + unfold csrg_rep'. rewrite Hcolindk. rewrite Hcols. rewrite HCOLIND. entailer!!.
+
+
+
+
+  unfold csrg_rep, csrg_rep'.
+  Exists csrval pcolind prowptr. 
+  
+  
+  assert (Hk1: Zlength (csr_col_ind csr) = k).
+  { inversion partial_CSRG_coog_csr. subst k. inversion partial_CSRG_wf.
+    rewrite <- CSR_wf_vals. rewrite coog_csr_vals.
+    unfold coog_upto. simpl. autorewrite with sublist. auto. }
+  assert (Hk2: count_distinct (coog_entries coog'_matrix) = k).
+  { subst k. unfold coog'_matrix. simpl. auto. }
+  
+  
+  
+    
+  data_at Ews (Tstruct _csr_matrix noattr) (csrval, (pcolind, (prowptr, (Vint (Int.repr rows), Vint (Int.repr cols))))) q 
+  data_at Ews t_csr (v, (ci, (rp, (Vint (Int.repr (csr_rows csr)), Vint (Int.repr (csr_cols csr)))))) q
+
+  unfold csrg_rep, csrg_rep'.  
+  (* set (csr:= Build_csr_matrix Tdouble cols 
+    (repeat (Zconst Tdouble 0) (length coog)) 
+    (map force_signed_int COLIND) (map force_signed_int ROWPTR)). *)
+
+  Locate build_csr_matrix_correct.
+  Exists coog'. 
+
+
+  
+
+    Search (data_at) (writable_share). 
 Admitted.
 
 

@@ -122,33 +122,33 @@ Definition add_to_coog_spec :=
 
 Definition t_csr := Tstruct _csr_matrix noattr.
 
-Definition csr_rep' sh (csr: csr_matrix Tdouble) (v: val) (ci: val) (rp: val) (p: val) :=
+Definition csrg_rep' sh (csr: csr_matrix Tdouble) (v: val) (ci: val) (rp: val) (p: val) :=
   data_at sh t_csr (v,(ci,(rp,(Vint (Int.repr (csr_rows csr)), Vint (Int.repr (csr_cols csr)))))) p *
-  data_at sh (tarray tdouble (Zlength (csr_col_ind csr))) (map Vfloat (csr_vals csr)) v * 
+  data_at_ sh (tarray tdouble (Zlength (csr_col_ind csr))) v * 
   data_at sh (tarray tuint (Zlength (csr_col_ind csr))) (map Vint (map Int.repr (csr_col_ind csr))) ci *
   data_at sh (tarray tuint (csr_rows csr + 1)) (map Vint (map Int.repr (csr_row_ptr csr))) rp.
 
-Definition csr_rep (sh: share) (csr: csr_matrix Tdouble) (p: val) : mpred :=
+Definition csrg_rep (sh: share) (csr: csr_matrix Tdouble) (p: val) : mpred :=
   EX v: val, EX ci: val, EX rp: val,
-  csr_rep' sh csr v ci rp p.
+  csrg_rep' sh csr v ci rp p.
 
-Definition csr_token' (csr: csr_matrix Tdouble) (p: val) : mpred :=
+Definition csrg_token (csr: csr_matrix Tdouble) (p: val) : mpred :=
  EX v: val, EX ci: val, EX rp: val,
-    csr_rep' Ews csr v ci rp p -*
-    (csr_rep' Ews csr v ci rp p
+    csrg_rep' Ews csr v ci rp p -*
+    (csrg_rep' Ews csr v ci rp p
      * (spec_malloc.malloc_token Ews t_csr p *
         spec_malloc.malloc_token Ews (tarray tdouble (Zlength (csr_vals csr))) v *
         spec_malloc.malloc_token Ews (tarray tuint (Zlength (csr_vals csr))) ci *
         spec_malloc.malloc_token Ews (tarray tuint (csr_rows csr + 1)) rp)).
 
-Definition csr_token (m: matrix Tdouble) (p: val) : mpred :=
- EX (csr: csr_matrix Tdouble) (H: csr_to_matrix csr m), csr_token' csr p.
+(* Definition csr_token (m: matrix Tdouble) (p: val) : mpred :=
+ EX (csr: csr_matrix Tdouble) (H: csr_to_matrix csr m), csr_token' csr p. *)
 
 Definition coog_to_csrg_aux_spec := 
   DECLARE _coog_to_csrg_aux
-  WITH sh : share, coog : coog_matrix, p : val, pc : val, pr : val, gv : globals
+  WITH sh1 : share, sh2 : share, coog : coog_matrix, p : val, pc : val, pr : val, gv : globals
   PRE [tptr (Tstruct _rowcol noattr), tuint, tuint, tptr tuint, tptr tuint]
-    PROP ( writable_share sh;
+    PROP ( writable_share sh1; readable_share sh2;
       coog_matrix_wellformed coog;
       coog_rows coog < Int.max_unsigned; 
       coog_cols coog < Int.max_unsigned;
@@ -156,18 +156,18 @@ Definition coog_to_csrg_aux_spec :=
       sorted coord2_le (coog_entries coog))
     PARAMS (p; Vint (Int.repr (Zlength (coog_entries coog))); Vint (Int.repr (coog_rows coog)); pc; pr)
     GLOBALS (gv)
-    SEP (data_at sh (Tarray (Tstruct _rowcol noattr) (Zlength (coog_entries coog)) noattr) (map Zpair_to_valpair (coog_entries coog)) p;
-         data_at_ sh (Tarray tuint (count_distinct (coog_entries coog)) noattr) pc;
-         data_at_ sh (Tarray tuint ((coog_rows coog) + 1) noattr) pr; 
-         mem_mgr gv)
+    SEP (data_at sh2 (Tarray (Tstruct _rowcol noattr) (Zlength (coog_entries coog)) noattr) (map Zpair_to_valpair (coog_entries coog)) p;
+         data_at_ sh1 (Tarray tuint (count_distinct (coog_entries coog)) noattr) pc;
+         data_at_ sh1 (Tarray tuint ((coog_rows coog) + 1) noattr) pr; 
+         mem_mgr gv (* this is not really needed *) )
   POST [Tvoid]
     EX rowptr : list val,
     EX colind : list val,
     PROP (partial_CSRG (Zlength (coog_entries coog)) (coog_rows coog) coog rowptr colind)
     RETURN ()
-    SEP (data_at sh (Tarray (Tstruct _rowcol noattr) (Zlength (coog_entries coog)) noattr) (map Zpair_to_valpair (coog_entries coog)) p;
-         data_at sh (Tarray tuint (count_distinct (coog_entries coog)) noattr) colind pc;
-         data_at sh (Tarray tuint (coog_rows coog + 1) noattr) rowptr pr;
+    SEP (data_at sh2 (Tarray (Tstruct _rowcol noattr) (Zlength (coog_entries coog)) noattr) (map Zpair_to_valpair (coog_entries coog)) p;
+         data_at sh1 (Tarray tuint (count_distinct (coog_entries coog)) noattr) colind pc;
+         data_at sh1 (Tarray tuint (coog_rows coog + 1) noattr) rowptr pr;
          mem_mgr gv).
 
 Definition coog_to_csrg_spec :=
@@ -187,10 +187,15 @@ Definition coog_to_csrg_spec :=
     EX csrg : csr_matrix Tdouble,
     EX q : val,
     PROP (Permutation coog coog';
-      coog_csr (Build_coog_matrix rows cols coog) csrg)
+      coog_csr (Build_coog_matrix rows cols coog') csrg)
     RETURN (q)
-    SEP (data_at sh (Tarray (Tstruct _rowcol noattr) (Zlength coog') noattr) (map Zpair_to_valpair coog') p; csr_rep sh csrg q; mem_mgr gv).
+    SEP (data_at sh (Tarray (Tstruct _rowcol noattr) (Zlength coog') noattr) (map Zpair_to_valpair coog') p; 
+      csrg_rep Ews csrg q; 
+      csrg_token csrg q;
+      mem_mgr gv).
 (* add csr_token *)
+
+(* Ews: extern write share (for newly malloced object) *)
 
 (* Definition coog_to_csrg_spec :=
   DECLARE _coo_shell_to_csr_shell

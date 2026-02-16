@@ -176,6 +176,8 @@ struct csr_matrix *coog_to_csrg(struct rowcol *rc, unsigned n, unsigned rows, un
 
   coog_to_csrg_aux(rc, n, rows, col_ind, row_ptr);
   // free(rc);
+
+  q = surely_malloc(sizeof(struct csr_matrix));
   q->val = surely_malloc(k * sizeof(double));
   q->col_ind = col_ind;
   q->row_ptr = row_ptr;
