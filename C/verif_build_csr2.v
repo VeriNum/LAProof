@@ -528,85 +528,26 @@ Proof.
   assert (Hcols: csr_cols csr = cols).
   { inversion partial_CSRG_coog_csr. rewrite <- coog_csr_cols. unfold coog_upto. auto. }
   assert (Hrplen : Zlength (csr_row_ptr csr) = rows + 1).
-  { rewrite <- Hrows. inversion partial_CSRG_wf.
-
+  { unfold csr_rows in Hrows. lia. } 
   assert (HCOLIND: COLIND = map Vint (map Int.repr (csr_col_ind csr))).
   { replace COLIND with (sublist 0 (Zlength (csr_col_ind csr)) COLIND) by list_solve. 
     rewrite partial_CSRG_colind. list_solve. }
-  (* assert (HROWPTR: ROWPTR = map Vint (map Int.repr (csr_row_ptr csr))).
+  assert (HROWPTR: ROWPTR = map Vint (map Int.repr (csr_row_ptr csr))).
   { replace ROWPTR with (sublist 0 (rows + 1) ROWPTR) by list_solve. 
-    rewrite partial_CSRG_rowptr. admit. } *)
-
+    rewrite partial_CSRG_rowptr. list_solve. }
   (* transform the same variables first*)
   (* getting rid of the P * (P -* Q) *)
-  rewrite (wand_eq _ (csrg_rep' Ews csr csrval pcolind prowptr q)
+  rewrite <-(wand_eq _ (csrg_rep' Ews csr csrval pcolind prowptr q)
     (spec_malloc.malloc_token Ews t_csr q *
      spec_malloc.malloc_token Ews (tarray tdouble (Zlength (csr_vals csr))) csrval *
      spec_malloc.malloc_token Ews (tarray tuint (Zlength (csr_vals csr))) pcolind *
      spec_malloc.malloc_token Ews (tarray tuint (csr_rows csr + 1)) prowptr)).
   2:{ rewrite Hvalsk. apply pred_ext.
-  + unfold csrg_rep'. rewrite Hcolindk. rewrite Hcols. rewrite HCOLIND. entailer!!.
-
-
-
-
-  unfold csrg_rep, csrg_rep'.
-  Exists csrval pcolind prowptr. 
+    + unfold csrg_rep'. rewrite Hcolindk. rewrite Hcols. entailer!!.
+    + unfold csrg_rep'. rewrite Hcolindk. rewrite Hcols. entailer!!. }
+  entailer!!. unfold csrg_rep'. rewrite Hcolindk. entailer!!.
+Qed.
   
-  
-  assert (Hk1: Zlength (csr_col_ind csr) = k).
-  { inversion partial_CSRG_coog_csr. subst k. inversion partial_CSRG_wf.
-    rewrite <- CSR_wf_vals. rewrite coog_csr_vals.
-    unfold coog_upto. simpl. autorewrite with sublist. auto. }
-  assert (Hk2: count_distinct (coog_entries coog'_matrix) = k).
-  { subst k. unfold coog'_matrix. simpl. auto. }
-  
-  
-  
-    
-  data_at Ews (Tstruct _csr_matrix noattr) (csrval, (pcolind, (prowptr, (Vint (Int.repr rows), Vint (Int.repr cols))))) q 
-  data_at Ews t_csr (v, (ci, (rp, (Vint (Int.repr (csr_rows csr)), Vint (Int.repr (csr_cols csr)))))) q
-
-  unfold csrg_rep, csrg_rep'.  
-  (* set (csr:= Build_csr_matrix Tdouble cols 
-    (repeat (Zconst Tdouble 0) (length coog)) 
-    (map force_signed_int COLIND) (map force_signed_int ROWPTR)). *)
-
-  Locate build_csr_matrix_correct.
-  Exists coog'. 
-
-
-  
-
-    Search (data_at) (writable_share). 
-Admitted.
-
-
-
-
-  start_function.
-  set (n := Zlength coog).
-  forward_call (sh, coog, p, 0, n).
-  Intros coog'.
-  assert (Zlength coog' = n).
-  { subst n. apply Permutation_Zlength. apply Permutation_sym. auto. }
-  forward_call (sh, coog', p).
-  { subst n. entailer!!. simpl. rewrite H5. auto. }
-  { rewrite H5. subst n. cancel. }
-  { subst n. autorewrite with sublist in H4. split;[|auto].
-    inversion H. unfold rowcol_range. simpl in *. 
-    pose proof Permutation_Forall. compute in H8.
-    apply (H8 _ _ coog coog'); auto.
-    eapply Forall_impl. 2:{ apply H7. }
-    intros. destruct a. simpl in *. rep_lia. }
-  set (k := count_distinct coog').
-  assert (0 <= k <= n).
-  { subst k n. rewrite <-H5. pose proof (count_distinct_bound coog'). lia. }  
-  assert (0 <= sizeof (tarray tdouble k) <= Ptrofs.max_unsigned).
-  { simpl. rep_lia. } 
-  forward_call (tarray tuint k, gv).
-  { entailer!!. simpl. f_equal. f_equal. f_equal. rep_lia. } 
-
 
 
 
