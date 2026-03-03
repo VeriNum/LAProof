@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - env: { COQ_VERSION: "9.0", DOCKER_MATHCOMP_VERSION: "2.5.0" }
+          - env: { COQ_VERSION: "9.1" }
 
     runs-on: ubuntu-latest
     env: ${{ matrix.env }}
@@ -31,5 +31,5 @@ jobs:
       - uses: coq-community/docker-coq-action@v1
         with:
           opam_file: 'coq-laproof.opam'
-          custom_image: mathcomp/mathcomp:${{ matrix.env.DOCKER_MATHCOMP_VERSION }}-rocq-prover-${{ matrix.env.COQ_VERSION }}
+          custom_image: rocq-prover-${{ matrix.env.COQ_VERSION }}
           export: CI

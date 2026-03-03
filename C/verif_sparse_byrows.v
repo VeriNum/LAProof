@@ -175,7 +175,7 @@ forward_for_simple_bound (Zlength mval)
    unfold matrix_rows; subst i. clear H10 H11 H12 H13 H9 H8 PNp PNv PNm H6.
     list_solve.
 -
- Intro result. Exists result.
+ Intro r; Exists r.
  unfold matrix_rows in *. list_simplify.
  entailer!.
  unfold matrix_vector_mult in H9 |- *.

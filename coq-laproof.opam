@@ -36,9 +36,7 @@ install: [
   [ make "-j%{jobs}%" "install" ]
 ]
 depends: [
-  "rocq-runtime" {>= "9.0~"}  # coq-compcert.3.16 requires <9.1
-  "coq-menhirlib" {= "20250912"}  # to work around https://gitlab.inria.fr/fpottier/menhir/-/issues/84
-  "coq-compcert" {= "3.16"}
+  "rocq-runtime" {>= "9.0~"}
   "coq-flocq"
   "coq-interval"
   "coq-coquelicot"
@@ -54,6 +52,6 @@ depends: [
   "coq-libvalidsdp" {>= "1.1.1"}
 ]
 tags: [
-  "date:2026-02-11"
+  "date:2026-03-03"
   "logpath:LAProof"
 ]
