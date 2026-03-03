@@ -31,5 +31,4 @@ jobs:
       - uses: coq-community/docker-coq-action@v1
         with:
           opam_file: 'coq-laproof.opam'
-          custom_image: rocq-prover-${{ matrix.env.COQ_VERSION }}
           export: CI
