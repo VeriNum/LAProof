@@ -74,12 +74,6 @@ Section WithNaN.
 
 Context {NAN: FPCore.Nans} {t : type}.
 
-Definition default_rel : R :=
-  / 2 * Raux.bpow Zaux.radix2 (- fprec t + 1).
-
-Definition default_abs : R :=
-  / 2 * Raux.bpow Zaux.radix2 (3 - femax t - fprec t).
-
 Lemma prec_lt_emax: @flocq_float.prec (fprecp t) <? femax t.
 Proof.
 pose proof fprec_lt_femax t.
@@ -89,11 +83,10 @@ apply Z.ltb_lt; auto.
 Qed.
 
 Notation F := (ftype t).
-Notation eps := (default_rel).
-Notation eta := (default_abs).
+Notation eps := (@default_rel t).
+Notation eta := (@default_abs t).
 
-Lemma default_abs_nonzero:  default_abs <> 0.
-rewrite /eta.
+Lemma default_abs_nonzero:  eps <> 0.
 apply Rmult_integral_contrapositive.
 split. lra.
 rewrite bpow_powerRZ.
@@ -111,9 +104,6 @@ rewrite bpow_powerRZ.
 apply powerRZ_NOR.
 simpl. lra.
 Qed.
-
-Definition iszero {t} (x: ftype t) : bool := 
-  match x with Binary.B754_zero _ _ _ => true | _ => false end.
 
 Fixpoint fsum_l2r_rec [n: nat] (c : F) : F^n -> F :=
   match n with
@@ -134,16 +124,6 @@ Definition ytilded [k : nat] (c : F) (a b : F^k) (bk : F) :=
 
 Definition ytildes [k : nat] (c : F) (a : F^k):=
   BSQRT (stilde c a a).
-
-
-Lemma BPLUS_B2R_zero (a : ftype t):
-  Binary.is_finite a ->
-  FT2R (BPLUS a (Zconst t 0)) = FT2R a.
-Proof.
-unfold BPLUS, BINOP, Zconst; intros;
-destruct a; simpl; try discriminate; auto.
-destruct s; simpl; auto.
-Qed.
 
 Lemma format_FT2R: forall (x: ftype t), is_true (@flocq_float.format (fprecp t) (femax t) (FT2R x)).
 Proof.

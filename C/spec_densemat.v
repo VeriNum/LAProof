@@ -353,7 +353,7 @@ Definition densemat_clear_spec :=
    program correct, there's no need for dynamic bounds checking.  
 
   The precondition of the function enforces that [0 <= i < m] and [0 <= j < n].  It does so by construction
-   of the dependently typed value [X], where the last component is a pair [(i: 'I_[m], j: 'I[n]).
+   of the dependently typed value [X], where the last component is a pair [(i: 'I_[m], j: 'I[n])].
     *)
 Definition densematn_get_spec :=
   DECLARE _densematn_get
