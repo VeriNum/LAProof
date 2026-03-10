@@ -7,6 +7,12 @@
 
     The main concepts defined here are:
 
+    - _Floating-point type_:  We use VCFloat's concept of a floating-point [type], 
+     that contains a precision (mantissa size), max-exponent, and some properties
+     of them; all based on Flocq's underlying constructions.  Examples are
+     [Tdouble] (64-bit IEEE double precision) and [Tsingle] (32-bit), and any other
+     (legal) combination of [fprec] and [femax] that one might need.
+
     - _Floating-point rounding_: The function [rounded] captures
       round-to-nearest-even (RNE) rounding in radix-2 floating point,
       parameterized by a floating-point type << t >> that fixes the precision
@@ -49,7 +55,9 @@
       floating-point operations. Key properties include [g_pos],
       [le_g_Sn] (monotonicity), and the recurrence
       [one_plus_d_mul_g], which expresses how one additional rounding
-      step advances the bound.
+      step advances the bound.  See also: Kellison et al., "LAProof: A Library of
+       Formal Proofs of Accuracy and Correctness of Linear Algebra Programs", 
+       2023, equation (4), where it is called "h".
 
     - _Mixed absolute/relative error accumulation factor_ [g1 n1 n2]:
       
@@ -60,6 +68,7 @@
       each amplified by up to << (1 + default_rel)^n2 >> subsequent
       multiplications. Numerous lemmas establish how [g1] grows as
       its arguments increase, supporting inductive error analyses.
+      See also: Kellison et al., "LAProof:...", equation (5).
 
     _Hint database_: All positivity, monotonicity, and ordering lemmas
     for [default_rel], [default_abs], [g], and [g1] are registered in
@@ -108,6 +117,15 @@ Proof.
   destruct l; try congruence; compute; lia.
 Qed.
 
+(** ** Parameterization by Nans and type
+
+   Any IEEE floating-point implementation must instantiate,
+  - precision (mantissa size) and exponent size
+  - propagation rules for Not-a-Number
+  The Rocq types for these are, respectively, [type] and [FPCore.Nans].  LAProof's 
+  accuracy proofs are, in general, parameterized to work with any instantiation of these.
+   We express that by Rocq's [Section] and [Context] commands.
+*)
 Section WithType.
 Context {NAN : FPCore.Nans} {t : type}.
 

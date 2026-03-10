@@ -237,7 +237,7 @@ Proof.
   - apply /RleP; auto with commonDB.
   - apply /RleP; auto with commonDB.
   - rewrite /normv.
-    apply bigmax_le => [| i _].
+     apply @bigmax_le => [ | i _].
     apply /RleP; auto with commonDB.
     auto.
 Qed.
