@@ -32,9 +32,6 @@ Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 (* end show *)
 
-Definition neg_zero {t}: ftype t := Binary.B754_zero (fprec t) (femax t) true.
-
-
 Lemma map_inj: forall [T1 T2] (f: T1 -> T2) (H: injective f) (al bl: list T1), map f al = map f bl -> al=bl.
 Proof.
 induction al; destruct bl; simpl; intros; inversion H0; clear H0; subst; auto.

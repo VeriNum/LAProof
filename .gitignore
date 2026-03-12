@@ -8,6 +8,7 @@ Makefile.coq
 Makefile.coq.conf
 CoqMakefile
 CoqMakefile.conf
+.history/*
 .*.aux
 .*.d
 *.a
@@ -48,3 +49,4 @@ html/LAProof.*
 html/genindex.html
 html/*.css
 html/toc.html
+.vscode/settings.json

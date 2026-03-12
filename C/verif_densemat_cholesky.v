@@ -323,7 +323,7 @@ forward_for_simple_bound (Z.of_nat n) (EX i:Z,
   set (al := seq.foldl _ _ _).
   subst bi. change (fstep i)  with al.
   unfold forward_subst_step.
-  change ssralg.GRing.zero with (@ord0 O).
+ (* change ssralg.GRing.zero with (@ord0 O). *)  (* MathComp 2.4 *)
   change @seq.map with @map.
   rewrite take_sublist.
   set (uu := BDIV _ _).

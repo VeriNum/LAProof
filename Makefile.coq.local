@@ -1,10 +1,15 @@
 # COQDOC publishing
-COQDOCEXTRAFLAGS= -g --no-lib-name --index genindex --lib-subtitles --interpolate -utf8
+COQDOCEXTRAFLAGS= -g --no-lib-name --with-header header.html --index genindex --lib-subtitles --interpolate -utf8
 
 accuracy: accuracy_proofs/export.vo
 C: C/verif_alloc.vo C/verif_sparse.vo C/verif_sparse_byrows.vo C/VSU_densemat.vo C/verif_build_csr.vo
 
-publish: html cdocs
+#  Ugh.  We can't just store the reference copy of index.html in html/index.html, because Makefile.coq's
+#   standard "make clean" removes the html directory entirely.  So we gotta do this hack:
+html2: html index.html
+	cp index.html html/index.html
+
+publish: html2 cdocs
 	cd gh-pages; git submodule update
 	cd gh-pages; rm -rf docs; mkdir docs
 	cp html/* gh-pages/docs
