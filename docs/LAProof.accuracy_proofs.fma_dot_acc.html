@@ -4,9 +4,15 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link href="coqdoc.css" rel="stylesheet" type="text/css" />
-<title>LAProof.accuracy_proofs.fma_dot_acc</title>
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
-
 <body>
 
 <div id="page">
@@ -15,95 +21,220 @@
 </div>
 
 <div id="main">
-
 <h1 class="libtitle">LAProof.accuracy_proofs.fma_dot_acc</h1>
 
 <div class="code">
 </div>
 
 <div class="doc">
-This file contains three main theorems for the accuracy of the fma
-  dot product : fma_dotprod_mixed_error, fma_dotprod_forward_error, 
-  and fma_sparse_dotprod_forward_error. 
+<a id="lab74"></a><h1 class="section">FMA Dot Product Accuracy Theorems</h1>
+
+
+<div class="paragraph"> </div>
+
+    This file establishes three main accuracy theorems for the fused
+    multiply-add (FMA) dot product computation <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a></span>.
+
+<div class="paragraph"> </div>
+
+    The significance of these results is that they provide rigorous
+    floating-point error bounds for dot products computed using FMA
+    instructions, which are critical in numerical linear algebra.
+
+<div class="paragraph"> </div>
+
+<a id="lab75"></a><h2 class="section">Error Factors</h2>
+
+
+<div class="paragraph"> </div>
+
+    Throughout, the accumulated relative error factor is
+    \(g(n) = (1 + \mathbf{u})^n - 1\) and
+    the mixed absolute error factor is
+    \(g_1(n_1, n_2) = n_1 \cdot \eta \cdot (1 + g(n_2))\),
+    where \(\mathbf{u}\) is the unit roundoff and
+    \(\eta\) is the underflow threshold for the given type.
+    Both are defined in <span class="inlinecode"><span class="id" title="library">common</span></span>.
+
+<div class="paragraph"> </div>
+
+<a id="lab76"></a><h2 class="section">Main Results</h2>
+
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#fma_dotprod_mixed_error"><span class="id" title="lemma">fma_dotprod_mixed_error</span></a></span>: Shows that the FMA-computed dot product
+      can be expressed as an exact dot product of slightly perturbed inputs
+      plus a small absolute error term.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#fma_dotprod_forward_error"><span class="id" title="lemma">fma_dotprod_forward_error</span></a></span>: Bounds the absolute forward error
+      \(|\mathtt{fl}_{\mathrm{fma}}(v_1 \cdot v_2) - v_1 \cdot v_2|\).
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#fma_sparse_dotprod_forward_error"><span class="id" title="lemma">fma_sparse_dotprod_forward_error</span></a></span>: Refines <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#fma_dotprod_forward_error"><span class="id" title="lemma">fma_dotprod_forward_error</span></a></span>
+      for sparse inputs by replacing the full vector length \(n\) with
+      the number of nonzero entries,
+      giving a tighter bound when the input vectors are sparse.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+<a id="lab77"></a><h2 class="section">Dependencies</h2>
+
+
+<div class="paragraph"> </div>
+
+    This file relies on:
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="library">preamble</span></span>, <span class="inlinecode"><span class="id" title="library">common</span></span>: basic setup and shared definitions
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="library">dotprod_model</span></span>, <span class="inlinecode"><span class="id" title="library">sum_model</span></span>: relational models of FMA dot product
+      and summation
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="library">float_acc_lems</span></span>: elementary floating-point accuracy lemmas
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="library">dot_acc_lemmas</span></span>: dot-product-specific accuracy lemmas
+
+</li>
+</ul>
+
 </div>
 <div class="code">
 
 <br/>
-<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.accuracy_proofs</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.accuracy_proofs.preamble.html#"><span class="id" title="library">preamble</span></a> <a class="idref" href="LAProof.accuracy_proofs.common.html#"><span class="id" title="library">common</span></a> <br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.accuracy_proofs</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.accuracy_proofs.preamble.html#"><span class="id" title="library">preamble</span></a> <a class="idref" href="LAProof.accuracy_proofs.common.html#"><span class="id" title="library">common</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#"><span class="id" title="library">dotprod_model</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_model.html#"><span class="id" title="library">sum_model</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.float_acc_lems.html#"><span class="id" title="library">float_acc_lems</span></a> <a class="idref" href="LAProof.accuracy_proofs.dot_acc_lemmas.html#"><span class="id" title="library">dot_acc_lemmas</span></a>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab78"></a><h1 class="section">Mixed Error</h1>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Section</span> <a id="MixedError" class="idref" href="#MixedError"><span class="id" title="section">MixedError</span></a>.<br/>
-<span class="id" title="keyword">Context</span> {<a id="MixedError.NAN" class="idref" href="#MixedError.NAN"><span class="id" title="variable">NAN</span></a>: <span class="id" title="class">FPCore.Nans</span>} {<a id="MixedError.t" class="idref" href="#MixedError.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
+<span class="id" title="keyword">Context</span> {<a id="MixedError.NAN" class="idref" href="#MixedError.NAN"><span class="id" title="variable">NAN</span></a> : <span class="id" title="class">FPCore.Nans</span>} {<a id="MixedError.t" class="idref" href="#MixedError.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
 
 <br/>
-<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="g1" class="idref" href="#g1"><span class="id" title="abbreviation">g1</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g1"><span class="id" title="definition">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="D" class="idref" href="#D"><span class="id" title="abbreviation">D</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#default_rel"><span class="id" title="definition">default_rel</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="E" class="idref" href="#E"><span class="id" title="abbreviation">E</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#default_abs"><span class="id" title="definition">default_abs</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a>        := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="g1" class="idref" href="#g1"><span class="id" title="abbreviation">g1</span></a>       := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g1"><span class="id" title="definition">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="D" class="idref" href="#D"><span class="id" title="abbreviation">D</span></a>        := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#default_rel"><span class="id" title="definition">default_rel</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="E" class="idref" href="#E"><span class="id" title="abbreviation">E</span></a>        := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#default_abs"><span class="id" title="definition">default_abs</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="neg_zero" class="idref" href="#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#neg_zero"><span class="id" title="definition">common.neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>).<br/>
 
 <br/>
-<span class="id" title="keyword">Variables</span> (<a id="MixedError.v1" class="idref" href="#MixedError.v1"><span class="id" title="variable">v1</span></a> <a id="MixedError.v2" class="idref" href="#MixedError.v2"><span class="id" title="variable">v2</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>)).<br/>
-<span class="id" title="keyword">Hypothesis</span> <a id="MixedError.Hlen" class="idref" href="#MixedError.Hlen"><span class="id" title="variable">Hlen</span></a>: <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>.<br/>
-<span class="id" title="keyword">Hypothesis</span> <a id="MixedError.Hfin" class="idref" href="#MixedError.Hfin"><span class="id" title="variable">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span>(<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>) <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Variables</span> (<a id="MixedError.v1" class="idref" href="#MixedError.v1"><span class="id" title="variable">v1</span></a> <a id="MixedError.v2" class="idref" href="#MixedError.v2"><span class="id" title="variable">v2</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.t"><span class="id" title="variable">t</span></a>)).<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="MixedError.Hlen" class="idref" href="#MixedError.Hlen"><span class="id" title="variable">Hlen</span></a> : <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="MixedError.Hfin" class="idref" href="#MixedError.Hfin"><span class="id" title="variable">Hfin</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
 
 <br/>
-<span class="id" title="keyword">Lemma</span> <a id="fma_dotprod_mixed_error" class="idref" href="#fma_dotprod_mixed_error"><span class="id" title="lemma">fma_dotprod_mixed_error</span></a>:<br/>
-&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="u:11" class="idref" href="#u:11"><span class="id" title="binder">u</span></a> : <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span>) (<a id="eta:12" class="idref" href="#eta:12"><span class="id" title="binder">eta</span></a> : <span class="id" title="axiom">R</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#u:11"><span class="id" title="variable">u</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>) <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#u:11"><span class="id" title="variable">u</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>) <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#eta:12"><span class="id" title="variable">eta</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="n:13" class="idref" href="#n:13"><span class="id" title="binder">n</span></a>, (<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n:13"><span class="id" title="variable">n</span></a> <span class="id" title="notation">&lt;</span> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>)%<span class="id" title="var">nat</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:14" class="idref" href="#delta:14"><span class="id" title="binder">delta</span></a><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">nth</span> 0 <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#u:11"><span class="id" title="variable">u</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n:13"><span class="id" title="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<span class="id" title="definition">nth</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n:13"><span class="id" title="variable">n</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#delta:14"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#delta:14"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>)<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>  <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#eta:12"><span class="id" title="variable">eta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g1"><span class="id" title="abbreviation">g1</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>) (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a> <span class="id" title="notation">-</span>1).<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#fma_dotprod_mixed_error"><span class="id" title="lemma">fma_dotprod_mixed_error</span></a></span> expresses the FMA-computed dot product as an
+    exact inner product of component-wise perturbed inputs plus a small
+    absolute offset. The relative perturbation on each input component is
+    bounded by \(g(n)\) and the absolute residual by
+    \(g_1(n,n-1)\). 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="fma_dotprod_mixed_error" class="idref" href="#fma_dotprod_mixed_error"><span class="id" title="lemma">fma_dotprod_mixed_error</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="u:11" class="idref" href="#u:11"><span class="id" title="binder">u</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span>) (<a id="eta:12" class="idref" href="#eta:12"><span class="id" title="binder">eta</span></a> : <span class="id" title="axiom">R</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#u:11"><span class="id" title="variable">u</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#u:11"><span class="id" title="variable">u</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>) <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#eta:12"><span class="id" title="variable">eta</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="n:13" class="idref" href="#n:13"><span class="id" title="binder">n</span></a>, (<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n:13"><span class="id" title="variable">n</span></a> <span class="id" title="notation">&lt;</span> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>)%<span class="id" title="var">nat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:14" class="idref" href="#delta:14"><span class="id" title="binder">delta</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">nth</span> 0 <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#u:11"><span class="id" title="variable">u</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n:13"><span class="id" title="variable">n</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<span class="id" title="definition">nth</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n:13"><span class="id" title="variable">n</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#delta:14"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#delta:14"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>)<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#eta:12"><span class="id" title="variable">eta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g1"><span class="id" title="abbreviation">g1</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a>) (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError.v2"><span class="id" title="variable">v2</span></a> <span class="id" title="notation">-</span> 1).<br/>
 
 <br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#MixedError"><span class="id" title="section">MixedError</span></a>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab79"></a><h1 class="section">Forward Error</h1>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Section</span> <a id="ForwardError" class="idref" href="#ForwardError"><span class="id" title="section">ForwardError</span></a>.<br/>
-<span class="id" title="keyword">Context</span> {<a id="ForwardError.NAN" class="idref" href="#ForwardError.NAN"><span class="id" title="variable">NAN</span></a>: <span class="id" title="class">FPCore.Nans</span>} {<a id="ForwardError.t" class="idref" href="#ForwardError.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
+<span class="id" title="keyword">Context</span> {<a id="ForwardError.NAN" class="idref" href="#ForwardError.NAN"><span class="id" title="variable">NAN</span></a> : <span class="id" title="class">FPCore.Nans</span>} {<a id="ForwardError.t" class="idref" href="#ForwardError.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
 
 <br/>
-<span class="id" title="keyword">Variables</span> <a id="ForwardError.v1" class="idref" href="#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a id="ForwardError.v2" class="idref" href="#ForwardError.v2"><span class="id" title="variable">v2</span></a> : <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.t"><span class="id" title="variable">t</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="v1R" class="idref" href="#v1R"><span class="id" title="abbreviation">v1R</span></a>  := (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="v2R" class="idref" href="#v2R"><span class="id" title="abbreviation">v2R</span></a>  := (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="v1R'" class="idref" href="#v1R'"><span class="id" title="abbreviation">v1R'</span></a> := (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R"><span class="id" title="abbreviation">v1R</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="v2R'" class="idref" href="#v2R'"><span class="id" title="abbreviation">v2R'</span></a> := (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R"><span class="id" title="abbreviation">v2R</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="n" class="idref" href="#n"><span class="id" title="abbreviation">n</span></a>    := (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>).<br/>
+<span class="id" title="keyword">Variables</span> <a id="ForwardError.v1" class="idref" href="#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a id="ForwardError.v2" class="idref" href="#ForwardError.v2"><span class="id" title="variable">v2</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.t"><span class="id" title="variable">t</span></a>).<br/>
 
 <br/>
-<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.t"><span class="id" title="variable">t</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="g1" class="idref" href="#g1"><span class="id" title="abbreviation">g1</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g1"><span class="id" title="definition">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="v1R" class="idref" href="#v1R"><span class="id" title="abbreviation">v1R</span></a>   := (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="v2R" class="idref" href="#v2R"><span class="id" title="abbreviation">v2R</span></a>   := (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="v1R'" class="idref" href="#v1R'"><span class="id" title="abbreviation">v1R'</span></a>  := (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R"><span class="id" title="abbreviation">v1R</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="v2R'" class="idref" href="#v2R'"><span class="id" title="abbreviation">v2R'</span></a>  := (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R"><span class="id" title="abbreviation">v2R</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="n" class="idref" href="#n"><span class="id" title="abbreviation">n</span></a>     := (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a>     := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="g1" class="idref" href="#g1"><span class="id" title="abbreviation">g1</span></a>    := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g1"><span class="id" title="definition">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.t"><span class="id" title="variable">t</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="neg_zero" class="idref" href="#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#neg_zero"><span class="id" title="definition">common.neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.t"><span class="id" title="variable">t</span></a>).<br/>
 
 <br/>
-<span class="id" title="keyword">Hypothesis</span> <a id="ForwardError.Hlen" class="idref" href="#ForwardError.Hlen"><span class="id" title="variable">Hlen</span></a>: <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>.<br/>
-<span class="id" title="keyword">Hypothesis</span> <a id="ForwardError.Hfin" class="idref" href="#ForwardError.Hfin"><span class="id" title="variable">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span>(<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>) <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="ForwardError.Hlen" class="idref" href="#ForwardError.Hlen"><span class="id" title="variable">Hlen</span></a> : <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="ForwardError.Hfin" class="idref" href="#ForwardError.Hfin"><span class="id" title="variable">Hfin</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
 
 <br/>
-<span class="id" title="keyword">Lemma</span> <a id="fma_dotprod_forward_error" class="idref" href="#fma_dotprod_forward_error"><span class="id" title="lemma">fma_dotprod_forward_error</span></a>:<br/>
-&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>) <span class="id" title="notation">-</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R"><span class="id" title="abbreviation">v1R</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R"><span class="id" title="abbreviation">v2R</span></a> ) <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g"><span class="id" title="abbreviation">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a> <span class="id" title="notation">×</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R'"><span class="id" title="abbreviation">v1R'</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R'"><span class="id" title="abbreviation">v2R'</span></a> <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g1"><span class="id" title="abbreviation">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a> (<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a> <span class="id" title="notation">-</span> 1).<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#fma_dotprod_forward_error"><span class="id" title="lemma">fma_dotprod_forward_error</span></a></span> bounds the absolute forward error of the
+    FMA-computed dot product. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="fma_dotprod_forward_error" class="idref" href="#fma_dotprod_forward_error"><span class="id" title="lemma">fma_dotprod_forward_error</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>) <span class="id" title="notation">-</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R"><span class="id" title="abbreviation">v1R</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R"><span class="id" title="abbreviation">v2R</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g"><span class="id" title="abbreviation">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a> <span class="id" title="notation">×</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R'"><span class="id" title="abbreviation">v1R'</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R'"><span class="id" title="abbreviation">v2R'</span></a> <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g1"><span class="id" title="abbreviation">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a> (<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a> <span class="id" title="notation">-</span> 1).<br/>
 
 <br/>
 <span class="id" title="keyword">Notation</span> <a id="nnzR" class="idref" href="#nnzR"><span class="id" title="abbreviation">nnzR</span></a> := (<a class="idref" href="LAProof.accuracy_proofs.common.html#nnzR"><span class="id" title="definition">common.nnzR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R"><span class="id" title="abbreviation">v1R</span></a>).<br/>
 
 <br/>
-<span class="id" title="keyword">Lemma</span> <a id="fma_sparse_dotprod_forward_error" class="idref" href="#fma_sparse_dotprod_forward_error"><span class="id" title="lemma">fma_sparse_dotprod_forward_error</span></a>:<br/>
-&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>) <span class="id" title="notation">-</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R"><span class="id" title="abbreviation">v1R</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R"><span class="id" title="abbreviation">v2R</span></a> )  <span class="id" title="notation">≤</span> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g"><span class="id" title="abbreviation">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#nnzR"><span class="id" title="abbreviation">nnzR</span></a> <span class="id" title="notation">×</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R'"><span class="id" title="abbreviation">v1R'</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R'"><span class="id" title="abbreviation">v2R'</span></a> <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g1"><span class="id" title="abbreviation">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#nnzR"><span class="id" title="abbreviation">nnzR</span></a> (<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#nnzR"><span class="id" title="abbreviation">nnzR</span></a> <span class="id" title="notation">-</span> 1).<br/>
- 
-<br/>
-<span class="id" title="keyword">End</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError"><span class="id" title="section">ForwardError</span></a>.<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#fma_sparse_dotprod_forward_error"><span class="id" title="lemma">fma_sparse_dotprod_forward_error</span></a></span> refines <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#fma_dotprod_forward_error"><span class="id" title="lemma">fma_dotprod_forward_error</span></a></span>
+    for sparse inputs by replacing the full vector length \(n\) with
+    the number of nonzero entries. 
+</div>
+<div class="code">
 
 <br/>
+<span class="id" title="keyword">Lemma</span> <a id="fma_sparse_dotprod_forward_error" class="idref" href="#fma_sparse_dotprod_forward_error"><span class="id" title="lemma">fma_sparse_dotprod_forward_error</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#fma_dotprod"><span class="id" title="definition">fma_dotprod</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v1"><span class="id" title="variable">v1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError.v2"><span class="id" title="variable">v2</span></a>) <span class="id" title="notation">-</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R"><span class="id" title="abbreviation">v1R</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R"><span class="id" title="abbreviation">v2R</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g"><span class="id" title="abbreviation">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#nnzR"><span class="id" title="abbreviation">nnzR</span></a> <span class="id" title="notation">×</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v1R'"><span class="id" title="abbreviation">v1R'</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#v2R'"><span class="id" title="abbreviation">v2R'</span></a> <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#g1"><span class="id" title="abbreviation">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#nnzR"><span class="id" title="abbreviation">nnzR</span></a> (<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#nnzR"><span class="id" title="abbreviation">nnzR</span></a> <span class="id" title="notation">-</span> 1).<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#ForwardError"><span class="id" title="section">ForwardError</span></a>.<br/>
 </div>
 </div>
 
 <div id="footer">
-<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
 </div>
 
 </div>

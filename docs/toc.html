@@ -4,9 +4,15 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link href="coqdoc.css" rel="stylesheet" type="text/css" />
-<title>Table of contents</title>
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
-
 <body>
 
 <div id="page">
@@ -15,32 +21,503 @@
 </div>
 
 <div id="main">
-
 <div id="toc">
 <h2><a href="LAProof.accuracy_proofs.preamble.html">LAProof.accuracy_proofs.preamble</a></h2>
+<h2><a href="LAProof.accuracy_proofs.real_lemmas.html">LAProof.accuracy_proofs.real_lemmas</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.real_lemmas.html#lab1">Real Arithmetic Auxiliary Lemmas</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.common.html">LAProof.accuracy_proofs.common</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.common.html#lab2">Common Definitions and Lemmas for Floating-Point Accuracy Proofs</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.common.html#lab3">Global Definitions and Setup</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.common.html#lab4">Parameterization by Nans and type</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.common.html#lab5">Zero Predicates</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.common.html#lab6">Number of Nonzeros</a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.common.html#lab7">Error Bound Constants</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.common.html#lab8">Upper bounds on <span class="inlinecode"><span class="id" title="var">default_abs</span></span> and <span class="inlinecode"><span class="id" title="var">default_rel</span></span></a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.common.html#lab9">Error Accumulation Factors</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.common.html#lab10">Relative Error Factor <span class="inlinecode"><span class="id" title="var">g</span></span></a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.common.html#lab11">Mixed Error Factor <span class="inlinecode"><span class="id" title="var">g1</span></span></a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.common.html#lab12">Floating-Point Operation Lemmas</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.common.html#lab13">Automation</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.float_acc_lems.html">LAProof.accuracy_proofs.float_acc_lems</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab14">Floating-Point Operation Accuracy</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab15">Structure</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab16">Signed Zero Lemmas</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab17">Signed Zero Values</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab18">No-Overflow Predicates</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab19">Generic Rounding Error Decomposition</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab20">Fused Multiply-Add</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab21">Floating-Point Multiplication</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab22">Floating-Point Addition</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.float_acc_lems.html#lab23">Floating-Point Subtraction</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.dotprod_model.html">LAProof.accuracy_proofs.dotprod_model</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.dotprod_model.html#lab24">Dot Product Definitions and Properties</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.dotprod_model.html#lab25">Overview of contents</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dotprod_model.html#lab26">Generic dot product</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dotprod_model.html#lab27">Floating-point dot product</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dotprod_model.html#lab28">Floating-point dot product with FMA</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dotprod_model.html#lab29">Real-number dot product</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dotprod_model.html#lab30">Non-zero detection for dot products</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.sum_model.html">LAProof.accuracy_proofs.sum_model</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab31">Floating-Point Summation: Functional Models and Equivalences</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab32">General Summation Relation</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab33">Any-Order Floating-Point Summation</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab34">Equivalence Between <span class="inlinecode"><span class="id" title="var">sum_rel</span></span> and <span class="inlinecode"><span class="id" title="var">sum_any</span></span></a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab35">Bounds via Absolute Value Summation</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab36">Singleton Summation Lemmas</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab37">Permutation Invariance</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab38">Uniform Bound on Sum Magnitude</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab39"><span class="inlinecode"><span class="id" title="var">sumR</span></span>: Functional Real Summation</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab40">Uniform Bounds on Floating-Point Sums via Real Arithmetic</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab41">Floating-Point Summation Instances and Properties</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_model.html#lab42">Subtraction Loop</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.sum_acc.html">LAProof.accuracy_proofs.sum_acc</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab43">Floating-Point Summation Accuracy Theorems</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab44">Error Factors</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab45">Main Results</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab46">Dependencies</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab47">Backward Error: List Version</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab48">Backward Error: Indexed Version</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab49">Forward Error: List Version</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab50">Forward Error: Indexed Version</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_acc.html#lab51">Forward Error Under Permutation</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html">LAProof.accuracy_proofs.dot_acc_lemmas</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab52">Forward and Mixed Error Bounds for Floating-Point Dot Products</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab53">Summary of Main Results</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab54">Forward Error Bounds</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab55">Sparse Forward Error Bounds</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab56">Mixed Error Bounds</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab57">Section 1: Forward Error Bound — Non-FMA Dot Product</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab58">Section 2: Forward Error Bound — FMA Dot Product</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab59">Section 3: Mixed Error Bound — Non-FMA Dot Product</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab60">Section 4: Mixed Error Bound — FMA Dot Product</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab61">Section 5: Sparse Forward Error Bound — Non-FMA Dot Product</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc_lemmas.html#lab62">Section 6: Sparse Forward Error Bound — FMA Dot Product</a>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.dot_acc.html">LAProof.accuracy_proofs.dot_acc</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.dot_acc.html#lab63">Dot Product Accuracy Proofs (Non-FMA)</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.dot_acc.html#lab64">Error Factors</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc.html#lab65">Main Results</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc.html#lab66">Dependencies</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.dot_acc.html#lab67">Structure</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.vecnorm_acc.html">LAProof.accuracy_proofs.vecnorm_acc</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.vecnorm_acc.html#lab68">Floating-Point Vector Norm Accuracy Bounds</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.vecnorm_acc.html#lab69">Error Factors</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vecnorm_acc.html#lab70">Main Results</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vecnorm_acc.html#lab71">Dependencies</a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vecnorm_acc.html#lab72">Two-Norm</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vecnorm_acc.html#lab73">One-Norm</a>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.fma_dot_acc.html">LAProof.accuracy_proofs.fma_dot_acc</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.fma_dot_acc.html#lab74">FMA Dot Product Accuracy Theorems</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.fma_dot_acc.html#lab75">Error Factors</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_dot_acc.html#lab76">Main Results</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_dot_acc.html#lab77">Dependencies</a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_dot_acc.html#lab78">Mixed Error</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_dot_acc.html#lab79">Forward Error</a>
+
+</li>
+</ul>
+<h2><a href="LAProof.accuracy_proofs.sum_is_finite.html">LAProof.accuracy_proofs.sum_is_finite</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.sum_is_finite.html#lab80">Finite Sum Boundedness</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.sum_is_finite.html#lab81">Overflow-free addition preserves finiteness</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_is_finite.html#lab82">Per-element bound for finite summation</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_is_finite.html#lab83">Monotonicity of <span class="inlinecode"><span class="id" title="var">fun_bnd</span></span></a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.sum_is_finite.html#lab84">Main theorem: element-wise bound implies finite sum</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.fma_is_finite.html">LAProof.accuracy_proofs.fma_is_finite</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.fma_is_finite.html#lab85">Finite Sum from Bounded Inputs</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.fma_is_finite.html#lab86">Key Definitions</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_is_finite.html#lab87">Key Lemmas</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_is_finite.html#lab88">Bound Function</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_is_finite.html#lab89">Positivity of <span class="inlinecode"><span class="id" title="var">fun_bnd</span></span> Components</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_is_finite.html#lab90">Monotonicity of <span class="inlinecode"><span class="id" title="var">fun_bnd</span></span></a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_is_finite.html#lab91">List Splitting Lemmas</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.fma_is_finite.html#lab92">Main Result: Finiteness from Bounded Inputs</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.mv_mathcomp.html">LAProof.accuracy_proofs.mv_mathcomp</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab93">Matrix and Vector Operations: MathComp–List Correspondence</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab94">Main Results</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab95">Structure</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab96">Dependencies</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab97">Norm and sequence definitions</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab98">Tactics</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab99">Example uses of <span class="inlinecode"><span class="id" title="var">case_splitP</span></span></a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab100">Enumeration and list lemmas</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab101">Lemmas about the <span class="inlinecode"><span class="id" title="var">maxr</span></span> operator</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab102">Norm lemmas</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab103">Auxiliary definitions</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab104">Module F: Floating-point MathComp matrix/vector operations</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab105">Conversions between MathComp matrices and list-of-lists</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab106">List-based floating-point operations</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.mv_mathcomp.html#lab107">Main theorem: floating-point matrix–vector multiplication</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.gemv_acc.html">LAProof.accuracy_proofs.gemv_acc</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.gemv_acc.html#lab108">Matrix-Vector Multiplication Error Bounds</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.gemv_acc.html#lab109">Error Factors</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemv_acc.html#lab110">Main Results</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemv_acc.html#lab111">Dependencies</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemv_acc.html#lab112">Row-Vector Times Column-Vector: Mixed Error Bound</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemv_acc.html#lab113">General Matrix-Vector Product: Mixed Error Bound</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemv_acc.html#lab114">Matrix-Vector Product: Forward Error Bound</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.vec_op_acc.html">LAProof.accuracy_proofs.vec_op_acc</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.vec_op_acc.html#lab115">Mixed Error Bounds for Floating-Point Matrix-Vector Operations</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.vec_op_acc.html#lab116">Main Results</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vec_op_acc.html#lab117">Dependencies</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vec_op_acc.html#lab118">Scalar-Matrix Multiplication: Mixed Error Bound</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vec_op_acc.html#lab119">Entry-wise Matrix Addition: Mixed Error Bound</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vec_op_acc.html#lab120">Scaled Matrix Sum: Mixed Error Bound</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vec_op_acc.html#lab121">Scaled Matrix-Vector Product: Mixed Error Bound</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.vec_op_acc.html#lab122">General Matrix-Vector Multiply-Accumulate (GEMV): Mixed Error Bound</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.gemm_acc.html">LAProof.accuracy_proofs.gemm_acc</a></h2>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab123">Matrix Multiplication Forward and Mixed Error Analysis</a>
+<ul class="doclist">
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab124">Error Factors</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab125">Error Bound Taxonomy</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab126">Key Results</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab127">Matrix Multiplication Error</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab128">Scalar-Matrix Multiplication Error</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab129">Scaled Matrix Product Error</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab130">Matrix Addition Error</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab131">Scaled Matrix Sum Error</a>
+
+</li>
+<li><a href="LAProof.accuracy_proofs.gemm_acc.html#lab132">General GEMM Error</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
 <h2><a href="LAProof.accuracy_proofs.export.html">LAProof.accuracy_proofs.export</a></h2>
 <h2><a href="LAProof.accuracy_proofs.libvalidsdp.html">LAProof.accuracy_proofs.libvalidsdp</a></h2>
 <ul class="doclist">
-<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab1">Importing a proof from libValidSDP into LAProof</a>
+<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab133">Importing a proof from libValidSDP into LAProof</a>
 <ul class="doclist">
-<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab2">Demonstrations and applications</a>
+<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab134">Demonstrations and applications</a>
 
 </li>
-<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab3">Main Cholesky equivalence theorem</a>
+<li><a href="LAProof.accuracy_proofs.libvalidsdp.html#lab135">Main Cholesky equivalence theorem</a>
 
 </li>
 </ul>
@@ -49,10 +526,10 @@
 </ul>
 <h2><a href="LAProof.accuracy_proofs.solve_model.html">LAProof.accuracy_proofs.solve_model: models of Cholesky decomposition and triangular solve</a></h2>
 <ul class="doclist">
-<li><a href="LAProof.accuracy_proofs.solve_model.html#lab4">MathComp matrices over a nonring</a>
+<li><a href="LAProof.accuracy_proofs.solve_model.html#lab136">MathComp matrices over a nonring</a>
 
 </li>
-<li><a href="LAProof.accuracy_proofs.solve_model.html#lab5">Functional model of Cholesky decomposition (jik algorithm)</a>
+<li><a href="LAProof.accuracy_proofs.solve_model.html#lab137">Functional model of Cholesky decomposition (jik algorithm)</a>
 
 </li>
 </ul>
@@ -72,131 +549,131 @@
 <h2><a href="LAProof.C.spec_densemat.html">LAProof.C.spec_densemat: VST specifications of functions on dense matrices.</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.spec_densemat.html#lab6">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.h</span></span> and <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.spec_densemat.html#lab138">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.h</span></span> and <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab7">Abstracting the floating-point precision</a>
+<li><a href="LAProof.C.spec_densemat.html#lab139">Abstracting the floating-point precision</a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab8">Conversions between floats, float-options, and <span class="inlinecode"><span class="id" title="var">val</span></span></a>
+<li><a href="LAProof.C.spec_densemat.html#lab140">Conversions between floats, float-options, and <span class="inlinecode"><span class="id" title="var">val</span></span></a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab9">Representation predicates for dense matrices</a>
+<li><a href="LAProof.C.spec_densemat.html#lab141">Representation predicates for dense matrices</a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab10">Function specifications (funspecs)</a>
+<li><a href="LAProof.C.spec_densemat.html#lab142">Function specifications (funspecs)</a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab11">Not-yet-specified functions</a>
+<li><a href="LAProof.C.spec_densemat.html#lab143">Not-yet-specified functions</a>
 
 </li>
-<li><a href="LAProof.C.spec_densemat.html#lab12">Building the "Abstract Specification Interface", the list of funspecs for this module</a>
+<li><a href="LAProof.C.spec_densemat.html#lab144">Building the "Abstract Specification Interface", the list of funspecs for this module</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.densemat_lemmas.html">LAProof.C.densemat_lemmas: Supporting lemmas for VST proofs of functions on dense matrices.</a></h2>
 <ul class="doclist">
-<li><a href="LAProof.C.densemat_lemmas.html#lab13">VSU definitions</a>
+<li><a href="LAProof.C.densemat_lemmas.html#lab145">VSU definitions</a>
 
 </li>
-<li><a href="LAProof.C.densemat_lemmas.html#lab14">Many useful supporting lemmas about <span class="inlinecode"><span class="id" title="var">column_major</span></span>, <span class="inlinecode"><span class="id" title="var">ordinal</span></span>, <span class="inlinecode"><span class="id" title="var">ord_enum</span></span>, etc.</a>
+<li><a href="LAProof.C.densemat_lemmas.html#lab146">Many useful supporting lemmas about <span class="inlinecode"><span class="id" title="var">column_major</span></span>, <span class="inlinecode"><span class="id" title="var">ordinal</span></span>, <span class="inlinecode"><span class="id" title="var">ord_enum</span></span>, etc.</a>
 
 </li>
-<li><a href="LAProof.C.densemat_lemmas.html#lab15">Tactics for calling matrix subscripting functions</a>
+<li><a href="LAProof.C.densemat_lemmas.html#lab147">Tactics for calling matrix subscripting functions</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.verif_densemat.html">LAProof.C.verif_densemat: VST proofs of functions on dense matrices.</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.verif_densemat.html#lab16">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.verif_densemat.html#lab148">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab17">Prologue.</a>
+<li><a href="LAProof.C.verif_densemat.html#lab149">Prologue.</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab18"><span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab150"><span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab19"><span class="inlinecode"><span class="id" title="var">densemat_free</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab151"><span class="inlinecode"><span class="id" title="var">densemat_free</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab20">Unpacking dependently typed WITH components</a>
+<li><a href="LAProof.C.verif_densemat.html#lab152">Unpacking dependently typed WITH components</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab21"><span class="inlinecode"><span class="id" title="var">densemat_clear</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab153"><span class="inlinecode"><span class="id" title="var">densemat_clear</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab22"><span class="inlinecode"><span class="id" title="var">densemat_get</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab154"><span class="inlinecode"><span class="id" title="var">densemat_get</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab23"><span class="inlinecode"><span class="id" title="var">densemat_set</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab155"><span class="inlinecode"><span class="id" title="var">densemat_set</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab24"><span class="inlinecode"><span class="id" title="var">densemat_addto</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab156"><span class="inlinecode"><span class="id" title="var">densemat_addto</span></span> verification</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat.html#lab25"><span class="inlinecode"><span class="id" title="var">data_norm</span></span> and <span class="inlinecode"><span class="id" title="var">densemat_norm</span></span> verification</a>
+<li><a href="LAProof.C.verif_densemat.html#lab157"><span class="inlinecode"><span class="id" title="var">data_norm</span></span> and <span class="inlinecode"><span class="id" title="var">densemat_norm</span></span> verification</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.verif_densemat_mult.html">LAProof.C.verif_densemat_mult: VST proofs dense matrix multiply functions</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.verif_densemat_mult.html#lab26">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.verif_densemat_mult.html#lab158">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.verif_densemat_mult.html#lab27">Prologue.</a>
+<li><a href="LAProof.C.verif_densemat_mult.html#lab159">Prologue.</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.verif_densemat_cholesky.html">LAProof.C.verif_densemat_cholesky: VST proofs of Cholesky functions on dense matrices.</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.verif_densemat_cholesky.html#lab28">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.verif_densemat_cholesky.html#lab160">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.verif_densemat_cholesky.html#lab29">Prologue.</a>
+<li><a href="LAProof.C.verif_densemat_cholesky.html#lab161">Prologue.</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat_cholesky.html#lab30"><span class="inlinecode"><span class="id" title="var">densemat_cfactor</span></span> verification: Cholesky factorization</a>
+<li><a href="LAProof.C.verif_densemat_cholesky.html#lab162"><span class="inlinecode"><span class="id" title="var">densemat_cfactor</span></span> verification: Cholesky factorization</a>
 
 </li>
-<li><a href="LAProof.C.verif_densemat_cholesky.html#lab31"><span class="inlinecode"><span class="id" title="var">densemat_csolve</span></span> verification: Cholesky solve by forward substitution and back substitution</a>
+<li><a href="LAProof.C.verif_densemat_cholesky.html#lab163"><span class="inlinecode"><span class="id" title="var">densemat_csolve</span></span> verification: Cholesky solve by forward substitution and back substitution</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.VSU_densemat.html">LAProof.C.VSU_densemat: Packaging the [densematVSU], the Verified Software Unit</a></h2>
 <ul class="doclist">
 <li><ul class="doclist">
-<li><a href="LAProof.C.VSU_densemat.html#lab32">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
+<li><a href="LAProof.C.VSU_densemat.html#lab164">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></a>
 
 </li>
 </ul>
 
 </li>
-<li><a href="LAProof.C.VSU_densemat.html#lab33">Prologue.</a>
+<li><a href="LAProof.C.VSU_densemat.html#lab165">Prologue.</a>
 
 </li>
 </ul>
 <h2><a href="LAProof.C.matrix_model.html">LAProof.C.matrix_model: Functional models of matrix operations</a></h2>
 <ul class="doclist">
-<li><a href="LAProof.C.matrix_model.html#lab34">Prologue: typical imports for MathComp floating-point matrix functional models</a>
+<li><a href="LAProof.C.matrix_model.html#lab166">Prologue: typical imports for MathComp floating-point matrix functional models</a>
 
 </li>
-<li><a href="LAProof.C.matrix_model.html#lab35">Definitions for manipulating triangular matrices</a>
+<li><a href="LAProof.C.matrix_model.html#lab167">Definitions for manipulating triangular matrices</a>
 
 </li>
 </ul>
@@ -206,7 +683,7 @@
 <h2><a href="LAProof.C.distinct.html">LAProof.C.distinct</a></h2>
 <h2><a href="LAProof.C.partial_csr.html">LAProof.C.partial_csr</a></h2>
 </div>
-<hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+<hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
 </div>
 
 </div>

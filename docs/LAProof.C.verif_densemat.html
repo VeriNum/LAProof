@@ -4,9 +4,15 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link href="coqdoc.css" rel="stylesheet" type="text/css" />
-<title>LAProof.C.verif_densemat: VST proofs of functions on dense matrices.</title>
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
-
 <body>
 
 <div id="page">
@@ -15,18 +21,17 @@
 </div>
 
 <div id="main">
-
 <h1 class="libtitle">LAProof.C.verif_densemat: VST proofs of functions on dense matrices.</h1>
 
 <div class="code">
 </div>
 
 <div class="doc">
-<a id="lab16"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
+<a id="lab148"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
 
 <div class="paragraph"> </div>
 
-<a id="lab17"></a><h1 class="section">Prologue.</h1>
+<a id="lab149"></a><h1 class="section">Prologue.</h1>
 
 
 <div class="paragraph"> </div>
@@ -61,7 +66,7 @@
 </div>
 
 <div class="doc">
-<a id="lab18"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> verification</h1>
+<a id="lab150"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_malloc</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -71,7 +76,7 @@
 </div>
 
 <div class="doc">
-<a id="lab19"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_free</span></span> verification</h1>
+<a id="lab151"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_free</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -81,20 +86,20 @@
 </div>
 
 <div class="doc">
-<a id="lab20"></a><h1 class="section">Unpacking dependently typed WITH components</h1>
+<a id="lab152"></a><h1 class="section">Unpacking dependently typed WITH components</h1>
 
 <div class="paragraph"> </div>
 
  When a funspec has a dependently typed package such as 
-   <span class="inlinecode"><span class="id" title="var">WITH</span></span> <span class="inlinecode"><span class="id" title="var">X</span>:</span> <span class="inlinecode">{<span class="id" title="var">mn</span></span> <span class="inlinecode">&amp;</span> <span class="inlinecode">'<span class="id" title="var">M</span>[<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a></span> <span class="inlinecode">(<span class="id" title="definition">ftype</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)]<span class="id" title="var">_</span>(<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a></span> <span class="inlinecode"><span class="id" title="var">mn</span>,</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a></span> <span class="inlinecode"><span class="id" title="var">mn</span>)}</span>, 
+   <span class="inlinecode"><span class="id" title="var">WITH</span></span> <span class="inlinecode"><span class="id" title="var">X</span>:</span> <span class="inlinecode">{<span class="id" title="var">mn</span></span> <span class="inlinecode">&amp;</span> <span class="inlinecode">'<span class="id" title="var">M</span>[<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a></span> <span class="inlinecode">(<span class="id" title="definition">ftype</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)]<span class="id" title="var">_</span>(<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a></span> <span class="inlinecode"><span class="id" title="var">mn</span>,</span> <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a></span> <span class="inlinecode"><span class="id" title="var">mn</span>)}</span>, 
   the funspec may destruct it by a let-definition immediately after PRE or POST,
-  such as <span class="inlinecode"><span class="id" title="keyword">let</span></span> <span class="inlinecode">'(<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Specif.html#existT"><span class="id" title="constructor">existT</span></a></span> <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">(<span class="id" title="projection">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span> <span class="inlinecode"><span class="id" title="var">M</span>)</span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">X</span></span> <span class="inlinecode"><span class="id" title="tactic">in</span></span>.  Standard VST 2.15's <span class="inlinecode"><span class="id" title="var">start_function</span></span> tactic
+  such as <span class="inlinecode"><span class="id" title="keyword">let</span></span> <span class="inlinecode">'(<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#existT"><span class="id" title="constructor">existT</span></a></span> <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">(<span class="id" title="projection">m</span>,<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a>)</span> <span class="inlinecode"><span class="id" title="var">M</span>)</span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">X</span></span> <span class="inlinecode"><span class="id" title="tactic">in</span></span>.  Standard VST 2.15's <span class="inlinecode"><span class="id" title="var">start_function</span></span> tactic
   cannot process such funspects.  Here we add a new feature to <span class="inlinecode"><span class="id" title="var">start_function</span></span>.
   See also: https://github.com/PrincetonUniversity/VST/issues/839
  
 <div class="paragraph"> </div>
 
-<a id="lab21"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_clear</span></span> verification</h1>
+<a id="lab153"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_clear</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -108,7 +113,7 @@
 <div class="doc">
 This proof demonstrates a good way to prove a function call to a function whose
   funspec contains a dependently typed package.  Before doing the <span class="inlinecode"><span class="id" title="var">forward_call</span></span>,
-  build the package using <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Specif.html#existT"><span class="id" title="constructor">existT</span></a></span>.  There will be no use for <span class="inlinecode"><span class="id" title="var">X</span></span> after the <span class="inlinecode"><span class="id" title="var">forward_call</span></span>,
+  build the package using <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#existT"><span class="id" title="constructor">existT</span></a></span>.  There will be no use for <span class="inlinecode"><span class="id" title="var">X</span></span> after the <span class="inlinecode"><span class="id" title="var">forward_call</span></span>,
   so it can be cleared immediately. 
 </div>
 <div class="code">
@@ -124,8 +129,8 @@ This proof demonstrates a good way to prove a function call to a function whose
 <span class="id" title="var">Intros</span>.<br/>
 <span class="id" title="var">forward</span>.<br/>
 <span class="id" title="var">forward</span>.<br/>
-<span class="id" title="tactic">pose</span> (<span class="id" title="var">X</span> := <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Specif.html#existT"><span class="id" title="constructor">existT</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">m</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><span class="id" title="var">n</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <span class="id" title="var">M</span> : <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Specif.html#e6a434cae860987d1c5f61b342cc9e57"><span class="id" title="notation">{</span></a><a id="mn:1" class="idref" href="#mn:1"><span class="id" title="binder"><span id="mn:2" class="id">mn</span></span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Specif.html#e6a434cae860987d1c5f61b342cc9e57"><span class="id" title="notation">&amp;</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)<span class="id" title="notation">]</span><span class="id" title="notation">_</span><span class="id" title="notation">(</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:1"><span class="id" title="variable">mn</span></a><span class="id" title="notation">,</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:1"><span class="id" title="variable">mn</span></a><span class="id" title="notation">)</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Specif.html#e6a434cae860987d1c5f61b342cc9e57"><span class="id" title="notation">}</span></a>).<br/>
-<span class="id" title="var">forward_call</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">X</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="definition">offset_val</span> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_data_offset"><span class="id" title="definition">densemat_data_offset</span></a> <span class="id" title="var">p</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">sh</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>; <span class="id" title="tactic">clear</span> <span class="id" title="var">X</span>.<br/>
+<span class="id" title="tactic">pose</span> (<span class="id" title="var">X</span> := <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#existT"><span class="id" title="constructor">existT</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">m</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><span class="id" title="var">n</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <span class="id" title="var">M</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#e6a434cae860987d1c5f61b342cc9e57"><span class="id" title="notation">{</span></a><a id="mn:1" class="idref" href="#mn:1"><span class="id" title="binder"><span id="mn:2" class="id">mn</span></span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#e6a434cae860987d1c5f61b342cc9e57"><span class="id" title="notation">&amp;</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.C.spec_densemat.html#the_type"><span class="id" title="definition">the_type</span></a>)<span class="id" title="notation">]</span><span class="id" title="notation">_</span><span class="id" title="notation">(</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:1"><span class="id" title="variable">mn</span></a><span class="id" title="notation">,</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="LAProof.C.verif_densemat.html#mn:1"><span class="id" title="variable">mn</span></a><span class="id" title="notation">)</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Specif.html#e6a434cae860987d1c5f61b342cc9e57"><span class="id" title="notation">}</span></a>).<br/>
+<span class="id" title="var">forward_call</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">X</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="definition">offset_val</span> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_data_offset"><span class="id" title="definition">densemat_data_offset</span></a> <span class="id" title="var">p</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">sh</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>; <span class="id" title="tactic">clear</span> <span class="id" title="var">X</span>.<br/>
 <span class="id" title="var">entailer</span>!.<br/>
 <span class="id" title="keyword">Qed</span>.<br/>
 </div>
@@ -135,7 +140,7 @@ This proof demonstrates a good way to prove a function call to a function whose
 </div>
 
 <div class="doc">
-<a id="lab22"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_get</span></span> verification</h1>
+<a id="lab154"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_get</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -150,7 +155,7 @@ This proof demonstrates a good way to prove a function call to a function whose
 </div>
 
 <div class="doc">
-<a id="lab23"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_set</span></span> verification</h1>
+<a id="lab155"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_set</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -165,7 +170,7 @@ This proof demonstrates a good way to prove a function call to a function whose
 </div>
 
 <div class="doc">
-<a id="lab24"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_addto</span></span> verification</h1>
+<a id="lab156"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">densemat_addto</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -180,7 +185,7 @@ This proof demonstrates a good way to prove a function call to a function whose
 </div>
 
 <div class="doc">
-<a id="lab25"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">data_norm</span></span> and <span class="inlinecode"><span class="id" title="var">densemat_norm</span></span> verification</h1>
+<a id="lab157"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">data_norm</span></span> and <span class="inlinecode"><span class="id" title="var">densemat_norm</span></span> verification</h1>
 
 </div>
 <div class="code">
@@ -196,11 +201,19 @@ This proof demonstrates a good way to prove a function call to a function whose
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <a id="body_densemat_norm" class="idref" href="#body_densemat_norm"><span class="id" title="lemma">body_densemat_norm</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densemat_norm"><span class="id" title="definition">f_densemat_norm</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_norm_spec"><span class="id" title="definition">densemat_norm_spec</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="body_densematn_print" class="idref" href="#body_densematn_print"><span class="id" title="lemma">body_densematn_print</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densematn_print"><span class="id" title="definition">f_densematn_print</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densematn_print_spec"><span class="id" title="definition">densematn_print_spec</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="body_densemat_print" class="idref" href="#body_densemat_print"><span class="id" title="lemma">body_densemat_print</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.spec_densemat.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.densemat_lemmas.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.densemat.html#f_densemat_print"><span class="id" title="definition">f_densemat_print</span></a> <a class="idref" href="LAProof.C.spec_densemat.html#densemat_print_spec"><span class="id" title="definition">densemat_print_spec</span></a>.<br/>
+
+<br/>
 </div>
 </div>
 
 <div id="footer">
-<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
 </div>
 
 </div>

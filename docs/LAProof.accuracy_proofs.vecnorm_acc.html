@@ -4,9 +4,15 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link href="coqdoc.css" rel="stylesheet" type="text/css" />
-<title>LAProof.accuracy_proofs.vecnorm_acc</title>
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
-
 <body>
 
 <div id="page">
@@ -15,68 +21,259 @@
 </div>
 
 <div id="main">
-
 <h1 class="libtitle">LAProof.accuracy_proofs.vecnorm_acc</h1>
 
 <div class="code">
-<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.accuracy_proofs</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.accuracy_proofs.preamble.html#"><span class="id" title="library">preamble</span></a> <a class="idref" href="LAProof.accuracy_proofs.common.html#"><span class="id" title="library">common</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#"><span class="id" title="library">dotprod_model</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_model.html#"><span class="id" title="library">sum_model</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.float_acc_lems.html#"><span class="id" title="library">float_acc_lems</span></a> <a class="idref" href="LAProof.accuracy_proofs.dot_acc.html#"><span class="id" title="library">dot_acc</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#"><span class="id" title="library">sum_acc</span></a>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab68"></a><h1 class="section">Floating-Point Vector Norm Accuracy Bounds</h1>
+
+
+<div class="paragraph"> </div>
+
+    This file establishes error bounds for floating-point computations of
+    the two-norm (Euclidean) and one-norm of a vector.
+
+<div class="paragraph"> </div>
+
+<a id="lab69"></a><h2 class="section">Error Factors</h2>
+
+
+<div class="paragraph"> </div>
+
+    Throughout, the accumulated relative error factor is
+    \(g(n) = (1 + \mathbf{u})^n - 1\) and
+    the mixed absolute error factor is
+    \(g_1(n_1, n_2) = n_1 \cdot \eta \cdot (1 + g(n_2))\),
+    where \(\mathbf{u}\) is the unit roundoff and
+    \(\eta\) is the underflow threshold for the given type.
+    Both are defined in <span class="inlinecode"><span class="id" title="library">common</span></span>.
+
+<div class="paragraph"> </div>
+
+<a id="lab70"></a><h2 class="section">Main Results</h2>
+
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#bfVNRM2"><span class="id" title="lemma">bfVNRM2</span></a></span>: Shows that the floating-point two-norm can be expressed as
+      the square root of a mixed-error dot product: one copy of the input
+      appears componentwise perturbed, and a small absolute residual accounts
+      for underflow.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#bfVNRM1"><span class="id" title="lemma">bfVNRM1</span></a></span>: Shows that the floating-point one-norm equals the exact
+      one-norm of a slightly perturbed input vector.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+<a id="lab71"></a><h2 class="section">Dependencies</h2>
+
+
+<div class="paragraph"> </div>
+
+    This file relies on:
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="library">preamble</span></span>, <span class="inlinecode"><span class="id" title="library">common</span></span>: basic setup and shared definitions
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="library">dotprod_model</span></span>, <span class="inlinecode"><span class="id" title="library">sum_model</span></span>: relational models of dot product and summation
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="library">float_acc_lems</span></span>: elementary floating-point accuracy lemmas
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="library">dot_acc</span></span>, <span class="inlinecode"><span class="id" title="library">sum_acc</span></span>: dot product and summation accuracy theorems
+
+</li>
+</ul>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.accuracy_proofs</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.preamble.html#"><span class="id" title="library">preamble</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.common.html#"><span class="id" title="library">common</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#"><span class="id" title="library">dotprod_model</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#"><span class="id" title="library">sum_model</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.float_acc_lems.html#"><span class="id" title="library">float_acc_lems</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.dot_acc.html#"><span class="id" title="library">dot_acc</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#"><span class="id" title="library">sum_acc</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab72"></a><h1 class="section">Two-Norm</h1>
+
+</div>
+<div class="code">
 
 <br/>
 <span class="id" title="keyword">Section</span> <a id="TwoNorm" class="idref" href="#TwoNorm"><span class="id" title="section">TwoNorm</span></a>.<br/>
-<span class="id" title="keyword">Context</span> {<a id="TwoNorm.NAN" class="idref" href="#TwoNorm.NAN"><span class="id" title="variable">NAN</span></a>: <span class="id" title="class">FPCore.Nans</span>} {<a id="TwoNorm.t" class="idref" href="#TwoNorm.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
 
 <br/>
-<span class="id" title="keyword">Definition</span> <a id="two_normF" class="idref" href="#two_normF"><span class="id" title="definition">two_normF</span></a> (<a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>)) : <span class="id" title="axiom">R</span> := <span class="id" title="definition">sqrt</span> (<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:3"><span class="id" title="variable">x</span></a>)).<br/>
-<span class="id" title="keyword">Definition</span> <a id="two_normR" class="idref" href="#two_normR"><span class="id" title="definition">two_normR</span></a> (<a id="x:4" class="idref" href="#x:4"><span class="id" title="binder">x</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span>) : <span class="id" title="axiom">R</span> := <span class="id" title="definition">sqrt</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:4"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:4"><span class="id" title="variable">x</span></a>).<br/>
+<span class="id" title="keyword">Context</span> {<a id="TwoNorm.NAN" class="idref" href="#TwoNorm.NAN"><span class="id" title="variable">NAN</span></a> : <span class="id" title="class">FPCore.Nans</span>} {<a id="TwoNorm.t" class="idref" href="#TwoNorm.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
 
 <br/>
-<span class="id" title="keyword">Variable</span> (<a id="TwoNorm.x" class="idref" href="#TwoNorm.x"><span class="id" title="variable">x</span></a> : <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>)).<br/>
-<span class="id" title="keyword">Notation</span> <a id="xR" class="idref" href="#xR"><span class="id" title="abbreviation">xR</span></a> := (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="n" class="idref" href="#n"><span class="id" title="abbreviation">n</span></a>:= (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a>).<br/>
-<span class="id" title="keyword">Hypothesis</span> <a id="TwoNorm.Hfin" class="idref" href="#TwoNorm.Hfin"><span class="id" title="variable">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+</div>
+
+<div class="doc">
+The floating-point two-norm: the square root of the floating-point dot
+    product of a vector with itself, coerced to a real number. 
+</div>
+<div class="code">
 
 <br/>
-<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="g1" class="idref" href="#g1"><span class="id" title="abbreviation">g1</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g1"><span class="id" title="definition">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Definition</span> <a id="two_normF" class="idref" href="#two_normF"><span class="id" title="definition">two_normF</span></a> (<a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>)) : <span class="id" title="axiom">R</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">sqrt</span> (<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:3"><span class="id" title="variable">x</span></a>)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The exact real-valued two-norm: the square root of the real dot product
+    of a vector with itself. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="two_normR" class="idref" href="#two_normR"><span class="id" title="definition">two_normR</span></a> (<a id="x:4" class="idref" href="#x:4"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span>) : <span class="id" title="axiom">R</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">sqrt</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:4"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:4"><span class="id" title="variable">x</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> (<a id="TwoNorm.x" class="idref" href="#TwoNorm.x"><span class="id" title="variable">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>)).<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="xR" class="idref" href="#xR"><span class="id" title="abbreviation">xR</span></a>       := (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="n" class="idref" href="#n"><span class="id" title="abbreviation">n</span></a>        := (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a>        := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="g1" class="idref" href="#g1"><span class="id" title="abbreviation">g1</span></a>       := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g1"><span class="id" title="definition">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="neg_zero" class="idref" href="#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#neg_zero"><span class="id" title="definition">common.neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.t"><span class="id" title="variable">t</span></a>).<br/>
 
 <br/>
-<span class="id" title="keyword">Lemma</span> <a id="bfVNRM2" class="idref" href="#bfVNRM2"><span class="id" title="lemma">bfVNRM2</span></a>:<br/>
-&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="x':9" class="idref" href="#x':9"><span class="id" title="binder">x'</span></a> : <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span>) (<a id="eta:10" class="idref" href="#eta:10"><span class="id" title="binder">eta</span></a> : <span class="id" title="axiom">R</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a><br/>
-&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#two_normF"><span class="id" title="definition">two_normF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">sqrt</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x':9"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#xR"><span class="id" title="abbreviation">xR</span></a> <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#eta:10"><span class="id" title="variable">eta</span></a>) <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="m:11" class="idref" href="#m:11"><span class="id" title="binder">m</span></a>, (<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:11"><span class="id" title="variable">m</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a>)%<span class="id" title="var">nat</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:12" class="idref" href="#delta:12"><span class="id" title="binder">delta</span></a><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">nth</span> 0 <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x':9"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:11"><span class="id" title="variable">m</span></a>  <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<span class="id" title="definition">nth</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:11"><span class="id" title="variable">m</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#delta:12"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#delta:12"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#g"><span class="id" title="abbreviation">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>  <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+</div>
+
+<div class="doc">
+We assume the floating-point dot product <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a></span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a></span> is finite,
+    which is necessary for <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#two_normF"><span class="id" title="definition">two_normF</span></a></span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a></span> to be well-defined. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Hypothesis</span> <a id="TwoNorm.Hfin" class="idref" href="#TwoNorm.Hfin"><span class="id" title="variable">Hfin</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#bfVNRM2"><span class="id" title="lemma">bfVNRM2</span></a></span> expresses the floating-point two-norm as the square root of
+    a mixed-error dot product. One copy of the input appears componentwise
+    perturbed by a relative factor bounded by \(g(n)\), and an
+    absolute residual bounded by \(g_1(n,n)\) accounts for
+    underflow. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="bfVNRM2" class="idref" href="#bfVNRM2"><span class="id" title="lemma">bfVNRM2</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="x':9" class="idref" href="#x':9"><span class="id" title="binder">x'</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span>) (<a id="eta:10" class="idref" href="#eta:10"><span class="id" title="binder">eta</span></a> : <span class="id" title="axiom">R</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#two_normF"><span class="id" title="definition">two_normF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">sqrt</span> (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodR"><span class="id" title="definition">dotprodR</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x':9"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#xR"><span class="id" title="abbreviation">xR</span></a> <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#eta:10"><span class="id" title="variable">eta</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="m:11" class="idref" href="#m:11"><span class="id" title="binder">m</span></a>, (<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:11"><span class="id" title="variable">m</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a>)%<span class="id" title="var">nat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:12" class="idref" href="#delta:12"><span class="id" title="binder">delta</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">nth</span> 0 <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x':9"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:11"><span class="id" title="variable">m</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<span class="id" title="definition">nth</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:11"><span class="id" title="variable">m</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#delta:12"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#delta:12"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#g"><span class="id" title="abbreviation">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#eta:10"><span class="id" title="variable">eta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#g1"><span class="id" title="abbreviation">g1</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a>.<br/>
 
 <br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#TwoNorm"><span class="id" title="section">TwoNorm</span></a>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab73"></a><h1 class="section">One-Norm</h1>
+
+</div>
+<div class="code">
+
+<br/>
 <span class="id" title="keyword">Section</span> <a id="OneNorm" class="idref" href="#OneNorm"><span class="id" title="section">OneNorm</span></a>.<br/>
-<span class="id" title="keyword">Context</span> {<a id="OneNorm.NAN" class="idref" href="#OneNorm.NAN"><span class="id" title="variable">NAN</span></a>: <span class="id" title="class">FPCore.Nans</span>} {<a id="OneNorm.t" class="idref" href="#OneNorm.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
 
 <br/>
-<span class="id" title="keyword">Definition</span> <a id="one_normF" class="idref" href="#one_normF"><span class="id" title="definition">one_normF</span></a> (<a id="x:15" class="idref" href="#x:15"><span class="id" title="binder">x</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.t"><span class="id" title="variable">t</span></a>)) : <span class="id" title="axiom">R</span> := <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:15"><span class="id" title="variable">x</span></a>).<br/>
-<span class="id" title="keyword">Definition</span> <a id="one_normR" class="idref" href="#one_normR"><span class="id" title="definition">one_normR</span></a> (<a id="x:16" class="idref" href="#x:16"><span class="id" title="binder">x</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span>) : <span class="id" title="axiom">R</span> := <span class="id" title="definition">fold_right</span> <span class="id" title="axiom">Rplus</span> 0 <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:16"><span class="id" title="variable">x</span></a>.<br/>
+<span class="id" title="keyword">Context</span> {<a id="OneNorm.NAN" class="idref" href="#OneNorm.NAN"><span class="id" title="variable">NAN</span></a> : <span class="id" title="class">FPCore.Nans</span>} {<a id="OneNorm.t" class="idref" href="#OneNorm.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
 
 <br/>
-<span class="id" title="keyword">Variables</span> (<a id="OneNorm.x" class="idref" href="#OneNorm.x"><span class="id" title="variable">x</span></a> : <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.t"><span class="id" title="variable">t</span></a>)).<br/>
-<span class="id" title="keyword">Hypothesis</span> <a id="OneNorm.Hfin" class="idref" href="#OneNorm.Hfin"><span class="id" title="variable">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+</div>
+
+<div class="doc">
+The floating-point one-norm: the real value of the floating-point
+    left-to-right accumulation of the vector entries. 
+</div>
+<div class="code">
 
 <br/>
-<span class="id" title="keyword">Notation</span> <a id="xR" class="idref" href="#xR"><span class="id" title="abbreviation">xR</span></a> := (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="n" class="idref" href="#n"><span class="id" title="abbreviation">n</span></a>:= (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Definition</span> <a id="one_normF" class="idref" href="#one_normF"><span class="id" title="definition">one_normF</span></a> (<a id="x:15" class="idref" href="#x:15"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.t"><span class="id" title="variable">t</span></a>)) : <span class="id" title="axiom">R</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:15"><span class="id" title="variable">x</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The exact real-valued one-norm: the sum of a list of real numbers. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="one_normR" class="idref" href="#one_normR"><span class="id" title="definition">one_normR</span></a> (<a id="x:16" class="idref" href="#x:16"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span>) : <span class="id" title="axiom">R</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">fold_right</span> <span class="id" title="axiom">Rplus</span> 0 <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x:16"><span class="id" title="variable">x</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> (<a id="OneNorm.x" class="idref" href="#OneNorm.x"><span class="id" title="variable">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.t"><span class="id" title="variable">t</span></a>)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We assume the floating-point sum <span class="inlinecode"><a class="idref" href="LAProof.C.verif_cholesky.html#sumF"><span class="id" title="definition">sumF</span></a></span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a></span> is finite, which is necessary
+    for <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#one_normF"><span class="id" title="definition">one_normF</span></a></span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a></span> to be well-defined. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="OneNorm.Hfin" class="idref" href="#OneNorm.Hfin"><span class="id" title="variable">Hfin</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="xR" class="idref" href="#xR"><span class="id" title="abbreviation">xR</span></a>       := (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="n" class="idref" href="#n"><span class="id" title="abbreviation">n</span></a>        := (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a>        := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.t"><span class="id" title="variable">t</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="neg_zero" class="idref" href="#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#neg_zero"><span class="id" title="definition">common.neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.t"><span class="id" title="variable">t</span></a>).<br/>
 
 <br/>
-<span class="id" title="keyword">Lemma</span> <a id="bfVNRM1" class="idref" href="#bfVNRM1"><span class="id" title="lemma">bfVNRM1</span></a>:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="x':21" class="idref" href="#x':21"><span class="id" title="binder">x'</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#one_normF"><span class="id" title="definition">one_normF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#one_normR"><span class="id" title="definition">one_normR</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x':21"><span class="id" title="variable">x'</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="m:22" class="idref" href="#m:22"><span class="id" title="binder">m</span></a>, (<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:22"><span class="id" title="variable">m</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a>)%<span class="id" title="var">nat</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:23" class="idref" href="#delta:23"><span class="id" title="binder">delta</span></a><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">nth</span> 0 <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x':21"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:22"><span class="id" title="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<span class="id" title="definition">nth</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:22"><span class="id" title="variable">m</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#delta:23"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#delta:23"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a> <span class="id" title="notation">-</span> 1)<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#bfVNRM1"><span class="id" title="lemma">bfVNRM1</span></a></span> shows that the floating-point one-norm equals the exact
+    one-norm of a perturbed input vector, where each component is perturbed
+    by a relative factor bounded by \(g(n-1)\). 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="bfVNRM1" class="idref" href="#bfVNRM1"><span class="id" title="lemma">bfVNRM1</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="x':21" class="idref" href="#x':21"><span class="id" title="binder">x'</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#one_normF"><span class="id" title="definition">one_normF</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#one_normR"><span class="id" title="definition">one_normR</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x':21"><span class="id" title="variable">x'</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="m:22" class="idref" href="#m:22"><span class="id" title="binder">m</span></a>, (<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:22"><span class="id" title="variable">m</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a>)%<span class="id" title="var">nat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:23" class="idref" href="#delta:23"><span class="id" title="binder">delta</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">nth</span> 0 <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#x':21"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:22"><span class="id" title="variable">m</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<span class="id" title="definition">nth</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm.x"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#m:22"><span class="id" title="variable">m</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#delta:23"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#delta:23"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#n"><span class="id" title="abbreviation">n</span></a> <span class="id" title="notation">-</span> 1)<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
 
 <br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="LAProof.accuracy_proofs.vecnorm_acc.html#OneNorm"><span class="id" title="section">OneNorm</span></a>.<br/>
@@ -84,7 +281,7 @@
 </div>
 
 <div id="footer">
-<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
 </div>
 
 </div>

@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+<h1 class="libtitle">LAProof.accuracy_proofs.sum_is_finite</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab80"></a><h1 class="section">Finite Sum Boundedness</h1>
+
+
+<div class="paragraph"> </div>
+
+    This file establishes conditions under which floating-point summation
+    remains finite (non-infinite, non-NaN). The central contributions are:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#is_finite_sum_no_overflow'"><span class="id" title="lemma">is_finite_sum_no_overflow'</span></a></span>: a helper lemma showing that the floating-point
+      sum is finite whenever both summands are finite and no overflow occurs.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_is_finite.html#fun_bnd"><span class="id" title="definition">fun_bnd</span></a></span>: a bound on individual list elements sufficient to guarantee
+      that their floating-point sum does not overflow. This bound decreases
+      monotonically as the list length grows, reflecting the accumulation of
+      rounding error.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_is_finite.html#fun_bnd_le"><span class="id" title="lemma">fun_bnd_le</span></a></span>: monotonicity of <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_is_finite.html#fun_bnd"><span class="id" title="definition">fun_bnd</span></a></span>, showing that the per-element
+      bound for a list of length S n is no greater than that for length n.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_is_finite.html#finite_sum_from_bounded"><span class="id" title="lemma">finite_sum_from_bounded</span></a></span>: the main theorem. Given a list of finite
+      floating-point values each bounded in absolute value, 
+      the floating-point sum fs satisfying <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sum_rel_Ft"><span class="id" title="definition">sum_rel_Ft</span></a></span> is
+      finite. The proof proceeds by induction on the list, using the
+      <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_is_finite.html#fun_bnd_le"><span class="id" title="lemma">fun_bnd_le</span></a></span> monotonicity lemma to discharge the inductive hypothesis
+      and explicit rounding-error arithmetic to close the overflow bound.
+
+</li>
+</ul>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.accuracy_proofs</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.preamble.html#"><span class="id" title="library">preamble</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.real_lemmas.html#"><span class="id" title="library">real_lemmas</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.common.html#"><span class="id" title="library">common</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#"><span class="id" title="library">dotprod_model</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#"><span class="id" title="library">sum_model</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.float_acc_lems.html#"><span class="id" title="library">float_acc_lems</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#"><span class="id" title="library">fma_dot_acc</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#"><span class="id" title="library">sum_acc</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="NAN" class="idref" href="#NAN"><span class="id" title="section">NAN</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="NAN.NAN" class="idref" href="#NAN.NAN"><span class="id" title="variable">NAN</span></a> : <span class="id" title="class">FPCore.Nans</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab81"></a><h2 class="section">Overflow-free addition preserves finiteness</h2>
+
+
+<div class="paragraph"> </div>
+
+    If x and y are finite floating-point numbers and their sum does
+    not overflow (in the sense of <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.float_acc_lems.html#Bplus_no_overflow"><span class="id" title="definition">Bplus_no_overflow</span></a></span>), then their sum is
+    is finite. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="is_finite_sum_no_overflow'" class="idref" href="#is_finite_sum_no_overflow'"><span class="id" title="lemma">is_finite_sum_no_overflow'</span></a> (<a id="t:3" class="idref" href="#t:3"><span class="id" title="binder">t</span></a> : <span class="id" title="record">type</span>) :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:4" class="idref" href="#x:4"><span class="id" title="binder">x</span></a> <a id="y:5" class="idref" href="#y:5"><span class="id" title="binder">y</span></a> : <span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:3"><span class="id" title="variable">t</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfinx:6" class="idref" href="#Hfinx:6"><span class="id" title="binder">Hfinx</span></a> : <span class="id" title="definition">Binary.is_finite</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#x:4"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfiny:7" class="idref" href="#Hfiny:7"><span class="id" title="binder">Hfiny</span></a> : <span class="id" title="definition">Binary.is_finite</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#y:5"><span class="id" title="variable">y</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hov:8" class="idref" href="#Hov:8"><span class="id" title="binder">Hov</span></a>   : @<a class="idref" href="LAProof.accuracy_proofs.float_acc_lems.html#Bplus_no_overflow"><span class="id" title="definition">Bplus_no_overflow</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:3"><span class="id" title="variable">t</span></a> (<span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#x:4"><span class="id" title="variable">x</span></a>) (<span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#y:5"><span class="id" title="variable">y</span></a>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Binary.is_finite</span> (<span class="id" title="definition">BPLUS</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#x:4"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#y:5"><span class="id" title="variable">y</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab82"></a><h2 class="section">Per-element bound for finite summation</h2>
+
+
+<div class="paragraph"> </div>
+
+    <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_is_finite.html#fun_bnd"><span class="id" title="definition">fun_bnd</span></a></span> <span class="inlinecode"><a class="idref" href="LAProof.C.matrix_model.html#AlternatePresentations.WithNaN.t"><span class="id" title="variable">t</span></a></span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_dot_acc.html#n"><span class="id" title="abbreviation">n</span></a></span> is the maximum absolute value that each element of an
+    n-element list may have while still guaranteeing that the
+    floating-point sum of the list is finite.  It is defined as
+
+<div class="paragraph"> </div>
+
+    <code>fmax t / (1 + default_rel t)  *  1 / (1 + n * (g t (n-1) + 1))</code>
+
+<div class="paragraph"> </div>
+
+    where the function g encodes the standard (1 + eps)^k - 1 rounding-error 
+    growth factor. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="fun_bnd" class="idref" href="#fun_bnd"><span class="id" title="definition">fun_bnd</span></a> (<a id="t:9" class="idref" href="#t:9"><span class="id" title="binder">t</span></a> : <span class="id" title="record">type</span>) (<a id="n:10" class="idref" href="#n:10"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="notation">(</span>@<a class="idref" href="LAProof.accuracy_proofs.common.html#fmax"><span class="id" title="definition">fmax</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:9"><span class="id" title="variable">t</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">/</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> @<a class="idref" href="LAProof.accuracy_proofs.common.html#default_rel"><span class="id" title="definition">default_rel</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:9"><span class="id" title="variable">t</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">×</span> 1 <span class="id" title="notation">/</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <span class="id" title="definition">INR</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#n:10"><span class="id" title="variable">n</span></a> <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:9"><span class="id" title="variable">t</span></a> (<a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#n:10"><span class="id" title="variable">n</span></a> <span class="id" title="notation">-</span> 1) <span class="id" title="notation">+</span> 1<span class="id" title="notation">)</span><span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab83"></a><h2 class="section">Monotonicity of <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_is_finite.html#fun_bnd"><span class="id" title="definition">fun_bnd</span></a></span></h2>
+
+
+<div class="paragraph"> </div>
+
+    The per-element bound is non-increasing in the list length: a longer
+    list requires each element to be smaller to keep the sum finite. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="fun_bnd_le" class="idref" href="#fun_bnd_le"><span class="id" title="lemma">fun_bnd_le</span></a> (<a id="t:11" class="idref" href="#t:11"><span class="id" title="binder">t</span></a> : <span class="id" title="record">type</span>) (<a id="n:12" class="idref" href="#n:12"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#fun_bnd"><span class="id" title="definition">fun_bnd</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:11"><span class="id" title="variable">t</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#n:12"><span class="id" title="variable">n</span></a>) <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#fun_bnd"><span class="id" title="definition">fun_bnd</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:11"><span class="id" title="variable">t</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#n:12"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab84"></a><h2 class="section">Main theorem: element-wise bound implies finite sum</h2>
+
+
+<div class="paragraph"> </div>
+
+    If every element of l is finite and sufficiently bounded
+    then the floating-point sum fs satisfying <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sum_rel_Ft"><span class="id" title="definition">sum_rel_Ft</span></a></span> <span class="inlinecode"><span class="id" title="var">l</span></span> <span class="inlinecode"><span class="id" title="var">fs</span></span> is finite.
+
+<div class="paragraph"> </div>
+
+    The proof proceeds by induction on l, using <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.fma_is_finite.html#fun_bnd_le"><span class="id" title="lemma">fun_bnd_le</span></a></span> to transfer
+    the per-element bound to the tail, then closing the overflow condition
+    via explicit rounding-error arithmetic and algebraic manipulation. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="finite_sum_from_bounded" class="idref" href="#finite_sum_from_bounded"><span class="id" title="lemma">finite_sum_from_bounded</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="t:13" class="idref" href="#t:13"><span class="id" title="binder">t</span></a> : <span class="id" title="record">type</span>) (<a id="l:14" class="idref" href="#l:14"><span class="id" title="binder">l</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:13"><span class="id" title="variable">t</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="fs:15" class="idref" href="#fs:15"><span class="id" title="binder">fs</span></a> : <span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:13"><span class="id" title="variable">t</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfs:16" class="idref" href="#Hfs:16"><span class="id" title="binder">Hfs</span></a> : <a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sum_rel_Ft"><span class="id" title="definition">sum_rel_Ft</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#l:14"><span class="id" title="variable">l</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#fs:15"><span class="id" title="variable">fs</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="x:17" class="idref" href="#x:17"><span class="id" title="binder">x</span></a>, <span class="id" title="definition">In</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#x:17"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#l:14"><span class="id" title="variable">l</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Binary.is_finite</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#x:17"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <span class="id" title="definition">Rabs</span> (<span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#x:17"><span class="id" title="variable">x</span></a>) <span class="id" title="notation">&lt;</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#fun_bnd"><span class="id" title="definition">fun_bnd</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#t:13"><span class="id" title="variable">t</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#length"><span class="id" title="definition">length</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#l:14"><span class="id" title="variable">l</span></a>)<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Binary.is_finite</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#fs:15"><span class="id" title="variable">fs</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="LAProof.accuracy_proofs.sum_is_finite.html#NAN"><span class="id" title="section">NAN</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

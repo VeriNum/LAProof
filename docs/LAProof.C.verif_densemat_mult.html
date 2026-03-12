@@ -4,9 +4,15 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link href="coqdoc.css" rel="stylesheet" type="text/css" />
-<title>LAProof.C.verif_densemat_mult: VST proofs dense matrix multiply functions</title>
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
-
 <body>
 
 <div id="page">
@@ -15,18 +21,17 @@
 </div>
 
 <div id="main">
-
 <h1 class="libtitle">LAProof.C.verif_densemat_mult: VST proofs dense matrix multiply functions</h1>
 
 <div class="code">
 </div>
 
 <div class="doc">
-<a id="lab26"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
+<a id="lab158"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="var">densemat.c</span></span></h2>
 
 <div class="paragraph"> </div>
 
-<a id="lab27"></a><h1 class="section">Prologue.</h1>
+<a id="lab159"></a><h1 class="section">Prologue.</h1>
 
 
 <div class="paragraph"> </div>
@@ -58,12 +63,12 @@
 <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">logic</span>.<br/>
 
 <br/>
-<span class="id" title="keyword">Local Definition</span> <a id="upto_row_col" class="idref" href="#upto_row_col"><span class="id" title="definition">upto_row_col</span></a> {<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>} [<a id="m:2" class="idref" href="#m:2"><span class="id" title="binder">m</span></a> <a id="n:3" class="idref" href="#n:3"><span class="id" title="binder">n</span></a>] (<a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#T:1"><span class="id" title="variable">T</span></a><span class="id" title="notation">]</span><span class="id" title="notation">_</span><span class="id" title="notation">(</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#m:2"><span class="id" title="variable">m</span></a><span class="id" title="notation">,</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#n:3"><span class="id" title="variable">n</span></a><span class="id" title="notation">)</span>) (<a id="i:5" class="idref" href="#i:5"><span class="id" title="binder">i</span></a> <a id="j:6" class="idref" href="#j:6"><span class="id" title="binder">j</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#T:1"><span class="id" title="variable">T</span></a><span class="id" title="notation">]</span><span class="id" title="notation">_</span><span class="id" title="notation">(</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#m:2"><span class="id" title="variable">m</span></a><span class="id" title="notation">,</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#n:3"><span class="id" title="variable">n</span></a><span class="id" title="notation">)</span> :=<br/>
+<span class="id" title="keyword">Local Definition</span> <a id="upto_row_col" class="idref" href="#upto_row_col"><span class="id" title="definition">upto_row_col</span></a> {<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>} [<a id="m:2" class="idref" href="#m:2"><span class="id" title="binder">m</span></a> <a id="n:3" class="idref" href="#n:3"><span class="id" title="binder">n</span></a>] (<a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#T:1"><span class="id" title="variable">T</span></a><span class="id" title="notation">]</span><span class="id" title="notation">_</span><span class="id" title="notation">(</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#m:2"><span class="id" title="variable">m</span></a><span class="id" title="notation">,</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#n:3"><span class="id" title="variable">n</span></a><span class="id" title="notation">)</span>) (<a id="i:5" class="idref" href="#i:5"><span class="id" title="binder">i</span></a> <a id="j:6" class="idref" href="#j:6"><span class="id" title="binder">j</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#T:1"><span class="id" title="variable">T</span></a><span class="id" title="notation">]</span><span class="id" title="notation">_</span><span class="id" title="notation">(</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#m:2"><span class="id" title="variable">m</span></a><span class="id" title="notation">,</span><a class="idref" href="LAProof.C.verif_densemat_mult.html#n:3"><span class="id" title="variable">n</span></a><span class="id" title="notation">)</span> :=<br/>
 &nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">matrix_</span><span class="id" title="notation">(</span><a id="i':7" class="idref" href="#i':7"><span class="id" title="binder">i'</span></a><span class="id" title="notation">,</span><a id="j':8" class="idref" href="#j':8"><span class="id" title="binder">j'</span></a><span class="id" title="notation">)</span><br/>
-&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="definition">Nat.ltb</span> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i':7"><span class="id" title="variable">i'</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i:5"><span class="id" title="variable">i</span></a> <span class="id" title="keyword">then</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="LAProof.C.verif_densemat_mult.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i':7"><span class="id" title="variable">i'</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#j':8"><span class="id" title="variable">j'</span></a>)<br/>
-&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="keyword">if</span> <span class="id" title="definition">Nat.ltb</span> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i:5"><span class="id" title="variable">i</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i':7"><span class="id" title="variable">i'</span></a> <span class="id" title="keyword">then</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
-&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="keyword">if</span> <span class="id" title="definition">Nat.ltb</span> <a class="idref" href="LAProof.C.verif_densemat_mult.html#j':8"><span class="id" title="variable">j'</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#j:6"><span class="id" title="variable">j</span></a> <span class="id" title="keyword">then</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="LAProof.C.verif_densemat_mult.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i':7"><span class="id" title="variable">i'</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#j':8"><span class="id" title="variable">j'</span></a>)<br/>
-&nbsp;&nbsp;<span class="id" title="keyword">else</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="definition">Nat.ltb</span> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i':7"><span class="id" title="variable">i'</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i:5"><span class="id" title="variable">i</span></a> <span class="id" title="keyword">then</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="LAProof.C.verif_densemat_mult.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i':7"><span class="id" title="variable">i'</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#j':8"><span class="id" title="variable">j'</span></a>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="keyword">if</span> <span class="id" title="definition">Nat.ltb</span> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i:5"><span class="id" title="variable">i</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i':7"><span class="id" title="variable">i'</span></a> <span class="id" title="keyword">then</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="keyword">if</span> <span class="id" title="definition">Nat.ltb</span> <a class="idref" href="LAProof.C.verif_densemat_mult.html#j':8"><span class="id" title="variable">j'</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#j:6"><span class="id" title="variable">j</span></a> <span class="id" title="keyword">then</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="LAProof.C.verif_densemat_mult.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#i':7"><span class="id" title="variable">i'</span></a> <a class="idref" href="LAProof.C.verif_densemat_mult.html#j':8"><span class="id" title="variable">j'</span></a>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">else</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
 
 <br/>
 <span class="id" title="keyword">Local Ltac</span> <span class="id" title="var">case_ltb</span> := <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span> |- <span class="id" title="keyword">context</span> [<span class="id" title="definition">Nat.ltb</span> ?<span class="id" title="var">a</span> ?<span class="id" title="var">b</span>] ⇒<br/>
@@ -87,7 +92,7 @@
 </div>
 
 <div id="footer">
-<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
 </div>
 
 </div>

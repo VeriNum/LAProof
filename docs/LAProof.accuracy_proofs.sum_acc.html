@@ -4,9 +4,15 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <link href="coqdoc.css" rel="stylesheet" type="text/css" />
-<title>LAProof.accuracy_proofs.sum_acc</title>
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
-
 <body>
 
 <div id="page">
@@ -15,73 +21,267 @@
 </div>
 
 <div id="main">
-
 <h1 class="libtitle">LAProof.accuracy_proofs.sum_acc</h1>
 
 <div class="code">
+</div>
+
+<div class="doc">
+<a id="lab43"></a><h1 class="section">Floating-Point Summation Accuracy Theorems</h1>
+
+
+<div class="paragraph"> </div>
+
+    This file establishes backward and forward error bounds for floating-point
+    summation, in both list-based and ordinal-indexed forms.
+
+<div class="paragraph"> </div>
+
+<a id="lab44"></a><h2 class="section">Error Factors</h2>
+
+
+<div class="paragraph"> </div>
+
+    Throughout, the accumulated relative error factor is
+    \(g(n) = (1 + \mathbf{u})^n - 1\),
+    where \(\mathbf{u}\) is the unit roundoff for the given
+    floating-point type. It is defined in <span class="inlinecode"><span class="id" title="library">common</span></span>.
+
+<div class="paragraph"> </div>
+
+<a id="lab45"></a><h2 class="section">Main Results</h2>
+
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#bSUM"><span class="id" title="lemma">bSUM</span></a></span>: Shows that the computed floating-point sum can be expressed as
+      the exact sum of a slightly perturbed input list. Each input element is
+      perturbed by a relative factor bounded by
+      \(g(n-1)\), where \(n\) is the list length.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#Fsum_backward_error"><span class="id" title="lemma">Fsum_backward_error</span></a></span>: The ordinal-indexed analogue of <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#bSUM"><span class="id" title="lemma">bSUM</span></a></span>, expressing
+      the same backward error bound for functions indexed by finite ordinals.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#fSUM"><span class="id" title="lemma">fSUM</span></a></span>: Bounds the absolute forward error of the computed sum by
+      \(g(n) \cdot \sum |x_i|\), where
+      \(n\) is the list length.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#Fsum_forward_error"><span class="id" title="lemma">Fsum_forward_error</span></a></span>: The ordinal-indexed analogue of <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#fSUM"><span class="id" title="lemma">fSUM</span></a></span>.
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#sum_forward_error_permute"><span class="id" title="lemma">sum_forward_error_permute</span></a></span>: Shows that the forward error bound is stable
+      under permutation of the input list, so the bound holds regardless of the
+      order in which elements are summed.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+<a id="lab46"></a><h2 class="section">Dependencies</h2>
+
+
+<div class="paragraph"> </div>
+
+    This file relies on:
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="library">preamble</span></span>, <span class="inlinecode"><span class="id" title="library">common</span></span>: basic setup and shared definitions
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="library">sum_model</span></span>: the floating-point summation model <span class="inlinecode"><a class="idref" href="LAProof.C.verif_cholesky.html#sumF"><span class="id" title="definition">sumF</span></a></span> and <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a></span>
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="library">float_acc_lems</span></span>: elementary floating-point accuracy lemmas
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+
+</div>
+<div class="code">
 
 <br/>
-<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.accuracy_proofs</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.accuracy_proofs.preamble.html#"><span class="id" title="library">preamble</span></a> <a class="idref" href="LAProof.accuracy_proofs.common.html#"><span class="id" title="library">common</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#"><span class="id" title="library">sum_model</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.float_acc_lems.html#"><span class="id" title="library">float_acc_lems</span></a> .<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.accuracy_proofs</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.preamble.html#"><span class="id" title="library">preamble</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.common.html#"><span class="id" title="library">common</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#"><span class="id" title="library">sum_model</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.float_acc_lems.html#"><span class="id" title="library">float_acc_lems</span></a>.<br/>
+
+<br/>
 <span class="id" title="keyword">Require</span> <a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#"><span class="id" title="library">LAProof.accuracy_proofs.mv_mathcomp</span></a>.<br/>
-
-<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Permutation</span>.<br/>
 
 <br/>
-<span class="id" title="keyword">Section</span> <a id="WithNan" class="idref" href="#WithNan"><span class="id" title="section">WithNan</span></a> .<br/>
-<span class="id" title="keyword">Context</span> {<a id="WithNan.NAN" class="idref" href="#WithNan.NAN"><span class="id" title="variable">NAN</span></a>: <span class="id" title="class">FPCore.Nans</span>} {<a id="WithNan.t" class="idref" href="#WithNan.t"><span class="id" title="variable">t</span></a>: <span class="id" title="record">type</span>}.<br/>
-<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Section</span> <a id="WithNan" class="idref" href="#WithNan"><span class="id" title="section">WithNan</span></a>.<br/>
 
 <br/>
-<span class="id" title="keyword">Notation</span> <a id="D" class="idref" href="#D"><span class="id" title="abbreviation">D</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#default_rel"><span class="id" title="definition">default_rel</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Context</span> {<a id="WithNan.NAN" class="idref" href="#WithNan.NAN"><span class="id" title="variable">NAN</span></a> : <span class="id" title="class">FPCore.Nans</span>} {<a id="WithNan.t" class="idref" href="#WithNan.t"><span class="id" title="variable">t</span></a> : <span class="id" title="record">type</span>}.<br/>
 
 <br/>
+<span class="id" title="keyword">Notation</span> <a id="g" class="idref" href="#g"><span class="id" title="abbreviation">g</span></a>        := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#g"><span class="id" title="definition">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="D" class="idref" href="#D"><span class="id" title="abbreviation">D</span></a>        := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#default_rel"><span class="id" title="definition">default_rel</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="neg_zero" class="idref" href="#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> := (@<a class="idref" href="LAProof.accuracy_proofs.common.html#neg_zero"><span class="id" title="definition">common.neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>).<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab47"></a><h2 class="section">Backward Error: List Version</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#bSUM"><span class="id" title="lemma">bSUM</span></a></span> expresses the computed floating-point sum as the exact real sum of
+    a slightly perturbed input list. Each element of the perturbed list differs
+    from the corresponding input by a relative factor bounded by
+    \(g(n-1)\), where \(n\) is the list length. 
+</div>
+<div class="code">
+
+<br/>
 <span class="id" title="keyword">Theorem</span> <a id="bSUM" class="idref" href="#bSUM"><span class="id" title="lemma">bSUM</span></a> :<br/>
-&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>)) (<a id="Hfin:4" class="idref" href="#Hfin:4"><span class="id" title="binder">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:3"><span class="id" title="variable">x</span></a>)),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="x':5" class="idref" href="#x':5"><span class="id" title="binder">x'</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:3"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="n:6" class="idref" href="#n:6"><span class="id" title="binder">n</span></a>, (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:6"><span class="id" title="variable">n</span></a> <span class="id" title="notation">&lt;</span> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a>)%<span class="id" title="var">nat</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:7" class="idref" href="#delta:7"><span class="id" title="binder">delta</span></a><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">nth</span> 0 <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:6"><span class="id" title="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<span class="id" title="definition">nth</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:6"><span class="id" title="variable">n</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#delta:7"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#delta:7"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a> <span class="id" title="notation">-</span> 1)<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin:4" class="idref" href="#Hfin:4"><span class="id" title="binder">Hfin</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:3"><span class="id" title="variable">x</span></a>)),<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="x':5" class="idref" href="#x':5"><span class="id" title="binder">x'</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="axiom">R</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:3"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="n:6" class="idref" href="#n:6"><span class="id" title="binder">n</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:6"><span class="id" title="variable">n</span></a> <span class="id" title="notation">&lt;</span> <span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a>)%<span class="id" title="var">nat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:7" class="idref" href="#delta:7"><span class="id" title="binder">delta</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">nth</span> 0 <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:6"><span class="id" title="variable">n</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<span class="id" title="definition">nth</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#neg_zero"><span class="id" title="abbreviation">neg_zero</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:6"><span class="id" title="variable">n</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#delta:7"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#delta:7"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':5"><span class="id" title="variable">x'</span></a> <span class="id" title="notation">-</span> 1)<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab48"></a><h2 class="section">Backward Error: Indexed Version</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#Fsum_backward_error"><span class="id" title="lemma">Fsum_backward_error</span></a></span> lifts <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#bSUM"><span class="id" title="lemma">bSUM</span></a></span> to functions indexed by finite
+    ordinals. The computed sum equals the exact sum of a perturbed family,
+    with each element perturbed by a relative factor bounded by
+    \(g(n-1)\). 
+</div>
+<div class="code">
 
 <br/>
 <span class="id" title="keyword">Theorem</span> <a id="Fsum_backward_error" class="idref" href="#Fsum_backward_error"><span class="id" title="lemma">Fsum_backward_error</span></a> :<br/>
-&nbsp;&nbsp;<span class="id" title="keyword">∀</span> [<a id="n:12" class="idref" href="#n:12"><span class="id" title="binder">n</span></a>] (<a id="x:13" class="idref" href="#x:13"><span class="id" title="binder">x</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>) (<a id="Hfin:14" class="idref" href="#Hfin:14"><span class="id" title="binder">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#F.sum"><span class="id" title="definition">mv_mathcomp.F.sum</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:13"><span class="id" title="variable">x</span></a>)),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="x':15" class="idref" href="#x':15"><span class="id" title="binder">x'</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="axiom">R</span><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#F.sum"><span class="id" title="definition">mv_mathcomp.F.sum</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:13"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">\</span><span class="id" title="notation">sum_i</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':15"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:16"><span class="id" title="variable">i</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="i:19" class="idref" href="#i:19"><span class="id" title="binder">i</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span>, <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:20" class="idref" href="#delta:20"><span class="id" title="binder">delta</span></a><a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':15"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:19"><span class="id" title="variable">i</span></a> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:13"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:19"><span class="id" title="variable">i</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#delta:20"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#delta:20"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:12"><span class="id" title="variable">n</span></a><span class="id" title="notation">-</span>1)<a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> [<a id="n:12" class="idref" href="#n:12"><span class="id" title="binder">n</span></a>] (<a id="x:13" class="idref" href="#x:13"><span class="id" title="binder">x</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin:14" class="idref" href="#Hfin:14"><span class="id" title="binder">Hfin</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#F.sum"><span class="id" title="definition">mv_mathcomp.F.sum</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:13"><span class="id" title="variable">x</span></a>)),<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">(</span></a><a id="x':15" class="idref" href="#x':15"><span class="id" title="binder">x'</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="axiom">R</span><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">),</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#F.sum"><span class="id" title="definition">mv_mathcomp.F.sum</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:13"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">\</span><span class="id" title="notation">sum_i</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':15"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:16"><span class="id" title="variable">i</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="i:19" class="idref" href="#i:19"><span class="id" title="binder">i</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="delta:20" class="idref" href="#delta:20"><span class="id" title="binder">delta</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x':15"><span class="id" title="variable">x'</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:19"><span class="id" title="variable">i</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:13"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:19"><span class="id" title="variable">i</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span>1 <span class="id" title="notation">+</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#delta:20"><span class="id" title="variable">delta</span></a><span class="id" title="notation">)</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#delta:20"><span class="id" title="variable">delta</span></a> <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:12"><span class="id" title="variable">n</span></a> <span class="id" title="notation">-</span> 1)<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab49"></a><h2 class="section">Forward Error: List Version</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#fSUM"><span class="id" title="lemma">fSUM</span></a></span> bounds the absolute forward error of the computed floating-point
+    sum by \(g(n) \cdot \sum |x_i|\), where
+    \(n\) is the list length and \(|x_i|\) denotes the
+    componentwise absolute values of the inputs. 
+</div>
+<div class="code">
 
 <br/>
 <span class="id" title="keyword">Theorem</span> <a id="fSUM" class="idref" href="#fSUM"><span class="id" title="lemma">fSUM</span></a> :<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:21" class="idref" href="#x:21"><span class="id" title="binder">x</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>))  (<a id="Hfin:22" class="idref" href="#Hfin:22"><span class="id" title="binder">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>)),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">)</span> <span class="id" title="notation">-</span> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>)) <span class="id" title="notation">≤</span>  <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>))<span class="id" title="notation">)</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:21" class="idref" href="#x:21"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin:22" class="idref" href="#Hfin:22"><span class="id" title="binder">Hfin</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>) <span class="id" title="notation">-</span> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>)) <span class="id" title="notation">≤</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>) <span class="id" title="notation">×</span> <a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:21"><span class="id" title="variable">x</span></a>)).<br/>
 
 <br/>
-<span class="id" title="keyword">Lemma</span> <a id="Fsum_forward_error" class="idref" href="#Fsum_forward_error"><span class="id" title="lemma">Fsum_forward_error</span></a>: <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> [<a id="n:31" class="idref" href="#n:31"><span class="id" title="binder">n</span></a>] (<a id="x:32" class="idref" href="#x:32"><span class="id" title="binder">x</span></a>: <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span> <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>)  (<a id="Hfin:33" class="idref" href="#Hfin:33"><span class="id" title="binder">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#F.sum"><span class="id" title="definition">mv_mathcomp.F.sum</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:32"><span class="id" title="variable">x</span></a>)),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="notation">\</span><span class="id" title="notation">sum_i</span> <span class="id" title="notation">(</span><span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:32"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:34"><span class="id" title="variable">i</span></a>)<span class="id" title="notation">)</span> <span class="id" title="notation">-</span> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#F.sum"><span class="id" title="definition">mv_mathcomp.F.sum</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:32"><span class="id" title="variable">x</span></a>)) <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:31"><span class="id" title="variable">n</span></a> <span class="id" title="notation">×</span> <span class="id" title="notation">(</span><span class="id" title="notation">\</span><span class="id" title="notation">sum_i</span> <span class="id" title="notation">(</span><span class="id" title="definition">Rabs</span> (<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:32"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:37"><span class="id" title="variable">i</span></a>))<span class="id" title="notation">)</span><span class="id" title="notation">)</span>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab50"></a><h2 class="section">Forward Error: Indexed Version</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#Fsum_forward_error"><span class="id" title="lemma">Fsum_forward_error</span></a></span> lifts <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#fSUM"><span class="id" title="lemma">fSUM</span></a></span> to functions indexed by finite
+    ordinals, giving the same \(g(n) \cdot \sum |x_i|\)
+    bound for the absolute forward error of the indexed sum. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Fsum_forward_error" class="idref" href="#Fsum_forward_error"><span class="id" title="lemma">Fsum_forward_error</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> [<a id="n:31" class="idref" href="#n:31"><span class="id" title="binder">n</span></a>] (<a id="x:32" class="idref" href="#x:32"><span class="id" title="binder">x</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin:33" class="idref" href="#Hfin:33"><span class="id" title="binder">Hfin</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#F.sum"><span class="id" title="definition">mv_mathcomp.F.sum</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:32"><span class="id" title="variable">x</span></a>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="notation">\</span><span class="id" title="notation">sum_i</span> <span class="id" title="notation">(</span><span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:32"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:34"><span class="id" title="variable">i</span></a>)<span class="id" title="notation">)</span> <span class="id" title="notation">-</span> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.mv_mathcomp.html#F.sum"><span class="id" title="definition">mv_mathcomp.F.sum</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:32"><span class="id" title="variable">x</span></a>)) <span class="id" title="notation">≤</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#n:31"><span class="id" title="variable">n</span></a> <span class="id" title="notation">×</span> <span class="id" title="notation">(</span><span class="id" title="notation">\</span><span class="id" title="notation">sum_i</span> <span class="id" title="notation">(</span><span class="id" title="definition">Rabs</span> (<span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:32"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#i:37"><span class="id" title="variable">i</span></a>))<span class="id" title="notation">)</span><span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab51"></a><h2 class="section">Forward Error Under Permutation</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#sum_forward_error_permute'"><span class="id" title="lemma">sum_forward_error_permute'</span></a></span> is an auxiliary lemma: when two lists are
+    permutations of each other, the forward error bound for the computed sum
+    of either list can be expressed using the length of the original list.
+    Used internally by <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#sum_forward_error_permute"><span class="id" title="lemma">sum_forward_error_permute</span></a></span>. 
+</div>
+<div class="code">
 
 <br/>
 <span class="id" title="keyword">Lemma</span> <a id="sum_forward_error_permute'" class="idref" href="#sum_forward_error_permute'"><span class="id" title="lemma">sum_forward_error_permute'</span></a> :<br/>
-&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:40" class="idref" href="#x:40"><span class="id" title="binder">x</span></a> <a id="x0:41" class="idref" href="#x0:41"><span class="id" title="binder">x0</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>))<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin:42" class="idref" href="#Hfin:42"><span class="id" title="binder">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:40"><span class="id" title="variable">x</span></a>))<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin0:43" class="idref" href="#Hfin0:43"><span class="id" title="binder">Hfin0</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>))<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hper:44" class="idref" href="#Hper:44"><span class="id" title="binder">Hper</span></a>: <span class="id" title="inductive">Permutation</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:40"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>),   <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>)<span class="id" title="notation">)</span> <span class="id" title="notation">-</span> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>)) <span class="id" title="notation">≤</span>  <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:40"><span class="id" title="variable">x</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>))<span class="id" title="notation">)</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:40" class="idref" href="#x:40"><span class="id" title="binder">x</span></a> <a id="x0:41" class="idref" href="#x0:41"><span class="id" title="binder">x0</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin:42" class="idref" href="#Hfin:42"><span class="id" title="binder">Hfin</span></a>  : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:40"><span class="id" title="variable">x</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin0:43" class="idref" href="#Hfin0:43"><span class="id" title="binder">Hfin0</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hper:44" class="idref" href="#Hper:44"><span class="id" title="binder">Hper</span></a>  : <span class="id" title="inductive">Permutation</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:40"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>)<span class="id" title="notation">)</span> <span class="id" title="notation">-</span> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>)) <span class="id" title="notation">≤</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:40"><span class="id" title="variable">x</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:41"><span class="id" title="variable">x0</span></a>))<span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#sum_forward_error_permute"><span class="id" title="lemma">sum_forward_error_permute</span></a></span> shows that the forward error bound for the
+    computed sum is invariant under permutation of the input. If two lists
+    are permutations of each other, the absolute forward error for either
+    computed sum is bounded by
+    \(g(n) \cdot \sum |x_i|\)
+    using the shared element set and length \(n\). 
+</div>
+<div class="code">
 
 <br/>
 <span class="id" title="keyword">Theorem</span> <a id="sum_forward_error_permute" class="idref" href="#sum_forward_error_permute"><span class="id" title="lemma">sum_forward_error_permute</span></a> :<br/>
-&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:45" class="idref" href="#x:45"><span class="id" title="binder">x</span></a> <a id="x0:46" class="idref" href="#x0:46"><span class="id" title="binder">x0</span></a>: <a class="idref" href="http://coq.inria.fr/doc/V9.0.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>))<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin:47" class="idref" href="#Hfin:47"><span class="id" title="binder">Hfin</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a>))<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin0:48" class="idref" href="#Hfin0:48"><span class="id" title="binder">Hfin0</span></a>: <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:46"><span class="id" title="variable">x0</span></a>))<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hper:49" class="idref" href="#Hper:49"><span class="id" title="binder">Hper</span></a>: <span class="id" title="inductive">Permutation</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:46"><span class="id" title="variable">x0</span></a>),   <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">)</span> <span class="id" title="notation">-</span> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:46"><span class="id" title="variable">x0</span></a>)) <span class="id" title="notation">≤</span>  <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a>))<span class="id" title="notation">)</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:45" class="idref" href="#x:45"><span class="id" title="binder">x</span></a> <a id="x0:46" class="idref" href="#x0:46"><span class="id" title="binder">x0</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan.t"><span class="id" title="variable">t</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin:47" class="idref" href="#Hfin:47"><span class="id" title="binder">Hfin</span></a>  : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hfin0:48" class="idref" href="#Hfin0:48"><span class="id" title="binder">Hfin0</span></a> : <span class="id" title="definition">Binary.is_finite</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:46"><span class="id" title="variable">x0</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="Hper:49" class="idref" href="#Hper:49"><span class="id" title="binder">Hper</span></a>  : <span class="id" title="inductive">Permutation</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:46"><span class="id" title="variable">x0</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Rabs</span> (<span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a>)<span class="id" title="notation">)</span> <span class="id" title="notation">-</span> <span class="id" title="definition">FT2R</span> (<a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumF"><span class="id" title="definition">sumF</span></a> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x0:46"><span class="id" title="variable">x0</span></a>)) <span class="id" title="notation">≤</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#g"><span class="id" title="abbreviation">g</span></a> (<span class="id" title="definition">size</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a>) <span class="id" title="notation">×</span> <span class="id" title="notation">(</span><a class="idref" href="LAProof.accuracy_proofs.sum_model.html#sumR"><span class="id" title="definition">sumR</span></a> (<span class="id" title="definition">map</span> <span class="id" title="definition">Rabs</span> (<span class="id" title="definition">map</span> <span class="id" title="definition">FT2R</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#x:45"><span class="id" title="variable">x</span></a>))<span class="id" title="notation">)</span>.<br/>
 
 <br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#WithNan"><span class="id" title="section">WithNan</span></a>.<br/>
@@ -89,7 +289,7 @@
 </div>
 
 <div id="footer">
-<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
 </div>
 
 </div>
