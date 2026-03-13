@@ -10,7 +10,7 @@ html2: html index.html
 	cp index.html html/index.html
 
 publish: html2 cdocs
-	cd gh-pages; git submodule update
+	cd gh-pages; git submodule update; git checkout gh-pages
 	cd gh-pages; rm -rf docs; mkdir docs
 	cp html/* gh-pages/docs
 	cp -R cdoc/*.html cdoc/*_files gh-pages/docs
