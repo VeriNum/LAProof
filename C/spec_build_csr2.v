@@ -141,8 +141,16 @@ Definition csrg_token (csr: csr_matrix Tdouble) (p: val) : mpred :=
         spec_malloc.malloc_token Ews (tarray tuint (Zlength (csr_vals csr))) ci *
         spec_malloc.malloc_token Ews (tarray tuint (csr_rows csr + 1)) rp)).
 
-(* Definition csr_token (m: matrix Tdouble) (p: val) : mpred :=
- EX (csr: csr_matrix Tdouble) (H: csr_to_matrix csr m), csr_token' csr p. *)
+Definition csr_rep' sh (csr: csr_matrix Tdouble) (v: val) (ci: val) (rp: val) (p: val) :=
+  data_at sh t_csr (v,(ci,(rp,(Vint (Int.repr (csr_rows csr)), Vint (Int.repr (csr_cols csr)))))) p *
+  data_at sh (tarray tdouble (Zlength (csr_col_ind csr))) (map Vfloat (csr_vals csr)) v * 
+  data_at sh (tarray tuint (Zlength (csr_col_ind csr))) (map Vint (map Int.repr (csr_col_ind csr))) ci *
+  data_at sh (tarray tuint (csr_rows csr + 1)) (map Vint (map Int.repr (csr_row_ptr csr))) rp.
+
+Definition csr_rep (sh: share) (csr: csr_matrix Tdouble) (p: val) : mpred :=
+  EX v: val, EX ci: val, EX rp: val,
+  csr_rep' sh csr v ci rp p.
+
 
 Definition coog_to_csrg_aux_spec := 
   DECLARE _coog_to_csrg_aux
@@ -193,28 +201,8 @@ Definition coog_to_csrg_spec :=
       csrg_rep Ews csrg q; 
       csrg_token csrg q;
       mem_mgr gv).
-(* add csr_token *)
 
 (* Ews: extern write share (for newly malloced object) *)
-
-(* Definition coog_to_csrg_spec :=
-  DECLARE _coo_shell_to_csr_shell
-  WITH sh : share, coog : list (int * int), p : val, rows : int, cols : int, gv : globals
-  PRE [tptr (Tstruct _rowcol noattr), tuint, tuint, tuint]
-    PROP (  )
-    PARAMS (p; (Vint (Int.repr (Zlength coog))); (Vint rows); (Vint cols))
-    GLOBALS (gv) 
-    SEP (data_at sh (Tarray (Tstruct _rowcol noattr) (Zlength coog) noattr) (map intpair_to_valpair coog) p; mem_mgr gv)
-  POST [tptr (Tstruct _csr_matrix noattr)]
-    EX coog' : list (int * int), 
-    EX csr : csr_matrix Tdouble,
-    EX q : val,
-    PROP (Permutation coog coog'; 
-      coog_csr (Build_coog_matrix (Int.intval rows) (Int.intval cols) (map intpair_to_Zpair coog)) csr)
-    RETURN (q)
-    SEP (data_at sh (Tarray (Tstruct _rowcol noattr) (Zlength coog) noattr) (map intpair_to_valpair coog') p;
-      csr_rep Ews csr q;
-      mem_mgr gv). *)
 
 
 Definition csr_same_graph {t : type} (csr1 csr2 : csr_matrix t) :=
@@ -223,24 +211,41 @@ Definition csr_same_graph {t : type} (csr1 csr2 : csr_matrix t) :=
   csr_row_ptr csr1 = csr_row_ptr csr2.
 
 
-(* Definition reset_csr_spec :=
-  DECLARE _reset_csr 
+Definition reset_csr_spec := 
+  DECLARE _reset_csr
   WITH sh : share, csr : csr_matrix Tdouble, csr' : csr_matrix Tdouble, q : val, gv : globals
   PRE [tptr (Tstruct _csr_matrix noattr)]
     PROP (writable_share sh)
     PARAMS (q)
-    SEP (csr_rep sh csr q; mem_mgr gv)
-  POST [Tvoid]
-    PROP (csr_same_graph csr csr';
+    SEP (csrg_rep sh csr q; csrg_token csr q; mem_mgr gv)
+  POST [Tvoid]    
+    PROP (csr_same_graph csr csr'; 
       Forall (fun x => x = Zconst Tdouble 0) (csr_vals csr'))
     RETURN ()
-    SEP (csr_rep sh csr q; mem_mgr gv). *)
+    SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv).
 
 
-(* How to say that (r, c) is in the csr representation? *)
-(* Definition add_to_csr_spec :=
+(* a notion of a csr graph *)
+
+(* a predicate: rc is in the csr graph *)
+(* *)
+
+Definition add_to_csr_spec :=
   DECLARE _add_to_csr
-  WITH sh : share, csr : csr_matrix Tdouble,  *)
+  WITH 
+  PRE [tptr (Tstruct _csr_matrix noattr), tuint, tuint, tdouble]
+    PROP ((* rc is in the csr graph *))
+    PARAMS (q; Vint (Int.repr r); Vint (Int.repr c); Vfloat x)
+    SEP (csr_rep sh csr q; csrg_token csr q; mem_mgr gv)
+  POST [Tvoid]
+    PROP ((* relation between csr and csr' *))
+    RETURN ()
+    SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv)
+    .
+(* How to say that (r, c) is in the csr representation? *)
+(* Convert the csr to normal matrices / define predicates on the csrs directly? *)
+
+
 
 
 Definition surely_malloc_spec :=
