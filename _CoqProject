@@ -49,3 +49,5 @@ C/partial_csrg.v
 C/build_csr2.v
 C/spec_build_csr2.v
 C/verif_build_csr2.v
+C/sparse_client.v
+C/spec_sparse_client.v

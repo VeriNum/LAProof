@@ -5,6 +5,8 @@ C/build_csr.v
 C/build_csr2.v
 C/cholesky.v
 C/densemat.v
+C/sparse_client.v
+C/sparse_client
 Makefile.coq
 Makefile.coq.conf
 CoqMakefile
