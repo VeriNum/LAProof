@@ -37,8 +37,8 @@ Definition rowcol_range (rowcol : Z * Z) :=
   | (r, c) => 0 <= r < Int.max_unsigned /\ 0 <= c < Int.max_unsigned
   end.
 
-Definition swap_spec :=
- DECLARE _swap
+Definition swap_rc_spec :=
+ DECLARE _swap_rc
  WITH sh: share, coog: list (Z * Z), p: val, a: Z, b: Z
  PRE [ tptr (Tstruct _rowcol noattr), tuint, tuint ]
     PROP(writable_share sh;
@@ -230,7 +230,7 @@ Definition reset_csr_spec :=
 (* a predicate: rc is in the csr graph *)
 (* *)
 
-Definition add_to_csr_spec :=
+(* Definition add_to_csr_spec :=
   DECLARE _add_to_csr
   WITH 
   PRE [tptr (Tstruct _csr_matrix noattr), tuint, tuint, tdouble]
@@ -241,7 +241,7 @@ Definition add_to_csr_spec :=
     PROP ((* relation between csr and csr' *))
     RETURN ()
     SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv)
-    .
+    . *)
 (* How to say that (r, c) is in the csr representation? *)
 (* Convert the csr to normal matrices / define predicates on the csrs directly? *)
 
@@ -263,7 +263,7 @@ Definition surely_malloc_spec :=
        SEP (mem_mgr gv; malloc_token Ews t p * data_at_ Ews t p).
 
 Definition Build_CSR2_ASI : funspecs := [
-  surely_malloc_spec; swap_spec; coog_quicksort_spec; 
+  surely_malloc_spec; swap_rc_spec; coog_quicksort_spec; 
   coog_count_spec; start_coog_spec; add_to_coog_spec;
   coog_to_csrg_aux_spec; coog_to_csrg_spec
 ].

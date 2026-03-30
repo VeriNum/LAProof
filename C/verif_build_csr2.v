@@ -11,7 +11,7 @@ Open Scope logic.
 
 Definition Gprog: funspecs := Build_CSR2_ASI ++ SparseASI ++ MathASI.
 
-Lemma body_swap : semax_body Vprog Gprog f_swap swap_spec.
+Lemma body_swap_rc : semax_body Vprog Gprog f_swap_rc swap_rc_spec.
 Proof.
   start_function.
   forward.
