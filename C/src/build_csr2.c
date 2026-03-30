@@ -25,20 +25,20 @@ void free(void *p);
 //   return p;
 // }
 
-void add_to_coo_matrix(struct coo_matrix *p, unsigned i, unsigned j, double x) {
-  unsigned n = p->n;
-  if (n>=p->maxn) exit(2);
-  p->row_ind[n]=i;
-  p->col_ind[n]=j;
-  p->val[n]=x;
-  p->n = n+1;
-}
+// void add_to_coo_matrix(struct coo_matrix *p, unsigned i, unsigned j, double x) {
+//   unsigned n = p->n;
+//   if (n>=p->maxn) exit(2);
+//   p->row_ind[n]=i;
+//   p->col_ind[n]=j;
+//   p->val[n]=x;
+//   p->n = n+1;
+// }
 
 /* end of not used code */
 
 struct rowcol {unsigned row,col;};
 
-void swap(struct rowcol *p, unsigned a, unsigned b) {
+void swap_rc(struct rowcol *p, unsigned a, unsigned b) {
   unsigned i,j;
   i=p[a].row;
   j=p[a].col;
@@ -72,11 +72,11 @@ void coog_quicksort(struct rowcol *p, unsigned base, unsigned n)
     mid = lo + ((hi - lo) >> 1);
     
     if (coog_less(p, mid,lo))
-      swap(p, mid, lo);
+      swap_rc(p, mid, lo);
     if (coog_less(p, hi,mid)) {
-      swap(p, mid, hi);
+      swap_rc(p, mid, hi);
       if (coog_less(p,mid,lo))
-        swap(p, mid, lo);
+        swap_rc(p, mid, lo);
     }
     left = lo + 1;
     right = hi - 1;
@@ -86,7 +86,7 @@ void coog_quicksort(struct rowcol *p, unsigned base, unsigned n)
       while (coog_less(p,mid,right))
         right--;
       if (left < right) {
-	swap(p, left, right);
+	swap_rc(p, left, right);
         if (mid == left)
           mid = right;
         else if (mid == right)
@@ -187,52 +187,48 @@ struct csr_matrix *coog_to_csrg(struct rowcol *rc, unsigned n, unsigned rows, un
 }
 
 /* the following function is divided into two */
-struct csr_matrix *coog_to_csrg_old(struct rowcol *rc, unsigned n, unsigned rows, unsigned cols) {
-  struct csr_matrix *q;
-  unsigned count, i;
-  unsigned r,c, ri, ci, k, l;
-  unsigned *col_ind, *row_ptr;
-  coog_quicksort(rc, 0, n);
-  k = coog_count(n,rc);
-  q = surely_malloc(sizeof(struct csr_matrix));
-  col_ind = surely_malloc(k * sizeof(unsigned));
-  row_ptr = surely_malloc ((rows+1) * sizeof(unsigned));
-  r=-1;
-  c=0; /* this line is unnecessary for correctness but simplifies the proof */
-  l=0;
-  /* partial_csr_0 */
-  for (i=0; i<n; i++) {
-    ri = rc[i].row;
-    ci = rc[i].col;
-    if (ri==r)
-      if (ci==c)
-	/*skip*/; /* partial_CSR_duplicate */
-      else {
-	c=ci;
-	col_ind[l] = ci;
-	l++;           /* partial_CSR_newcol */
-      }
-    else {
-      while (r+1<=ri) row_ptr[++r]=l; /* partial_CSR_skiprow */
-      c= ci;
-      col_ind[l] = ci;
-      l++;            /* partial_CSR_newrow */
-    }
-  }
-  while (r+1<=rows) row_ptr[++r]=l;  /* partial_CSR_lastrows */
-  free(rc);
-  q->val = surely_malloc(k * sizeof(double));
-  q->col_ind = col_ind;
-  q->row_ptr = row_ptr;
-  q->rows = rows;
-  q->cols = cols;
-  return q;          /* partial_CSR_properties */
-}
+// struct csr_matrix *coog_to_csrg_old(struct rowcol *rc, unsigned n, unsigned rows, unsigned cols) {
+//   struct csr_matrix *q;
+//   unsigned i;
+//   unsigned r,c, ri, ci, k, l;
+//   unsigned *col_ind, *row_ptr;
+//   coog_quicksort(rc, 0, n);
+//   k = coog_count(n,rc);
+//   q = surely_malloc(sizeof(struct csr_matrix));
+//   col_ind = surely_malloc(k * sizeof(unsigned));
+//   row_ptr = surely_malloc ((rows+1) * sizeof(unsigned));
+//   r=-1;
+//   c=0; /* this line is unnecessary for correctness but simplifies the proof */
+//   l=0;
+//   /* partial_csr_0 */
+//   for (i=0; i<n; i++) {
+//     ri = rc[i].row;
+//     ci = rc[i].col;
+//     if (ri==r)
+//       if (ci==c)
+// 	/*skip*/; /* partial_CSR_duplicate */
+//       else {
+// 	c=ci;
+// 	col_ind[l] = ci;
+// 	l++;           /* partial_CSR_newcol */
+//       }
+//     else {
+//       while (r+1<=ri) row_ptr[++r]=l; /* partial_CSR_skiprow */
+//       c= ci;
+//       col_ind[l] = ci;
+//       l++;            /* partial_CSR_newrow */
+//     }
+//   }
+//   while (r+1<=rows) row_ptr[++r]=l;  /* partial_CSR_lastrows */
+//   free(rc);
+//   q->val = surely_malloc(k * sizeof(double));
+//   q->col_ind = col_ind;
+//   q->row_ptr = row_ptr;
+//   q->rows = rows;
+//   q->cols = cols;
+//   return q;          /* partial_CSR_properties */
+// }
 
-int main()
-{
-  return 0;
-}
 
 void reset_csr(struct csr_matrix *q) {
   unsigned rows,i,n;
@@ -264,22 +260,22 @@ void add_to_csr(struct csr_matrix *q, unsigned r, unsigned c, double x) {
     val[lo]+=x;
 }
 
-struct csr_matrix *coo_to_csr_matrix(struct coo_matrix *p) {
-  unsigned *prow_ind, *pcol_ind, i, n;
-  double *pval;
-  struct csr_matrix *q;
-  n=p->n;
-  prow_ind=p->row_ind;
-  pcol_ind=p->col_ind;
-  pval = p->val;    
-  struct rowcol *rc = start_coo_shell(n);
-  for (i=0; i<n; i++) 
-    add_to_coo_shell(rc,i,prow_ind[i],pcol_ind[i]);
-  free(rc);
-  q = coo_shell_to_csr_shell(rc,n,p->rows,p->cols);
-  reset_csr_shell(q);
-  for (i=0; i<n; i++)
-    add_to_csr_shell(q,prow_ind[i],pcol_ind[i],pval[i]);
-  return q;
-}
+// struct csr_matrix *coo_to_csr_matrix(struct coo_matrix *p) {
+//   unsigned *prow_ind, *pcol_ind, i, n;
+//   double *pval;
+//   struct csr_matrix *q;
+//   n=p->n;
+//   prow_ind=p->row_ind;
+//   pcol_ind=p->col_ind;
+//   pval = p->val;    
+//   struct rowcol *rc = start_coo_shell(n);
+//   for (i=0; i<n; i++) 
+//     add_to_coo_shell(rc,i,prow_ind[i],pcol_ind[i]);
+//   free(rc);
+//   q = coo_shell_to_csr_shell(rc,n,p->rows,p->cols);
+//   reset_csr_shell(q);
+//   for (i=0; i<n; i++)
+//     add_to_csr_shell(q,prow_ind[i],pcol_ind[i],pval[i]);
+//   return q;
+// }
 
