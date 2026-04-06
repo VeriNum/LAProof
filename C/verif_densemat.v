@@ -388,9 +388,7 @@ start_function.
 forward_call.
 forward_call.
 forward.
-entailer!!.
-(* Simplify this proof when https://github.com/VeriNum/vcfloat/issues/32
-   is resolved. *)
+(* This part of the proof was needed before VCFloat 2.4.1
 f_equal.
 unfold BSQRT, UNOP.
 simpl.
@@ -398,6 +396,7 @@ f_equal.
 extensionality z.
 f_equal.
 apply proof_irr.
+*)
 Qed.
 
 Lemma body_densemat_norm2: semax_body Vprog Gprog f_densemat_norm2 densemat_norm2_spec.
