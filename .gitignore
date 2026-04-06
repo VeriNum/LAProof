@@ -1,8 +1,14 @@
 C/sparse.v
+C/alloc.v
+C/bandmat.v
+C/build_csr.v
+C/cholesky.v
+C/densemat.v
 Makefile.coq
 Makefile.coq.conf
 CoqMakefile
 CoqMakefile.conf
+.history/*
 .*.aux
 .*.d
 *.a
@@ -43,3 +49,4 @@ html/LAProof.*
 html/genindex.html
 html/*.css
 html/toc.html
+.vscode/settings.json

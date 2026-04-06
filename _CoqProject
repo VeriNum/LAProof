@@ -2,6 +2,7 @@
 COQEXTRAFLAGS = "-w -notation-overridden,-ambiguous-paths,-overwriting-delimiting-key,-notation-incompatible-prefix"
   
 accuracy_proofs/preamble.v
+accuracy_proofs/real_lemmas.v
 accuracy_proofs/common.v
 accuracy_proofs/float_acc_lems.v
 accuracy_proofs/dotprod_model.v
@@ -11,6 +12,7 @@ accuracy_proofs/dot_acc_lemmas.v
 accuracy_proofs/dot_acc.v
 accuracy_proofs/vecnorm_acc.v
 accuracy_proofs/fma_dot_acc.v
+accuracy_proofs/sum_is_finite.v
 accuracy_proofs/fma_is_finite.v
 accuracy_proofs/mv_mathcomp.v
 accuracy_proofs/gemv_acc.v

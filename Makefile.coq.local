@@ -1,17 +1,33 @@
 # COQDOC publishing
-COQDOCEXTRAFLAGS= -g --no-lib-name --index genindex --lib-subtitles --interpolate -utf8
+COQDOCEXTRAFLAGS= -g --no-lib-name --with-header header.html --index genindex --lib-subtitles --interpolate -utf8
 
 accuracy: accuracy_proofs/export.vo
 C: C/verif_alloc.vo C/verif_sparse.vo C/verif_sparse_byrows.vo C/VSU_densemat.vo C/verif_build_csr.vo
 
-publish: html cdocs
-	cd gh-pages; git submodule update
+#  Ugh.  We can't just store the reference copy of index.html in html/index.html, because Makefile.coq's
+#   standard "make clean" removes the html directory entirely.  So we gotta do this hack:
+html2: html index.html
+	cp index.html html/index.html
+
+publish: html2 cdocs
+	cd gh-pages; git submodule update; git checkout gh-pages
 	cd gh-pages; rm -rf docs; mkdir docs
 	cp html/* gh-pages/docs
 	cp -R cdoc/*.html cdoc/*_files gh-pages/docs
 	cd gh-pages; git add docs
 	cd gh-pages; git commit -m "Publishing docs" docs
 	cd gh-pages; git push
+
+CFILES= C/src/alloc.c C/src/bandmat.c C/src/build_csr.c C/src/cholesky.c C/src/densemat.c C/src/sparse.c
+HFILES= C/include/alloc.h C/include/alloc.h C/include/bandmat.h C/include/densemat.h C/include/sparse.h
+
+INSTALLDIR= $(COQLIB)/user-contrib/LAProof
+
+install-extra:: $(CFILES) $(HFILES)
+	install -d $(INSTALLDIR)/C/src 
+	install -d $(INSTALLDIR)/C/include
+	install -m 0644 $(CFILES) $(COQLIB)/user-contrib/LAProof/C/src 
+	install -m 0644 $(HFILES) $(COQLIB)/user-contrib/LAProof/C/include
 
 # Quarto documentation of C programs
 LDOC= 	lua cdoc/ldoc.lua

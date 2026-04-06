@@ -74,12 +74,6 @@ Section WithNaN.
 
 Context {NAN: FPCore.Nans} {t : type}.
 
-Definition default_rel : R :=
-  / 2 * Raux.bpow Zaux.radix2 (- fprec t + 1).
-
-Definition default_abs : R :=
-  / 2 * Raux.bpow Zaux.radix2 (3 - femax t - fprec t).
-
 Lemma prec_lt_emax: @flocq_float.prec (fprecp t) <? femax t.
 Proof.
 pose proof fprec_lt_femax t.
@@ -89,11 +83,10 @@ apply Z.ltb_lt; auto.
 Qed.
 
 Notation F := (ftype t).
-Notation eps := (default_rel).
-Notation eta := (default_abs).
+Notation eps := (@default_rel t).
+Notation eta := (@default_abs t).
 
-Lemma default_abs_nonzero:  default_abs <> 0.
-rewrite /eta.
+Lemma default_abs_nonzero:  eps <> 0.
 apply Rmult_integral_contrapositive.
 split. lra.
 rewrite bpow_powerRZ.
@@ -111,9 +104,6 @@ rewrite bpow_powerRZ.
 apply powerRZ_NOR.
 simpl. lra.
 Qed.
-
-Definition iszero {t} (x: ftype t) : bool := 
-  match x with Binary.B754_zero _ _ _ => true | _ => false end.
 
 Fixpoint fsum_l2r_rec [n: nat] (c : F) : F^n -> F :=
   match n with
@@ -134,16 +124,6 @@ Definition ytilded [k : nat] (c : F) (a b : F^k) (bk : F) :=
 
 Definition ytildes [k : nat] (c : F) (a : F^k):=
   BSQRT (stilde c a a).
-
-
-Lemma BPLUS_B2R_zero (a : ftype t):
-  Binary.is_finite a ->
-  FT2R (BPLUS a (Zconst t 0)) = FT2R a.
-Proof.
-unfold BPLUS, BINOP, Zconst; intros;
-destruct a; simpl; try discriminate; auto.
-destruct s; simpl; auto.
-Qed.
 
 Lemma format_FT2R: forall (x: ftype t), is_true (@flocq_float.format (fprecp t) (femax t) (FT2R x)).
 Proof.
@@ -634,9 +614,9 @@ pose proof @cholesky.lemma_2_1 fspec fspec_eta_nonzero k a' b' (mkFS c) (mkFS bk
 repeat change (float_spec.FS_val (mkFS ?x)) with (FT2R x) in H|-*.
 rewrite LVSDP_ytilded_eq in H; auto.
 replace (\sum_i (float_spec.FS_val _ * _)) with (\sum_i (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H.
-2:  by apply: eq_big => [// | i _]; rewrite /a' /b' !ffunE.
+2: apply eq_big; auto; try solve [move => x //]; move => i _; rewrite /a' /b' !ffunE //.
 replace (\sum_i Rabs (float_spec.FS_val _ * _)) with (\sum_i Rabs (FT2R (fun_of_fin a i) * (FT2R (b i)))) in H.
-2:  by apply: eq_big => [// | i _]; rewrite /a' /b' !ffunE.
+2: apply eq_big; auto; try solve [move => x //]; move => i _; rewrite /a' /b' !ffunE //.
 rewrite default_abs_eq default_rel_eq.
 apply H.
 Qed.
@@ -721,8 +701,8 @@ clear H. destruct H0.
 change i with (nat_of_ord (Ordinal H)).
 rewrite nth_take.
 rewrite nth_ord_enum'.
-first [ (* mathcomp 2.4 *) simpl; lia | (* mathcomp 2.5 *) rewrite ltEord; auto].
-first [ (* mathcomp 2.4 *) simpl; lia | (* mathcomp 2.5 *) rewrite ltEord; auto].
+first [simpl; lia | rewrite ltEord; simpl; lia].  (* compatibility Rocq 9.0, mathcomp 2.4  | 9.1,2.5*)
+simpl; lia.
 Qed. 
 
 Lemma stilde_subtract_loop: forall [n] (c: F) (R: 'M_n.+1) (i j: 'I_n.+1) (Hij: (i<=j)%N),
