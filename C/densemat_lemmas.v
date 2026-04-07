@@ -490,13 +490,8 @@ Ltac forward_densematn_set M i j p sh x:=
     forward_call (X, p, sh, x); clear X.
 
 (** In the special case when a densemat or densematn is indexed by constant indexes (i,j) of type Z,
-  the tactics [forward_densemat[|n]_[get|set]_special] can be used, which automatically
+  the tactic [forward_densematn_special] can be used _without any arguments_, which automatically
   calculate all of the arguments to [forward_densemat[|n]_[get|set]].
-  That is, _with no parameters_, 
- - [forward_densemat_get_special] instead of [forward_call] when calling [densemat_get]
- - [forward_densematn_get_special] instead of [forward_call] when calling [densematn_get]
- - [forward_densemat_set_special] instead of [forward_call] when calling [densemat_set]
- - [forward_densematn_set_special] instead of [forward_call] when calling [densematn_set]
 *)
 
 Ltac forward_densematn_get_special_aux pvar p stride i j :=
@@ -508,28 +503,27 @@ Ltac forward_densematn_get_special_aux pvar p stride i j :=
     end end end;
     [ try (unfold map_mx; rewrite !mxE; reflexivity) | ].
 
-Ltac forward_densematn_get_special :=
+Ltac forward_densematn_special :=
  match goal with
- | |- context [Scall (Some _) (Evar _densematn_get _)
-                                             [Etempvar ?pvar _; Econst_int (Int.repr ?stride) _; 
-                                              Econst_int (Int.repr ?i) _; Econst_int (Int.repr ?j) _]] =>
-      match goal with |- context [temp pvar ?p] =>
-            forward_densematn_get_special_aux pvar p stride i j 
-       end
- | |- context [Scall (Some _) (Evar _densematn_get _)
-                                             [Evar ?pvar _; Econst_int (Int.repr ?stride) _; 
-                                              Econst_int (Int.repr ?i) _; Econst_int (Int.repr ?j) _]] =>
-   match goal with |- context [lvar pvar _ ?p] =>
-            forward_densematn_get_special_aux pvar p stride i j 
-   end
-end.
-
-Ltac forward_densematn_set_special :=
- match goal with |- context [Scall None (Evar _densematn_set _)
-                                             [Etempvar ?pvar _; Econst_int (Int.repr ?stride) _; 
-                                              Econst_int (Int.repr ?i) _; Econst_int (Int.repr ?j) _;
-                                               _]] =>
-   match goal with |- context [temp pvar ?p] =>
+ | |- context [Scall (Some _) (Evar ?f _)
+                      [Etempvar ?pvar _; Econst_int (Int.repr ?stride) _; 
+                       Econst_int (Int.repr ?i) _; Econst_int (Int.repr ?j) _]] =>
+     unify f _densematn_get;
+     match goal with
+     | |- context [temp pvar ?p] => forward_densematn_get_special_aux pvar p stride i j 
+     end
+ | |- context [Scall (Some _) (Evar ?f _)
+                      [Evar ?pvar _; Econst_int (Int.repr ?stride) _; 
+                       Econst_int (Int.repr ?i) _; Econst_int (Int.repr ?j) _]] =>
+     unify f _densematn_get;
+     match goal with
+     | |- context [lvar pvar _ ?p] => forward_densematn_get_special_aux pvar p stride i j 
+     end
+ | |- context [Scall None (Evar ?f _)
+                     [Etempvar ?pvar _; Econst_int (Int.repr ?stride) _; 
+                      Econst_int (Int.repr ?i) _; Econst_int (Int.repr ?j) _; _]] =>
+    unify f _densematn_set;
+    match goal with |- context [temp pvar ?p] =>
     match goal with |- semax _ ?Pre _ _ => match Pre with context [densematn ?sh ?M p] =>
      match type of M with @matrix _ ?m ?n =>
      let y := fresh "y" in 
@@ -537,8 +531,8 @@ Ltac forward_densematn_set_special :=
         densemat_lemmas.forward_densematn_set M
         (@Ordinal m (Z.to_nat i) (eq_refl _))  (@Ordinal n (Z.to_nat j) (eq_refl _)) p sh y; subst y
     end end end
-   end 
-end; [entailer!! | ].
+   end; [entailer!! | ]
+end.
 
 (** [begin_densematn_in_frame] is used when you already have an array of floats/doubles
    that you want to treat as a dense matrix.  That is, you don't want to call [densemat_alloc].
