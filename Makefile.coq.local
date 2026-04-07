@@ -19,7 +19,7 @@ publish: html2 cdocs
 	cd gh-pages; git push
 
 CFILES= C/src/alloc.c C/src/bandmat.c C/src/build_csr.c C/src/cholesky.c C/src/densemat.c C/src/sparse.c
-HFILES= C/include/alloc.h C/include/alloc.h C/include/bandmat.h C/include/densemat.h C/include/sparse.h
+HFILES= C/include/alloc.h C/include/bandmat.h C/include/densemat.h C/include/sparse.h
 
 INSTALLDIR= $(COQLIB)/user-contrib/LAProof
 
