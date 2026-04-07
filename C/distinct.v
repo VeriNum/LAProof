@@ -1,6 +1,5 @@
 Require Import VST.floyd.functional_base.
-Require Import Coq.Relations.Relations.
-Require Import Coq.Classes.RelationClasses.
+From Stdlib Require Import Relations.Relations Classes.RelationClasses.
 Import ListNotations.
 
 

@@ -7,7 +7,7 @@ From vcfloat Require Export FPStdLib IEEE754_extra RAux Float_lemmas.
 Export Lra.
 
 Export List ListNotations.
-Require Export Coq.Relations.Relations Coq.Classes.Morphisms Coq.Classes.RelationPairs Coq.Classes.RelationClasses.
+From Coq Require Export Relations.Relations Classes.Morphisms Classes.RelationPairs Classes.RelationClasses.
 Export Reals.
 From mathcomp Require Export ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
 From mathcomp Require Export fintype finfun bigop finset fingroup perm order.

@@ -1,8 +1,7 @@
 Require Import VST.floyd.proofauto.
 From VSTlib Require Import spec_malloc.
 From LAProof.C Require Import floatlib sparse sparse_model distinct spec_alloc.
-Require Import vcfloat.FPStdCompCert.
-Require Import vcfloat.FPStdLib.
+From vcfloat Require Import FPStdCompCert FPStdLib.
 Require Import VSTlib.spec_math.
 
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.

@@ -11,7 +11,7 @@ From vcfloat Require Import FPStdCompCert FPStdLib.
 From VSTlib Require Import spec_math spec_malloc.
 From LAProof.accuracy_proofs Require Import solve_model.
 From LAProof.C Require Import densemat spec_alloc floatlib matrix_model.
-Require Import Coq.Classes.RelationClasses.
+From Stdlib Require Import Classes.RelationClasses.
 
 (** We [Require] the [mathcomp] files, but without [Import] because we don't want
    to use [ssreflect] tactics in VST proofs, and we don't want the namespace polluted with

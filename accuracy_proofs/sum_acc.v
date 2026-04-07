@@ -39,14 +39,9 @@
 
 *)
 
-From LAProof.accuracy_proofs Require Import
-  preamble
-  common
-  sum_model
-  float_acc_lems.
-
-Require LAProof.accuracy_proofs.mv_mathcomp.
-Require Import Permutation.
+From LAProof.accuracy_proofs Require Import  preamble common sum_model float_acc_lems.
+From LAProof Require mv_mathcomp.
+From Stdlib Require Import Permutation.
 
 Section WithNan.
 
@@ -95,7 +90,7 @@ induction (rev x) as [| a l] => Hfin; clear x.
     rewrite Rplus_0_r Rmult_1_r.
     have H3 : (n = 1)%nat \/ (n = 0)%nat by lia.
     destruct H3 as [Hn1 | Hn0]; subst; auto.
-    rewrite Rabs_R0 /g /=; lra.
+    rewrite Rabs_R0 /g /=. lra.
   + (* case non-empty l *)
     simpl in *.
     destruct (BPLUS_finite_e _ _ Hfin) as [Ha Hb].

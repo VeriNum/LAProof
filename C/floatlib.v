@@ -1,6 +1,6 @@
 Require Import VST.floyd.proofauto.
-Require Import Coq.Relations.Relations Coq.Classes.Morphisms 
-               Coq.Classes.RelationPairs Coq.Classes.RelationClasses.
+From Stdlib Require Import Relations.Relations Classes.Morphisms 
+               Classes.RelationPairs Classes.RelationClasses.
 Require Export vcfloat.FPStdLib.
 Set Bullet Behavior "Strict Subproofs".
 

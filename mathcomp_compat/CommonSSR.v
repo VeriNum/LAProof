@@ -7,15 +7,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 *)
 
 (** Generic Results about mathcomp and ssreflect functions, some used in multiple places*)
-Require Import Coq.Lists.List.
+From Stdlib Require Import Lists.List.
 From HB Require Export structures.
 Set Warnings "-notation-overriden, -parsing".
 
 From mathcomp Require Import all_ssreflect ssralg matrix.
-Require Import mathcomp.algebra.matrix.
-
-Require Import mathcomp.algebra.ssralg.
-
+(*From mathcomp.algebra Require Import matrix ssralg.*)
 
 Set Implicit Arguments.
 Unset Strict Implicit.

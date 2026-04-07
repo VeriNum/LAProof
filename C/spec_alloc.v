@@ -1,7 +1,7 @@
 Require Import VST.floyd.proofauto.
 From LAProof.C Require Import alloc.
-Require Import VSTlib.spec_math VSTlib.spec_malloc.
-Require Import Coq.Classes.RelationClasses.
+From VSTlib Require Import spec_math spec_malloc.
+From Stdlib Require Import Classes.RelationClasses.
 
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
 Definition Vprog : varspecs. mk_varspecs prog. Defined.

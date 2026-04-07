@@ -1,9 +1,7 @@
 Require Import VST.floyd.proofauto.
-Require Import vcfloat.FPStdLib.
-Require Import vcfloat.FPStdCompCert.
+From vcfloat Require Import FPStdLib FPStdCompCert.
 Require Import VSTlib.spec_math.
-Require Import LAProof.C.floatlib.
-Require Import LAProof.C.cholesky.
+From LAProof.C Require Import floatlib cholesky.
 Import FPCore FPCompCert.
 
 

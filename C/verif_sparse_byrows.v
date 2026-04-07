@@ -1,7 +1,6 @@
 Require Import VST.floyd.proofauto.
 From LAProof.C Require Import sparse sparse_model spec_sparse.
-Require Import vcfloat.FPStdLib.
-Require Import vcfloat.FPStdCompCert.
+From vcfloat Require Import FPStdLib FPStdCompCert.
 Require Import VSTlib.spec_math.
 Require Import LAProof.C.floatlib.
 

@@ -2,7 +2,7 @@ Require Import VST.floyd.proofauto.
 From LAProof.C Require Import floatlib sparse_model distinct.
 Require Import vcfloat.FPStdCompCert.
 Require Import vcfloat.FPStdLib.
-Require Import Coq.Classes.RelationClasses.
+From Stdlib Require Import Classes.RelationClasses.
 
 Set Bullet Behavior "Strict Subproofs".
 
