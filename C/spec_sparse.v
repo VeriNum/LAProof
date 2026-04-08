@@ -273,13 +273,13 @@ Definition csr_mat_vec_multiply_spec :=
     let vval := (list_of_cV vval') in 
     PROP (readable_share sh1; readable_share sh2; writable_share sh3;
       csr_to_matrix csr mval;
-      matrix_cols mval (Zlength vval);
+      matrix_cols mval (Z.of_nat cols);
       matrix_rows mval < Int.max_unsigned;
       Zlength vval < Int.max_unsigned;
       Forall finite vval;
       Forall (Forall finite) mval)
     PARAMS (m; v; p)
-    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v; 
+    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat vval) v; 
       data_at_ sh3 (tarray tdouble (matrix_rows mval)) p)
   POST [tvoid]
     let '(existT _ (rows, cols) (mval', vval')) := X in 
@@ -288,7 +288,7 @@ Definition csr_mat_vec_multiply_spec :=
     EX result : 'cV[ftype Tdouble]_rows, 
     PROP (forall i:'I_rows, feq (result i ord0) ((F.mulmx mval' vval') i ord0))
     RETURN ()
-    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v;
+    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat vval) v;
       data_at sh3 (tarray tdouble (matrix_rows mval)) (map Vfloat (list_of_cV result)) p).
 
 
