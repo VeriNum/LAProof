@@ -277,3 +277,18 @@ Exists vp ci rp.
 rewrite (csr_to_matrix_rows _ _ H').
 cancel.
 Qed.
+
+From LAProof.accuracy_proofs Require Import mv_mathcomp.
+From mathcomp Require ssreflect.
+Import fintype matrix.
+
+(** Now we undo all the settings that mathcomp has modified *)
+Unset Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+Set Bullet Behavior "Strict Subproofs".
+
+
+Lemma body_csr_mat_vec_multiply: semax_body Vprog Gprog f_csr_mat_vec_multiply csr_mat_vec_multiply_spec.
+Proof. 
+  start_function.

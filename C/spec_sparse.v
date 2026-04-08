@@ -148,10 +148,14 @@ Definition csr_matrix_vector_multiply_spec :=
     PARAMS(m; v; p)
     SEP (csr_rep sh1 csr m;
          data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v; 
+            (* change the above line to using densematn *)
          data_at_ sh3 (tarray tdouble (matrix_rows mval)) p)
+            (* sparse matrix, write the definition *)
  POST [ tvoid ]
    EX result: vector Tdouble,
     PROP(Forall2 feq result (matrix_vector_mult mval vval)) 
+      (* prove this is equivalent to mathcomp matrix vector mult *)
+      (* F.mulmx *)
     RETURN()
     SEP (csr_rep sh1 csr m;
           data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v; 
@@ -233,11 +237,65 @@ Definition coo_less_spec : ident*funspec :=
 Definition create_coo_matrix_spec : ident*funspec := 
  (_create_coo_matrix, vacuous_funspec (Internal f_create_coo_matrix)).
 
+
+(* imports and settings copied from spec_densemat.v  *)
+(** We [Require] the [mathcomp] files, but without [Import] because we don't want
+   to use [ssreflect] tactics in VST proofs, and we don't want the namespace polluted with
+   all that mathcomp stuff.
+*) 
+(* From mathcomp Require (*Import*) ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
+From mathcomp Require (*Import*) fintype finfun bigop finset fingroup perm order.
+From mathcomp Require (*Import*) div ssralg countalg finalg zmodp matrix.
+From mathcomp.zify Require Import ssrZ zify.
+(** Among all the mathcomp stuff, these are the files that we *do* want to Import: *)
+Import fintype matrix. *)
+From LAProof.accuracy_proofs Require Import mv_mathcomp.
+From mathcomp Require ssreflect.
+Import fintype matrix.
+
+
+(** Now we undo all the settings that mathcomp has modified *)
+Unset Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+Set Bullet Behavior "Strict Subproofs".
+
+Definition csr_mat_vec_multiply_spec :=
+  DECLARE _csr_mat_vec_multiply 
+  WITH sh1 : share, sh2 : share, sh3 : share,
+    m : val, v : val, csr : csr_matrix Tdouble, p : val,
+    X : {m & {n & 'M[ftype Tdouble]_(m,n) * 'cV[ftype Tdouble]_n}}%type
+  PRE [tptr t_csr, tptr tdouble, tptr tdouble]
+    let '(existT _ rows (existT _ cols (mval', vval'))) := X in 
+    let mval := (matrix2listlist mval') in  
+    let vval := (list_of_cV vval') in 
+    PROP (readable_share sh1; readable_share sh2; writable_share sh3;
+      csr_to_matrix csr mval;
+      matrix_cols mval (Zlength vval);
+      matrix_rows mval < Int.max_unsigned;
+      Zlength vval < Int.max_unsigned;
+      Forall finite vval;
+      Forall (Forall finite) mval)
+    PARAMS (m; v; p)
+    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v; 
+      data_at_ sh3 (tarray tdouble (matrix_rows mval)) p)
+  POST [tvoid]
+    let '(existT _ rows (existT _ cols (mval', vval'))) := X in 
+    let mval := (matrix2listlist mval') in 
+    let vval := (list_of_cV vval') in 
+    EX result : 'cV[ftype Tdouble]_rows, 
+    PROP (forall i, feq (result i ord0) ((F.mulmx mval' vval') i ord0))
+    RETURN ()
+    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v;
+      data_at sh3 (tarray tdouble (matrix_rows mval)) (map Vfloat (list_of_cV result)) p).
+
+
 Definition SparseASI : funspecs := [ 
    csr_matrix_rows_spec;
    csr_row_vector_multiply_spec;
    csr_matrix_vector_multiply_byrows_spec;
    csr_matrix_vector_multiply_spec;
+   csr_mat_vec_multiply_spec;
    coo_count_spec; swap_spec; coo_quicksort_spec; 
    add_to_coo_matrix_spec; coo_to_csr_matrix_spec;
    coo_less_spec; create_coo_matrix_spec

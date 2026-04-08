@@ -33,6 +33,14 @@ void csr_matrix_vector_multiply (struct csr_matrix *m, double *v, double *p) {
 }
 
 /**
+ * A wrapper function that's proved using mathcomp definitions
+ */
+
+void csr_mat_vec_multiply(struct csr_matrix *m, double *v, double *p) {
+  csr_matrix_vector_multiply(m,v,p);
+}
+
+/**
  * Return the number of rows of a CSR matrix
  */
 unsigned csr_matrix_rows (struct csr_matrix *m) {

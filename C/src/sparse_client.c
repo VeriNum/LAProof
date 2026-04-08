@@ -4,10 +4,16 @@
 
 void test(double *p1, double *p2)
 {
+  double v[3];
+  v[0] = 1.0;
+  v[1] = 1.0;
+  v[2] = 1.0;
+
   struct rowcol *coog = start_coog(3);
   add_to_coog(coog, 0, 0, 0);
   add_to_coog(coog, 1, 1, 2);
   add_to_coog(coog, 2, 2, 1);
+  add_to_coog(coog, 3, 0, 0); // duplicate 
   struct csr_matrix *csr = coog_to_csrg(coog, 3, 3, 3);
   
   reset_csr(csr);
@@ -16,8 +22,9 @@ void test(double *p1, double *p2)
   add_to_csr(csr, 2, 1, 1.0);
   add_to_csr(csr, 0, 0, 1.0);
 
-  double v[3] = {1.0, 1.0, 1.0};
   csr_matrix_vector_multiply(csr, v, p1);
+  // add another function that calls csr_matrix_vector_multiply with the spec using mathcomp  
+  // csr_mat_vec_multiply
 
   reset_csr(csr);
   add_to_csr(csr, 0, 0, 2.0);

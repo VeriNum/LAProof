@@ -17,6 +17,37 @@ Record csr_matrix {t: type} := {
 }.
 Arguments csr_matrix t : clear implicits.
 
+(* An attempt to update csr_row_rep to mathcomp version *)
+
+(* Definition vnil {t:type} : 'cV[ftype t]_0 := (const_mx (Zconst t 0) : 'cV[ftype t]_0).
+
+Definition vcons {t:type} {n:nat} (x : ftype t) (v : 'cV[ftype t]_n) :=
+  col_mx (const_mx x : 'cV[ftype t]_1) v. *)
+
+(* the type of cols changed to nat *)
+(* since the dependently typed mathcomp vectors cannot figure our the vector len *)
+
+(* Inductive csr_row_rep {t:type} :
+  forall (cols : nat) (vals: list (ftype t)) (col_ind: list Z) (v: 'cV[ftype t]_cols), Prop :=
+  | csr_row_rep_nil: csr_row_rep 0 nil nil vnil
+  | csr_row_rep_zero: forall cols vals col_ind v,
+      csr_row_rep cols vals (map Z.pred col_ind) v ->
+      csr_row_rep (ssrnat.addn 1 cols) vals col_ind (vcons (Zconst t 0) v)
+  | csr_row_rep_val: forall cols x vals col_ind v,
+      csr_row_rep cols vals (map Z.pred col_ind) v -> 
+      csr_row_rep (ssrnat.addn 1 cols) vals col_ind (vcons x v). *)
+
+(* Definition csr_to_matrix {t:type} (csr : csr_matrix t) 
+  (mval : 'M[ftype t]_(Z.to_nat (csr_rows csr), Z.to_nat (csr_cols csr))) :=
+  Zlength (csr_vals csr) = Znth (csr_rows csr) (csr_row_ptr csr) /\
+  Zlength (csr_col_ind csr) = Znth (csr_rows csr) (csr_row_ptr csr) /\
+  list_solver.sorted Z.le (0 :: csr_row_ptr csr ++ [Int.max_unsigned]) /\
+  forall j, 0 <= j < csr_rows csr ->
+    csr_row_rep (Z.to_nat (csr_cols csr))
+      (sublist (Znth j (csr_row_ptr csr)) (Znth (j+1) (csr_row_ptr csr)) (csr_vals csr))
+      (sublist (Znth j (csr_row_ptr csr)) (Znth (j+1) (csr_row_ptr csr)) (csr_col_ind csr))
+      (row (@inord (Z.to_nat (csr_rows csr - 1)%Z) (Z.to_nat j)) mval). *)
+
 Inductive csr_row_rep {t: type} : 
   forall (cols: Z) (vals: list (ftype t)) (col_ind: list Z) 
   (v: list  (ftype t)), Prop :=
@@ -785,5 +816,57 @@ Qed.
 Instance Coord2BPO : BPO.BoolPreOrder coord2_le := 
   {| BPO.BO := Coord2BO; BPO.PO := Coord2PO |}.
 
+
+(* copied from matrix_model.v *)
+(** In contrast to certain other modules (e.g., [C.spec_densemat]
+  where we [Require] mathcomp but carefully don't [Import] most of it), 
+  here we intend to do lots of mathcomp reasoning, so we [Require Import]. *)
+From mathcomp Require Import ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
+From mathcomp Require Import fintype finfun bigop finset fingroup perm order.
+From mathcomp Require Import div ssralg countalg finalg zmodp matrix.
+From mathcomp.zify Require Import ssrZ zify.
+From LAProof.accuracy_proofs Require Import mv_mathcomp.
+
+(** Now we adjust all the settings that mathcomp has modified *)
+(* begin show *)
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+Set Bullet Behavior "Strict Subproofs".
+(* end show *)
   
+Definition matrix2listlist {t} [m n] (A: 'M[t]_(m,n)): seq (seq t) :=
+  map (fun i => map (fun j => A i j) (ord_enum n)) (ord_enum m).
+
+Lemma matrix2listlist_inj': forall {t} [m n] (A B: 'M[t]_(m.+1,n.+1)),
+  matrix2listlist A = matrix2listlist B -> A=B.
+Proof.
+intros.
+apply matrixP => i j.
+pose d := A ord0 ord0. clearbody d.
+assert (nth d (nth nil (matrix2listlist A) i) j = nth d (nth nil (matrix2listlist B) i) j).
+congruence.
+unfold matrix2listlist in H0.
+erewrite nth_map with (x1:=ord0) in H0. 
+2: rewrite size_ord_enum; apply ltn_ord.
+erewrite nth_map with (x1:=ord0) in H0.
+2: rewrite size_ord_enum; apply ltn_ord.
+erewrite nth_map with (x1:=ord0) in H0.
+2: rewrite size_ord_enum; apply ltn_ord.
+erewrite nth_map with (x1:=ord0) in H0.
+2: rewrite size_ord_enum; apply ltn_ord.
+rewrite !nth_ord_enum' in H0.
+auto.
+Qed.
+
+Lemma matrix2listlist_inj : forall {t} [m n] (A B : 'M[t]_(m, n)),
+  matrix2listlist A = matrix2listlist B -> A = B. 
+Proof. 
+  intros.
+  destruct m. 
+  { apply matrixP => i j. destruct i. inversion i. }
+  destruct n. 
+  { apply matrixP => i j. destruct j. inversion i0. }
+  apply matrix2listlist_inj'. exact H. 
+Qed.
 
