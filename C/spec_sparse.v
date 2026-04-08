@@ -260,14 +260,16 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 
+Check listlist_of_mx.
+
 Definition csr_mat_vec_multiply_spec :=
   DECLARE _csr_mat_vec_multiply 
   WITH sh1 : share, sh2 : share, sh3 : share,
     m : val, v : val, csr : csr_matrix Tdouble, p : val,
-    X : {m & {n & 'M[ftype Tdouble]_(m,n) * 'cV[ftype Tdouble]_n}}%type
+    X : {mn : nat * nat & 'M[ftype Tdouble]_(fst mn, snd mn) * 'cV[ftype Tdouble]_(snd mn)}%type
   PRE [tptr t_csr, tptr tdouble, tptr tdouble]
-    let '(existT _ rows (existT _ cols (mval', vval'))) := X in 
-    let mval := (matrix2listlist mval') in  
+    let '(existT _ (rows, cols) (mval', vval')) := X in 
+    let mval := (listlist_of_mx mval') in  
     let vval := (list_of_cV vval') in 
     PROP (readable_share sh1; readable_share sh2; writable_share sh3;
       csr_to_matrix csr mval;
@@ -280,11 +282,11 @@ Definition csr_mat_vec_multiply_spec :=
     SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v; 
       data_at_ sh3 (tarray tdouble (matrix_rows mval)) p)
   POST [tvoid]
-    let '(existT _ rows (existT _ cols (mval', vval'))) := X in 
-    let mval := (matrix2listlist mval') in 
+    let '(existT _ (rows, cols) (mval', vval')) := X in 
+    let mval := (listlist_of_mx mval') in 
     let vval := (list_of_cV vval') in 
     EX result : 'cV[ftype Tdouble]_rows, 
-    PROP (forall i, feq (result i ord0) ((F.mulmx mval' vval') i ord0))
+    PROP (forall i:'I_rows, feq (result i ord0) ((F.mulmx mval' vval') i ord0))
     RETURN ()
     SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Zlength vval)) (map Vfloat vval) v;
       data_at sh3 (tarray tdouble (matrix_rows mval)) (map Vfloat (list_of_cV result)) p).
