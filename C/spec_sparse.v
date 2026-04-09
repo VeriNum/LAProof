@@ -260,7 +260,15 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 
-Check listlist_of_mx.
+
+Definition csr_to_M {t} {rows cols} (csr: csr_matrix t) (M : 'M[ftype t]_(rows, cols)) :=
+  csr_to_matrix csr (listlist_of_mx M).
+
+Definition cV_finite {t} {n} (v : 'cV[ftype t]_n) :=
+  Forall finite (list_of_cV v).
+
+Definition M_finite {t} {rows cols} (M : 'M[ftype t]_(rows, cols)) :=
+  Forall (Forall finite) (listlist_of_mx M).
 
 Definition csr_mat_vec_multiply_spec :=
   DECLARE _csr_mat_vec_multiply 
@@ -268,28 +276,23 @@ Definition csr_mat_vec_multiply_spec :=
     m : val, v : val, csr : csr_matrix Tdouble, p : val,
     X : {mn : nat * nat & 'M[ftype Tdouble]_(fst mn, snd mn) * 'cV[ftype Tdouble]_(snd mn)}%type
   PRE [tptr t_csr, tptr tdouble, tptr tdouble]
-    let '(existT _ (rows, cols) (mval', vval')) := X in 
-    let mval := (listlist_of_mx mval') in  
-    let vval := (list_of_cV vval') in 
+    let '(existT _ (rows, cols) (mval, vval)) := X in 
     PROP (readable_share sh1; readable_share sh2; writable_share sh3;
-      csr_to_matrix csr mval;
-      matrix_cols mval (Z.of_nat cols);
-      matrix_rows mval < Int.max_unsigned;
-      Zlength vval < Int.max_unsigned;
-      Forall finite vval;
-      Forall (Forall finite) mval)
+      csr_to_M csr mval;
+      Z.of_nat rows < Int.max_unsigned;
+      Z.of_nat cols < Int.max_unsigned;
+      cV_finite vval;
+      M_finite mval)
     PARAMS (m; v; p)
-    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat vval) v; 
-      data_at_ sh3 (tarray tdouble (matrix_rows mval)) p)
+    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat (list_of_cV vval)) v; 
+      data_at_ sh3 (tarray tdouble (Z.of_nat rows)) p)
   POST [tvoid]
-    let '(existT _ (rows, cols) (mval', vval')) := X in 
-    let mval := (listlist_of_mx mval') in 
-    let vval := (list_of_cV vval') in 
+    let '(existT _ (rows, cols) (mval, vval)) := X in 
     EX result : 'cV[ftype Tdouble]_rows, 
-    PROP (forall i:'I_rows, feq (result i ord0) ((F.mulmx mval' vval') i ord0))
+    PROP (forall i:'I_rows, feq (result i ord0) ((F.mulmx mval vval) i ord0))
     RETURN ()
-    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat vval) v;
-      data_at sh3 (tarray tdouble (matrix_rows mval)) (map Vfloat (list_of_cV result)) p).
+    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat (list_of_cV vval)) v;
+      data_at sh3 (tarray tdouble (Z.of_nat rows)) (map Vfloat (list_of_cV result)) p).
 
 
 Definition SparseASI : funspecs := [ 
