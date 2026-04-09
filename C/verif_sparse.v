@@ -288,15 +288,28 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 
-(* Should this lemma be moved to mv_mathcomp.v *)
-Lemma 
 
 Lemma body_csr_mat_vec_multiply: semax_body Vprog Gprog f_csr_mat_vec_multiply csr_mat_vec_multiply_spec.
 Proof. 
   start_function.
-  forward_call (sh1, sh2, sh3, m, (matrix2listlist mval'), csr, v, (list_of_cV vval'), p).
+  assert (Z.of_nat cols = Zlength (list_of_cV vval)).
+  { unfold list_of_cV. rewrite Zlength_map, Zlength_correct, size_ord_enum. auto. }
+  rewrite H4. 
+  assert (Z.of_nat rows = matrix_rows (listlist_of_mx mval)).
+  { unfold listlist_of_mx. unfold matrix_rows. 
+  rewrite Zlength_map, Zlength_correct, size_ord_enum. auto. }
+  rewrite H5.
+  assert (matrix_cols (listlist_of_mx mval) (Z.of_nat cols)).
+  { unfold matrix_cols, listlist_of_mx. rewrite Forall_Znth.
+    intros. erewrite Znth_map.
+    2:{ rewrite Zlength_map in H6. auto. }
+    erewrite Zlength_map. rewrite Zlength_correct, size_ord_enum. auto. } 
+  forward_call (sh1, sh2, sh3, m, (listlist_of_mx mval), csr, v, (list_of_cV vval), p).
   Intros vret. Exists (@cV_of_list (ftype Tdouble) (Zconst Tdouble 0) rows vret).
   entailer!!.
+  
+    
+
   + assert (Zlength vret = Zlength (floatlib.matrix_vector_mult (matrix2listlist mval') (list_of_cV vval'))).
     { Search floatlib.matrix_vector_mult. }
     pose proof (Forall2_forall_Znth feq _ _ H5).
