@@ -1,0 +1,179 @@
+(**  * LAProof.C.spec_bandmat: VST specifications of functions on banded matrices. *)
+(** ** Corresponds to C program [bandmat.h] and [bandmat.c] *)
+Require Import VST.floyd.proofauto.
+From vcfloat Require Import FPStdCompCert FPStdLib.
+From VSTlib Require Import spec_math spec_malloc.
+From LAProof.accuracy_proofs Require Import solve_model.
+From LAProof.C Require Import bandmat spec_alloc floatlib matrix_model.
+Require Import Coq.Classes.RelationClasses.
+
+(** We [Require] the [mathcomp] files, but without [Import] because we don't want
+   to use [ssreflect] tactics in VST proofs, and we don't want the namespace polluted with
+   all that mathcomp stuff.
+*) 
+From mathcomp Require (*Import*) ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
+From mathcomp Require (*Import*) fintype finfun bigop finset fingroup perm order.
+From mathcomp Require (*Import*) div ssralg countalg finalg zmodp matrix.
+From mathcomp.zify Require Import ssrZ zify.
+(** Among all the mathcomp stuff, these are the files that we *do* want to Import: *)
+Import fintype matrix.
+
+Require LAProof.accuracy_proofs.export.
+Module F := LAProof.accuracy_proofs.mv_mathcomp.F.
+
+(** Now we undo all the settings that mathcomp has modified *)
+Unset Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+Set Bullet Behavior "Strict Subproofs".
+
+(** The next lines are usual in VST specification files *)
+#[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
+Definition Vprog : varspecs. mk_varspecs prog. Defined.
+
+Open Scope logic.
+
+(** In a typical VST proof, many variables and operators have type [Z] and few have type [nat],
+  so there are not many coercions between [Z] and [nat].  In a MathComp proof, there are many
+  uses of ordinals ['I_n], which coerce naturally to [nat]; but the VST operators still prefer [Z].
+  So there is more motivation (than usual in VST) to implicitly coerce [nat] to [Z]. 
+*) 
+Coercion Z.of_nat : nat >-> Z.
+
+(** ** Abstracting the floating-point precision *)
+(** C programs may use single precision or double precision.
+  This chart covers different wa7ys to talk about these types.
+<<
+Ctypes.floatsize      F64        F32
+Ctypes.type           tdouble    tsingle   (= Tfloat Fxx noattr, where Fxx=F64 or F32)
+CompCert Type         float      float32
+Values.val            Vfloat     Vsingle
+vcfloat.FPStdLib.type Tdouble    Tsingle
+>>
+[ftype Tdouble] is convertible to [float], and [ftype Tsingle] is convertible to [float32].
+*)
+
+(** To make our specifications (mostly) portable to C programs that use F64 or F32,
+  we define [the_ctype] as either [tdouble] or [tsingle], depending on what type
+  the program uses for the [data] field of dense matrices.  The [nested_field_type]
+  computation in the definition of [the_ctype] goes looking for that. *) 
+
+Definition bandmat_t := Tstruct _bandmat_t noattr.
+
+Definition the_ctype := ltac:(
+    let d := constr:(nested_field_type bandmat_t (DOT _data SUB 0))
+     in let d := eval compute in d 
+     in first [ unify d tdouble; exact tdouble
+              | unify d tfloat; exact tfloat
+              ]).
+
+(** Corresponding to [the_ctype] is [the_type], which is the description of that
+ type's exponent size and mantissa size, per VCFloat. *)
+
+Definition the_type := 
+  ltac:(first [ unify the_ctype tdouble; exact Tdouble
+              | unify the_ctype tsingle; exact Tsingle
+              ]).
+
+(** There is a correspondence between a [Ctypes.type] and a [vcfloat.FPStdLib.type] *)
+
+Definition ctype_of_type (t: type) : Ctypes.type :=
+ if type_eq_dec t Tdouble then tdouble
+ else if type_eq_dec t Tsingle then tfloat
+ else tvoid.
+
+
+Local Remark about_the_ctype: the_ctype=tdouble \/ the_ctype=tfloat.
+Proof. auto. Qed.
+
+Local Remark ctype_of_the_type: ctype_of_type the_type = the_ctype.
+Proof. reflexivity. Qed.
+
+(** ** Conversions between floats, float-options, and [val] *)
+(* We use [ftype t] as the type of floating-point values in format [t].
+  However, some arrays and matrices may be partially initialized, so we also
+ need [option (ftype t)] as the type of maybe-intialized floats.
+
+  CompCert's [val] type allows injecting double- and single-precision floats, and has
+  a separate constructor for uninitialized values of any type:
+<<
+Inductive val : Type :=
+    Vundef : val
+  | Vint : int -> val
+  | Vlong : int64 -> val
+  | Vfloat : float -> val     (*  recall that   float = ftype Tdouble *)
+  | Vsingle : float32 -> val   (* recall that float32 = ftype Tsingle *)
+  | Vptr : block -> ptrofs -> val.
+>>
+So therefore we need several functions that can convert between [ftype t], [option (ftype t)], and [val]
+*)
+
+Definition val_of_float {t} (f: ftype t) : val :=
+match type_eq_dec t Tdouble with
+     | left e =>
+          eq_rect_r (fun t0 : type => ftype t0 -> val)
+            (fun f1 : ftype Tdouble => Vfloat f1) e f
+     | right _ =>
+          match type_eq_dec t Tsingle with
+          | left e =>
+               eq_rect_r (fun t0 : type => ftype t0 -> val)
+                 (fun f1 : ftype Tsingle => Vsingle f1) e f
+          | right _ => Vundef
+          end
+     end.
+
+Definition val_of_optfloat {t} (x: option (ftype t)) : val :=
+match x with
+| Some f => val_of_float f
+| None => Vundef
+end.
+
+(** An arbitrary NaN value with the least informative payload *)
+Lemma nan_pl_1: forall t, eq (Binary.nan_pl (fprec t) 1) true.
+Proof.
+intros.
+unfold Binary.nan_pl, fprec.
+simpl.
+pose proof fprecp_not_one t.
+lia.
+Qed.
+
+Definition nan1 (t: type) := Binary.B754_nan (fprec t) (femax t) false _ (nan_pl_1 t).
+
+Definition optfloat_to_float {t: type} (x: option (ftype t)) := 
+  match x with
+  | Some y => y
+  | None => nan1 t
+  end.
+
+(** [reptype_ftype] is a convertible (transparent) coercion, useful in [data_at] *) 
+Definition reptype_ftype {t: type} (n: Z): list val -> reptype (tarray (ctype_of_type t) n).
+intro vl.
+unfold ctype_of_type.
+repeat if_tac.
+apply vl.
+apply vl.
+apply (Zrepeat tt n).
+Defined.
+
+(** Here's a proof that it really is a convertible equality *)
+Local Remark about_reptype_ftype: forall vl, @reptype_ftype the_type (Zlength vl) vl = vl.
+Proof. reflexivity. Qed.
+
+(*** (almost) copied from spec_densemat until here ***)
+(*****************************************************)
+Definition bandmat_data_offset := 
+  ltac:(let x := constr:(nested_field_offset bandmat_t (DOT _data))
+        in let y := eval compute in x in exact y).
+
+(* also need: symmetry, top right corner zero's -> in densemat definition *)
+(* TODO: replace Z with T *)
+Definition banded_repr (*{T}*) [m: nat] (b: nat) (f: 'M[(*T*)Z]_(S m,S m)) :=
+ concat (map (fun j => (map (fun i => (*default*)0) (ord_enum (nat_of_ord j))) ++ (* repeat 0, j times *)
+                         (* we put default's but technically it could be anything *)
+                       (map (fun i => f i (@inord m (j+i))) (sublist 0 (S m-j) (ord_enum (S m)))))
+             (ord_enum (b+1))).
+
+
+
+
