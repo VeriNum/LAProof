@@ -176,6 +176,23 @@ Definition banded_repr (*{T}*) {t: type} [m: nat] (b: nat) (f: 'M[(*T*)option (f
                        (map (fun i => f i (@inord m (j+i))) (sublist 0 (S m-j) (ord_enum (S m)))))
              (ord_enum (S b))).
 
+(* An attempt to have the matrix size m*m instead (S m) * (S m) by using auxiliary definitions. *)
+Definition inord_add' {m n : nat} (j : 'I_n) (i : 'I_(m-j)) : 'I_m.
+apply (@Ordinal m (i+j)).
+pose proof (ltn_ord i). lia.
+Defined.
+
+Definition inord' {m n : nat} (i : 'I_(m-n)) : 'I_m.
+apply (@Ordinal m i). 
+pose proof (ltn_ord i). lia.
+Defined.
+
+Definition banded_repr' {t: type} [m: nat] (b: nat) (f: 'M[option (ftype t)]_(m,m)) :=
+ concat (map (fun j => (map (fun i => (*default*)Some (Zconst t 0)) (ord_enum (nat_of_ord j))) ++ (* repeat 0, j times *)
+                         (* we put default's but technically it could be anything *)
+                       (map (fun (i : 'I_(m-j)) => f (@inord' m j i) (@inord_add' m (S b) j i)) (ord_enum (m-j))))
+             (ord_enum (S b))).
+
 (** Spatial predicate (mpred) to represent the [data] field of a [struct bandmat_t] *)
 Definition bandmatn {t: type} (sh: share) [m] (b: nat) (M: 'M[option (ftype t)]_(S m,S m)) (p: val) : mpred :=
  !! (S m * S b <= Int.max_signed /\ trmx M = M /\ 
