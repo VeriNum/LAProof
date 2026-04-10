@@ -167,13 +167,27 @@ Definition bandmat_data_offset :=
         in let y := eval compute in x in exact y).
 
 (* also need: symmetry, top right corner zero's -> in densemat definition *)
-(* TODO: replace Z with T *)
-Definition banded_repr (*{T}*) [m: nat] (b: nat) (f: 'M[(*T*)Z]_(S m,S m)) :=
- concat (map (fun j => (map (fun i => (*default*)0) (ord_enum (nat_of_ord j))) ++ (* repeat 0, j times *)
+(* TODO: replace option (ftype t) with T *)
+(* Remark: might need None instead of Some (Zconst t 0), given that dense_to_band doesn't initialize them *)
+(* Remark: we use (S m) for the size otherwise (@inord m (j+i)) creates issues *)
+Definition banded_repr (*{T}*) {t: type} [m: nat] (b: nat) (f: 'M[(*T*)option (ftype t)]_(S m,S m)) :=
+ concat (map (fun j => (map (fun i => (*default*)Some (Zconst t 0)) (ord_enum (nat_of_ord j))) ++ (* repeat 0, j times *)
                          (* we put default's but technically it could be anything *)
                        (map (fun i => f i (@inord m (j+i))) (sublist 0 (S m-j) (ord_enum (S m)))))
-             (ord_enum (b+1))).
+             (ord_enum (S b))).
 
+(** Spatial predicate (mpred) to represent the [data] field of a [struct bandmat_t] *)
+Definition bandmatn {t: type} (sh: share) [m] (b: nat) (M: 'M[option (ftype t)]_(S m,S m)) (p: val) : mpred :=
+ !! (S m * S b <= Int.max_signed)
+ && data_at sh (tarray (ctype_of_type t) (S m * S b))
+      (reptype_ftype (S m * S b) (map (@val_of_optfloat t) (banded_repr b M)))
+      p.
 
-
-
+(** Spatial predicate (mpred) to represent an entire [struct bandmat_t] *)
+Definition bandmat (sh: share) [m] (b: nat) (M: 'M[option (ftype the_type)]_(S m, S m))
+     (p: val) : mpred :=
+     field_at sh (Tstruct _bandmat_t noattr) (DOT _m) (Vint (Int.repr (S m))) p
+     (* the field m corresponds to (S m) in the Rocq code *)
+   * field_at sh (Tstruct _bandmat_t noattr) (DOT _b) (Vint (Int.repr b)) p
+   * bandmatn sh b M (offset_val bandmat_data_offset p)
+   * malloc_token' sh (bandmat_data_offset + sizeof (tarray the_ctype (Z.of_nat (S m) * Z.of_nat (S b)))) p.
