@@ -166,57 +166,56 @@ Definition bandmat_data_offset :=
   ltac:(let x := constr:(nested_field_offset bandmat_t (DOT _data))
         in let y := eval compute in x in exact y).
 
-(* also need: symmetry, top right corner zero's -> in bandmat definition *)
+(* Old version not being used anymore *)
 (* TODO: replace option (ftype t) with T *)
 (* Remark: might need None instead of Some (Zconst t 0), given that dense_to_band doesn't initialize them *)
 (* Remark: we use (S m) for the size otherwise (@inord m (j+i)) creates issues *)
-Definition banded_repr (*{T}*) {t: type} [m: nat] (b: nat) (f: 'M[(*T*)option (ftype t)]_(S m,S m)) :=
+Definition banded_repr' (*{T}*) {t: type} [m: nat] (b: nat) (f: 'M[(*T*)option (ftype t)]_(S m,S m)) :=
  concat (map (fun j => (map (fun i => (*default*)Some (Zconst t 0)) (ord_enum (nat_of_ord j))) ++ (* repeat 0, j times *)
                          (* we put default's but technically it could be anything *)
                        (map (fun i => f i (@inord m (j+i))) (sublist 0 (S m-j) (ord_enum (S m)))))
              (ord_enum (S b))).
 
 (* An attempt to have the matrix size m*m instead (S m) * (S m) by using auxiliary definitions. *)
-Definition inord_add' {m n : nat} (j : 'I_n) (i : 'I_(m-j)) : 'I_m.
+Definition inord_add {m n : nat} (j : 'I_n) (i : 'I_(m-j)) : 'I_m.
 apply (@Ordinal m (i+j)).
 pose proof (ltn_ord i). lia.
 Defined.
 
-Definition inord' {m n : nat} (i : 'I_(m-n)) : 'I_m.
+Definition inord_inj {m j : nat} (i : 'I_(m-j)) : 'I_m.
 apply (@Ordinal m i). 
 pose proof (ltn_ord i). lia.
 Defined.
 
-Definition banded_repr' {t: type} [m: nat] (b: nat) (f: 'M[option (ftype t)]_(m,m)) :=
- concat (map (fun j => (map (fun i => (*default*)Some (Zconst t 0)) (ord_enum (nat_of_ord j))) ++ (* repeat 0, j times *)
-                         (* we put default's but technically it could be anything *)
-                       (map (fun (i : 'I_(m-j)) => f (@inord' m j i) (@inord_add' m (S b) j i)) (ord_enum (m-j))))
+Definition banded_repr (*{T}*) {t: type} [m: nat] (b: nat) (f: 'M[(*T*)option (ftype t)]_(m,m)) :=
+ concat (map (fun j => (map (fun i => (*default*)Some (Zconst t 0)) (ord_enum (nat_of_ord j))) ++
+                       (map (fun (i : 'I_(m-j)) => f (@inord_inj m j i) (@inord_add m (S b) j i)) (ord_enum (m-j))))
              (ord_enum (S b))).
 
 (** Spatial predicate (mpred) to represent the [data] field of a [struct bandmat_t] *)
-Definition bandmatn {t: type} (sh: share) [m] (b: nat) (M: 'M[option (ftype t)]_(S m,S m)) (p: val) : mpred :=
- !! (S m * S b <= Int.max_signed /\ trmx M = M /\ 
-     forall (i j : 'I_(S m)), j>i+b -> M i j = Some (Zconst t 0)) (* might need to be None instead *)
- && data_at sh (tarray (ctype_of_type t) (S m * S b))
-      (reptype_ftype (S m * S b) (map (@val_of_optfloat t) (banded_repr b M)))
+Definition bandmatn {t: type} (sh: share) [m] (b: nat) (M: 'M[option (ftype t)]_(m,m)) (p: val) : mpred :=
+ !! (0 < m <= Int.max_signed /\ m * S b <= Int.max_signed /\ trmx M = M /\ 
+     forall (i j : 'I_m), j>i+b -> M i j = Some (Zconst t 0)) (* might need to be None instead *)
+ && data_at sh (tarray (ctype_of_type t) (m * S b))
+      (reptype_ftype (m * S b) (map (@val_of_optfloat t) (banded_repr b M)))
       p.
 
 (** Spatial predicate (mpred) to represent an entire [struct bandmat_t] *)
-Definition bandmat (sh: share) [m] (b: nat) (M: 'M[option (ftype the_type)]_(S m, S m))
+Definition bandmat (sh: share) [m] (b: nat) (M: 'M[option (ftype the_type)]_(m, m))
      (p: val) : mpred :=
-     field_at sh (Tstruct _bandmat_t noattr) (DOT _m) (Vint (Int.repr (S m))) p
-     (* the field m corresponds to (S m) in the Rocq code *)
+     field_at sh (Tstruct _bandmat_t noattr) (DOT _m) (Vint (Int.repr m)) p
    * field_at sh (Tstruct _bandmat_t noattr) (DOT _b) (Vint (Int.repr b)) p
    * bandmatn sh b M (offset_val bandmat_data_offset p)
-   * malloc_token' sh (bandmat_data_offset + sizeof (tarray the_ctype (Z.of_nat (S m) * Z.of_nat (S b)))) p.
+   * malloc_token' sh (bandmat_data_offset + sizeof (tarray the_ctype (Z.of_nat m * Z.of_nat (S b)))) p.
 
 (** As usual with new spatial predicates, populate the Hint databases [saturate_local] and [valid_pointer] *)
 Definition bandmatn_local_facts: forall {t} sh m b M p,
   @bandmatn t sh m b M p |-- 
-      !! (S m * S b <= Int.max_signed
+      !! (0 < m <= Int.max_signed
+          /\ m * S b <= Int.max_signed
           /\ trmx M = M 
-          /\ forall (i j : 'I_(S m)), j>i+b -> M i j = Some (Zconst t 0)
-          /\ field_compatible (tarray (ctype_of_type t) ((S m)*(S b))) [] p).
+          /\ forall (i j : 'I_(m)), j>i+b -> M i j = Some (Zconst t 0)
+          /\ field_compatible (tarray (ctype_of_type t) (m * S b)) [] p).
 Proof.
 intros.
 unfold bandmatn.
@@ -225,10 +224,11 @@ Qed.
 
 Definition bandmat_local_facts: forall sh m b M p,
   @bandmat sh m b M p |-- 
-      !! (S m * S b <= Int.max_signed
+      !! (0 < m <= Int.max_signed
+          /\ m * S b <= Int.max_signed
           /\ trmx M = M 
-          /\ forall (i j : 'I_(S m)), j>i+b -> M i j = Some (Zconst the_type 0)
-          /\ malloc_compatible (bandmat_data_offset + sizeof (tarray the_ctype ((S m)*(S b)))) p).
+          /\ forall (i j : 'I_m), j>i+b -> M i j = Some (Zconst the_type 0)
+          /\ malloc_compatible (bandmat_data_offset + sizeof (tarray the_ctype (m * S b))) p).
 Proof.
 intros.
 unfold bandmat, bandmatn.
@@ -263,30 +263,29 @@ Qed.
 (** * Function specifications (funspecs) *)
 (** Compare these to the function headers in [bandmat.h] *)
 
-(** [bandmat_malloc] takes [m] and [b] such that [S m*S b] is representable as a signed integer, 
-    and returns an uninitialized [S m*S b] matrix. *)
-(* TODO problem: the C code generates a matrix of size m, but this specs a matrix of size (S m) *)
+(** [bandmat_malloc] takes [m] and [b] such that [m * S b] is representable as a signed integer, 
+    and returns a banded uninitialized [m * m] matrix. *)
 (* Note: the argument in C code is n instead of m, might want to change it for clarity *)
 Definition bandmat_malloc_spec :=
   DECLARE _bandmat_malloc
   WITH m: nat, b: nat, gv: globals
   PRE [ tint, tint ]
-    PROP(0 <= m <= Int.max_signed; (* change back to 0<m if matrix of size m *)
+    PROP(0 < m <= Int.max_signed;
          0 <= b <= Int.max_signed;
-         (S m)*(S b) <= Int.max_signed)
+         m * S b <= Int.max_signed)
     PARAMS (Vint (Int.repr m); Vint (Int.repr b) ) GLOBALS (gv)
     SEP( mem_mgr gv )
   POST [ tptr bandmat_t ]
    EX p: val,
     PROP () 
     RETURN (p) 
-    SEP(bandmat Ews b (@const_mx (option(ftype the_type)) (S m) (S m) None) p; mem_mgr gv).
+    SEP(bandmat Ews b (@const_mx (option(ftype the_type)) m m None) p; mem_mgr gv).
     (* alternative: build the matrix with zeros in the corners and None on the bands *)
 
-(** [bandmat_free] takes an (S m)*(S m) matrix and returns nothing. *)
+(** [bandmat_free] takes an m * m banded matrix and returns nothing. *)
 Definition bandmat_free_spec :=
   DECLARE _bandmat_free
-  WITH X: {m & 'M[option (ftype the_type)]_(S m, S m)}, b : nat, p: val, gv: globals
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m)}, b : nat, p: val, gv: globals
   PRE [ tptr bandmat_t ]
     PROP() 
     PARAMS ( p ) GLOBALS (gv)
@@ -304,7 +303,7 @@ Definition bandmat_free_spec :=
   We have to repeat this unpacking separately in the PRE and POST clauses. *)
 Definition bandmatn_clear_spec :=
   DECLARE _bandmatn_clear
-  WITH X: {m & 'M[option (ftype the_type)]_(S m, S m)}, b: nat, p: val, sh: share
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m)}, b: nat, p: val, sh: share
   PRE [ tptr the_ctype, tint, tint ] let '(existT _ m M) := X in
     PROP(writable_share sh) 
     PARAMS (p; Vint (Int.repr m); Vint (Int.repr b))
@@ -312,14 +311,14 @@ Definition bandmatn_clear_spec :=
   POST [ tvoid ] let '(existT _ m M) := X in
     PROP () 
     RETURN () 
-    SEP(bandmatn sh b (@const_mx _ (S m) (S m) (Some (Zconst the_type 0))) p).
+    SEP(bandmatn sh b (@const_mx _ m m (Some (Zconst the_type 0))) p).
   (* For this function it has to enforce zero's, not None, in the corners *)
 
 (** [bandmat_clear] takes just the struct (with bounds information) of an m*n matrix and 
    sets all its elements to floating-point zero. *)
 Definition bandmat_clear_spec :=
   DECLARE _bandmat_clear
-  WITH X: {m & 'M[option (ftype the_type)]_(S m, S m)}, b: nat, p: val, sh: share
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m)}, b: nat, p: val, sh: share
   PRE [ tptr bandmat_t ] let '(existT _ m M) := X in 
     (PROP(writable_share sh) 
     PARAMS (p)
@@ -327,4 +326,4 @@ Definition bandmat_clear_spec :=
    POST [ tvoid ] let '(existT _ m M) := X in 
     PROP () 
     RETURN () 
-    SEP(bandmat sh b (@const_mx _ (S m) (S m) (Some (Zconst the_type 0))) p).
+    SEP(bandmat sh b (@const_mx _ m m (Some (Zconst the_type 0))) p).
