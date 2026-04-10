@@ -55,7 +55,7 @@ vcfloat.FPStdLib.type Tdouble    Tsingle
 
 (** To make our specifications (mostly) portable to C programs that use F64 or F32,
   we define [the_ctype] as either [tdouble] or [tsingle], depending on what type
-  the program uses for the [data] field of dense matrices.  The [nested_field_type]
+  the program uses for the [data] field of banded matrices.  The [nested_field_type]
   computation in the definition of [the_ctype] goes looking for that. *) 
 
 Definition bandmat_t := Tstruct _bandmat_t noattr.
@@ -166,7 +166,7 @@ Definition bandmat_data_offset :=
   ltac:(let x := constr:(nested_field_offset bandmat_t (DOT _data))
         in let y := eval compute in x in exact y).
 
-(* also need: symmetry, top right corner zero's -> in densemat definition *)
+(* also need: symmetry, top right corner zero's -> in bandmat definition *)
 (* TODO: replace option (ftype t) with T *)
 (* Remark: might need None instead of Some (Zconst t 0), given that dense_to_band doesn't initialize them *)
 (* Remark: we use (S m) for the size otherwise (@inord m (j+i)) creates issues *)
@@ -178,7 +178,8 @@ Definition banded_repr (*{T}*) {t: type} [m: nat] (b: nat) (f: 'M[(*T*)option (f
 
 (** Spatial predicate (mpred) to represent the [data] field of a [struct bandmat_t] *)
 Definition bandmatn {t: type} (sh: share) [m] (b: nat) (M: 'M[option (ftype t)]_(S m,S m)) (p: val) : mpred :=
- !! (S m * S b <= Int.max_signed)
+ !! (S m * S b <= Int.max_signed /\ trmx M = M /\ 
+     forall (i j : 'I_(S m)), j>i+b -> M i j = Some (Zconst t 0)) (* might need to be None instead *)
  && data_at sh (tarray (ctype_of_type t) (S m * S b))
       (reptype_ftype (S m * S b) (map (@val_of_optfloat t) (banded_repr b M)))
       p.
@@ -191,3 +192,6 @@ Definition bandmat (sh: share) [m] (b: nat) (M: 'M[option (ftype the_type)]_(S m
    * field_at sh (Tstruct _bandmat_t noattr) (DOT _b) (Vint (Int.repr b)) p
    * bandmatn sh b M (offset_val bandmat_data_offset p)
    * malloc_token' sh (bandmat_data_offset + sizeof (tarray the_ctype (Z.of_nat (S m) * Z.of_nat (S b)))) p.
+
+
+
