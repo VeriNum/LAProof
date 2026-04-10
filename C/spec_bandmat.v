@@ -243,3 +243,26 @@ Qed.
 
 #[export] Hint Resolve bandmatn_valid_pointer bandmat_valid_pointer : valid_pointer.
 
+(** * Function specifications (funspecs) *)
+(** Compare these to the function headers in [bandmat.h] *)
+
+(** [bandmat_malloc] takes [m] and [b] such that [S m*S b] is representable as a signed integer, 
+    and returns an uninitialized [S m*S b] matrix. *)
+(* TODO problem: the C code generates a matrix of size m, but this specs a matrix of size (S m) *)
+(* Note: the argument in C code is n instead of m, might want to change it for clarity *)
+Definition bandmat_malloc_spec :=
+  DECLARE _bandmat_malloc
+  WITH m: nat, b: nat, gv: globals
+  PRE [ tint, tint ]
+    PROP(0 <= m <= Int.max_signed; (* change back to 0<m if matrix of size m *)
+         0 <= b <= Int.max_signed;
+         (S m)*(S b) <= Int.max_signed)
+    PARAMS (Vint (Int.repr m); Vint (Int.repr b) ) GLOBALS (gv)
+    SEP( mem_mgr gv )
+  POST [ tptr bandmat_t ]
+   EX p: val,
+    PROP () 
+    RETURN (p) 
+    SEP(bandmat Ews b (@const_mx (option(ftype the_type)) (S m) (S m) None) p; mem_mgr gv).
+    (* alternative: build the matrix with zeros in the corners and None on the bands *)
+
