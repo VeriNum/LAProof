@@ -63,7 +63,7 @@ From LAProof.accuracy_proofs Require Import
   float_acc_lems
   dot_acc_lemmas.
 
-Require Import Reals.
+From Stdlib Require Import Reals.
 
 Open Scope R.
 

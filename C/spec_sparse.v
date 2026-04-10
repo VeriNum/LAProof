@@ -1,8 +1,7 @@
 Require Import VST.floyd.proofauto.
 From VSTlib Require Import spec_malloc.
 From LAProof.C Require Import floatlib sparse sparse_model distinct spec_alloc.
-Require Import vcfloat.FPStdCompCert.
-Require Import vcfloat.FPStdLib.
+From vcfloat Require Import FPStdCompCert FPStdLib.
 Require Import VSTlib.spec_math.
 
 #[export] Instance CompSpecs : compspecs. make_compspecs prog. Defined.
@@ -248,7 +247,7 @@ Definition sparse_imports := [fma_spec] ++ [spec_alloc.surely_malloc_spec'].
 
 Definition Gprog: funspecs := sparse_imports ++ SparseASI.
 
-Lemma BFMA_eq:
+Local Lemma BFMA_eq:  (* delete me!  seems no longer needed *)
    forall H H0 x y z,
   Binary.Bfma (fprec Tdouble) (femax Tdouble) H H0
     (@FPCompCert.FMA_NAN.fma_nan_pl 
@@ -258,8 +257,7 @@ Lemma BFMA_eq:
   BFMA x y z.
 Proof.
 intros.
- unfold BFMA.
+ unfold BFMA;
  f_equal; try apply proof_irr.
- simpl. f_equal. apply proof_irr.
 Qed.
 

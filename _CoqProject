@@ -1,5 +1,5 @@
 -Q . LAProof
-COQEXTRAFLAGS = "-w -notation-overridden,-ambiguous-paths,-overwriting-delimiting-key,-notation-incompatible-prefix"
+COQEXTRAFLAGS = "-w -notation-overridden,-ambiguous-paths,-overwriting-delimiting-key,-notation-incompatible-prefix,-deprecated-from-Coq"
   
 accuracy_proofs/preamble.v
 accuracy_proofs/real_lemmas.v

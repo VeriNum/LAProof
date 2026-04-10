@@ -1,8 +1,7 @@
 (** ** Real Arithmetic Auxiliary Lemmas *)
 
-Require Import Coq.Reals.Reals.
-Require Import Coq.Reals.RIneq.
-Require Import Psatz.
+From Stdlib Require Import Reals.Reals Reals.RIneq.
+From Stdlib Require Import Psatz.
 
 Open Scope R_scope.
 

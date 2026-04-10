@@ -7,8 +7,8 @@
 From VST.floyd Require Import proofauto VSU.
 From LAProof.C Require Import densemat spec_alloc spec_densemat floatlib matrix_model.
 From vcfloat Require Import FPStdCompCert FPStdLib.
-Require Import VSTlib.spec_math VSTlib.spec_malloc.
-Require Import Coq.Classes.RelationClasses.
+From VSTlib Require Import spec_math spec_malloc.
+From Stdlib Require Import Classes.RelationClasses.
 
 From mathcomp Require (*Import*) ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
 From mathcomp Require (*Import*) fintype finfun bigop finset fingroup perm order.

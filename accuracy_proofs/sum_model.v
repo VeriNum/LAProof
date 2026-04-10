@@ -40,7 +40,7 @@
 *)
 
 From LAProof.accuracy_proofs Require Import preamble common float_acc_lems.
-Require Import Permutation.
+From Stdlib Require Import Permutation.
 
 (** ** General Summation Relation
 

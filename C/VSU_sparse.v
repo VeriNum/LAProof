@@ -1,6 +1,5 @@
 Require Import VST.floyd.proofauto VST.floyd.VSU.
-Require Import vcfloat.VCFloat.
-Require Import vcfloat.FPStdCompCert.
+From vcfloat Require Import VCFloat FPStdCompCert.
 Require Import VSTlib.spec_math.
 From LAProof.C Require Import sparse sparse_model spec_sparse
                             floatlib verif_sparse verif_sparse_byrows verif_build_csr.

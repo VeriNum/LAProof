@@ -46,8 +46,8 @@
 *)
 
 From LAProof.accuracy_proofs Require Import preamble common float_acc_lems.
-Require Import FunctionalExtensionality.
-Require Import Permutation.
+From Stdlib Require Import FunctionalExtensionality.
+From Stdlib Require Import Permutation.
 
 (** ** Generic dot product
 
@@ -754,7 +754,6 @@ Lemma dot_prod_rel_nnzR :
     (Hfin : Binary.is_finite fp = true),
     nnzR v1R == 0%nat -> FT2R fp = 0.
 Proof.
-  Print nnzR.
   intros.
   rewrite nnzR_lemma in H.
   revert H Hfp Hlen Hfin. revert v2 fp.

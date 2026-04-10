@@ -8,8 +8,8 @@ From VST.floyd Require Import proofauto VSU.
 From LAProof.accuracy_proofs Require Import solve_model.
 From LAProof.C Require Import densemat spec_alloc spec_densemat floatlib matrix_model.
 From vcfloat Require Import FPStdCompCert FPStdLib.
-Require Import VSTlib.spec_math VSTlib.spec_malloc.
-Require Import Coq.Classes.RelationClasses.
+From VSTlib Require Import spec_math spec_malloc.
+From Stdlib Require Import Classes.RelationClasses.
 
 From mathcomp Require (*Import*) ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
 From mathcomp Require (*Import*) fintype finfun bigop finset fingroup perm order.
@@ -177,11 +177,10 @@ forward_for_simple_bound (Z.of_nat j)
     apply @subtract_another; auto; lia.
   * Intros k. assert (k=i) by (apply ord_inj; lia). subst k.
     forward_call.
-    replace (Binary.Bsqrt _ _ _ _ _ _) with (@BSQRT _ the_type).
-2:{ (* Simplify this proof when https://github.com/VeriNum/vcfloat/issues/32
-   is resolved. *)
+   change (Binary.Bsqrt _ _ _ _ _ _) with (@BSQRT _ the_type).
+(* before VCfloat 2.4.1, this was a 'replace' with the following proof.
  unfold BSQRT, UNOP. f_equal. extensionality x. simpl. f_equal. apply proof_irr.
-   }
+*)
     set (s := BSQRT _).
     forward_call (s, v_scratch, Tsh).
     forward.

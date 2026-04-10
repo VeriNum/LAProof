@@ -1,7 +1,6 @@
 Require Import VST.floyd.proofauto.
 From LAProof.C Require Import sparse sparse_model spec_sparse.
-Require Import vcfloat.FPStdLib.
-Require Import vcfloat.FPStdCompCert.
+From vcfloat Require Import FPStdLib FPStdCompCert.
 Require Import VSTlib.spec_math.
 Require Import LAProof.C.floatlib.
 
@@ -117,8 +116,8 @@ forward_call (Znth h (csr_vals csr), Znth (Znth h (csr_col_ind csr)) vval,
 forward.
 entailer!.
 f_equal.
-rewrite BFMA_eq.
-eapply partial_row_next; try eassumption; lia.
+erewrite partial_row_next; try eassumption; try lia.
+reflexivity.
 -
  forward.
  Exists  (partial_row i (Znth (i + 1) (csr_row_ptr csr)) (csr_vals csr) (csr_col_ind csr) (csr_row_ptr csr) vval).

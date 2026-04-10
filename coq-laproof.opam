@@ -40,7 +40,7 @@ depends: [
   "coq-flocq"
   "coq-interval"
   "coq-coquelicot"
-  "coq-vcfloat" {>= "2.3~"}
+  "coq-vcfloat" {>= "2.4.1~"}
   "coq-mathcomp-ssreflect" {>= "2.4.0~"}
   "coq-mathcomp-algebra"
   "coq-mathcomp-analysis"
@@ -52,6 +52,6 @@ depends: [
   "coq-libvalidsdp" {>= "1.1.1"}
 ]
 tags: [
-  "date:2025-02-11"
+  "date:2025-04-06"
   "logpath:LAProof"
 ]

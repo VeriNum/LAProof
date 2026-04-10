@@ -8,8 +8,8 @@ From VST.floyd Require Import proofauto VSU.
 From LAProof.accuracy_proofs Require Import solve_model.
 From LAProof.C Require Import densemat spec_alloc spec_densemat floatlib matrix_model.
 From vcfloat Require Import FPStdCompCert FPStdLib.
-Require Import VSTlib.spec_math VSTlib.spec_malloc.
-Require Import Coq.Classes.RelationClasses.
+From VSTlib Require Import spec_math spec_malloc.
+From Stdlib Require Import Classes.RelationClasses.
 
 From mathcomp Require (*Import*) ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
 From mathcomp Require (*Import*) fintype finfun bigop finset fingroup perm order.
@@ -388,9 +388,7 @@ start_function.
 forward_call.
 forward_call.
 forward.
-entailer!!.
-(* Simplify this proof when https://github.com/VeriNum/vcfloat/issues/32
-   is resolved. *)
+(* This part of the proof was needed before VCFloat 2.4.1
 f_equal.
 unfold BSQRT, UNOP.
 simpl.
@@ -398,6 +396,7 @@ f_equal.
 extensionality z.
 f_equal.
 apply proof_irr.
+*)
 Qed.
 
 Lemma body_densemat_norm2: semax_body Vprog Gprog f_densemat_norm2 densemat_norm2_spec.

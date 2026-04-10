@@ -2,7 +2,7 @@ From VST.floyd Require Import proofauto VSU.
 From LAProof.C Require Import alloc spec_alloc.
 (* From vcfloat Require Import vcfloat.FPStdCompCert vcfloat.FPStdLib. *)
 Require Import VSTlib.spec_math VSTlib.spec_malloc.
-Require Import Coq.Classes.RelationClasses.
+From Stdlib Require Import Classes.RelationClasses.
 
 Set Bullet Behavior "Strict Subproofs".
 

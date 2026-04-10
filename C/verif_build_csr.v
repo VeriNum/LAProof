@@ -2,9 +2,8 @@ Require Import VST.floyd.proofauto.
 Require Import LAProof.C.floatlib.
 From LAProof.C Require Import build_csr sparse_model spec_sparse distinct partial_csr.
 Require Import VSTlib.spec_math.
-Require Import vcfloat.FPStdCompCert.
-Require Import vcfloat.FPStdLib.
-Require Import Coq.Classes.RelationClasses.
+From vcfloat Require Import FPStdCompCert FPStdLib.
+From Stdlib Require Import Classes.RelationClasses.
 
 Set Bullet Behavior "Strict Subproofs".
 

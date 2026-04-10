@@ -1,8 +1,7 @@
 (** * LAProof.accuracy_proofs.solve_model: models of Cholesky decomposition and triangular solve *)
 
 From LAProof.accuracy_proofs Require Import preamble common float_acc_lems.
-Require Import vcfloat.FPStdLib.
-Require Import vcfloat.FPStdCompCert.
+From vcfloat Require Import FPStdLib FPStdCompCert.
 From LAProof Require Import accuracy_proofs.mv_mathcomp.
 
 

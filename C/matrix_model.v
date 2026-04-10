@@ -13,7 +13,6 @@ Require Import VST.floyd.functional_base.
 Import ListNotations.
 From Stdlib Require Import Permutation.
 Require Import vcfloat.FPStdLib.
-(*Require Import vcfloat.FPStdCompCert.*)
 Require Import LAProof.accuracy_proofs.solve_model.
 
 (** In contrast to certain other modules (e.g., [C.spec_densemat]
