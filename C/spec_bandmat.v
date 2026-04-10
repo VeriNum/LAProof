@@ -266,3 +266,48 @@ Definition bandmat_malloc_spec :=
     SEP(bandmat Ews b (@const_mx (option(ftype the_type)) (S m) (S m) None) p; mem_mgr gv).
     (* alternative: build the matrix with zeros in the corners and None on the bands *)
 
+(** [bandmat_free] takes an (S m)*(S m) matrix and returns nothing. *)
+Definition bandmat_free_spec :=
+  DECLARE _bandmat_free
+  WITH X: {m & 'M[option (ftype the_type)]_(S m, S m)}, b : nat, p: val, gv: globals
+  PRE [ tptr bandmat_t ]
+    PROP() 
+    PARAMS ( p ) GLOBALS (gv)
+    SEP(bandmat Ews b (projT2 X) p; mem_mgr gv)
+  POST [ tvoid ]
+    PROP () 
+    RETURN () 
+    SEP( mem_mgr gv ).
+
+(** [bandmatn_clear] takes just the [data] part of an m*n matrix and 
+   sets all its elements to floating-point zero.  Therefore, as with all [bandmatn] operations,
+   we need to pass bounds information as function parameters.   
+
+   The [let '(existT _ ...)] unpacks the components of [X].  Due to a limitation in VST's notation system,
+  We have to repeat this unpacking separately in the PRE and POST clauses. *)
+Definition bandmatn_clear_spec :=
+  DECLARE _bandmatn_clear
+  WITH X: {m & 'M[option (ftype the_type)]_(S m, S m)}, b: nat, p: val, sh: share
+  PRE [ tptr the_ctype, tint, tint ] let '(existT _ m M) := X in
+    PROP(writable_share sh) 
+    PARAMS (p; Vint (Int.repr m); Vint (Int.repr b))
+    SEP(bandmatn sh b M p)
+  POST [ tvoid ] let '(existT _ m M) := X in
+    PROP () 
+    RETURN () 
+    SEP(bandmatn sh b (@const_mx _ (S m) (S m) (Some (Zconst the_type 0))) p).
+  (* For this function it has to enforce zero's, not None, in the corners *)
+
+(** [bandmat_clear] takes just the struct (with bounds information) of an m*n matrix and 
+   sets all its elements to floating-point zero. *)
+Definition bandmat_clear_spec :=
+  DECLARE _bandmat_clear
+  WITH X: {m & 'M[option (ftype the_type)]_(S m, S m)}, b: nat, p: val, sh: share
+  PRE [ tptr bandmat_t ] let '(existT _ m M) := X in 
+    (PROP(writable_share sh) 
+    PARAMS (p)
+    SEP(bandmat sh b M p))
+   POST [ tvoid ] let '(existT _ m M) := X in 
+    PROP () 
+    RETURN () 
+    SEP(bandmat sh b (@const_mx _ (S m) (S m) (Some (Zconst the_type 0))) p).
