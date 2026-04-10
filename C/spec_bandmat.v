@@ -193,5 +193,53 @@ Definition bandmat (sh: share) [m] (b: nat) (M: 'M[option (ftype the_type)]_(S m
    * bandmatn sh b M (offset_val bandmat_data_offset p)
    * malloc_token' sh (bandmat_data_offset + sizeof (tarray the_ctype (Z.of_nat (S m) * Z.of_nat (S b)))) p.
 
+(** As usual with new spatial predicates, populate the Hint databases [saturate_local] and [valid_pointer] *)
+Definition bandmatn_local_facts: forall {t} sh m b M p,
+  @bandmatn t sh m b M p |-- 
+      !! (S m * S b <= Int.max_signed
+          /\ trmx M = M 
+          /\ forall (i j : 'I_(S m)), j>i+b -> M i j = Some (Zconst t 0)
+          /\ field_compatible (tarray (ctype_of_type t) ((S m)*(S b))) [] p).
+Proof.
+intros.
+unfold bandmatn.
+entailer!.
+Qed.
 
+Definition bandmat_local_facts: forall sh m b M p,
+  @bandmat sh m b M p |-- 
+      !! (S m * S b <= Int.max_signed
+          /\ trmx M = M 
+          /\ forall (i j : 'I_(S m)), j>i+b -> M i j = Some (Zconst the_type 0)
+          /\ malloc_compatible (bandmat_data_offset + sizeof (tarray the_ctype ((S m)*(S b)))) p).
+Proof.
+intros.
+unfold bandmat, bandmatn.
+entailer!.
+Qed.
+
+#[export] Hint Resolve bandmatn_local_facts bandmat_local_facts : saturate_local.
+
+Lemma bandmatn_valid_pointer:
+  forall t sh m b M p,
+   sepalg.nonidentity sh ->
+   @bandmatn t sh m b M p |-- valid_pointer p.
+Proof.
+ intros.
+ unfold bandmatn.
+ Intros.
+ apply data_at_valid_ptr; auto.
+ unfold ctype_of_type.
+ repeat if_tac; simpl; lia.
+Qed.
+
+Lemma bandmat_valid_pointer:
+  forall sh m b M p,
+   @bandmat sh m b M p |-- valid_pointer p.
+Proof.
+ intros.
+ unfold bandmat. entailer!.
+Qed.
+
+#[export] Hint Resolve bandmatn_valid_pointer bandmat_valid_pointer : valid_pointer.
 
