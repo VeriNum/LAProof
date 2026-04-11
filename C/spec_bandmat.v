@@ -264,7 +264,7 @@ Qed.
 (** Compare these to the function headers in [bandmat.h] *)
 
 (** [bandmat_malloc] takes [m] and [b] such that [m * S b] is representable as a signed integer, 
-    and returns a banded uninitialized [m * m] matrix. *)
+    and returns a b-banded uninitialized [m * m] matrix. *)
 (* Note: the argument in C code is n instead of m, might want to change it for clarity *)
 Definition bandmat_malloc_spec :=
   DECLARE _bandmat_malloc
@@ -282,7 +282,7 @@ Definition bandmat_malloc_spec :=
     SEP(bandmat Ews b (@const_mx (option(ftype the_type)) m m None) p; mem_mgr gv).
     (* alternative: build the matrix with zeros in the corners and None on the bands *)
 
-(** [bandmat_free] takes an m * m banded matrix and returns nothing. *)
+(** [bandmat_free] takes a b-banded m * m banded matrix and returns nothing. *)
 Definition bandmat_free_spec :=
   DECLARE _bandmat_free
   WITH X: {m & 'M[option (ftype the_type)]_(m, m)}, b : nat, p: val, gv: globals
@@ -295,7 +295,7 @@ Definition bandmat_free_spec :=
     RETURN () 
     SEP( mem_mgr gv ).
 
-(** [bandmatn_clear] takes just the [data] part of an m*n matrix and 
+(** [bandmatn_clear] takes just the [data] part of a b-banded m*m matrix and 
    sets all its elements to floating-point zero.  Therefore, as with all [bandmatn] operations,
    we need to pass bounds information as function parameters.   
 
@@ -314,7 +314,7 @@ Definition bandmatn_clear_spec :=
     SEP(bandmatn sh b (@const_mx _ m m (Some (Zconst the_type 0))) p).
   (* For this function it has to enforce zero's, not None, in the corners *)
 
-(** [bandmat_clear] takes just the struct (with bounds information) of an m*n matrix and 
+(** [bandmat_clear] takes just the struct (with bounds information) of a b-banded m*m matrix and 
    sets all its elements to floating-point zero. *)
 Definition bandmat_clear_spec :=
   DECLARE _bandmat_clear
@@ -327,3 +327,91 @@ Definition bandmat_clear_spec :=
     PROP () 
     RETURN () 
     SEP(bandmat sh b (@const_mx _ m m (Some (Zconst the_type 0))) p).
+
+
+(** [bandmatn_get] fetches the (i,d) component of a matrix.  Since the matrix is in banded form
+    order, we must also pass the size [m] and the number of bands [b].
+
+   The precondition of the function enforces that [0 <= i < m] and [0 <= d < m].  It does so by construction
+   of the dependently typed value [X], where the last component is a pair [(i: 'I_[m], d: 'I[m])].
+    *)
+(* I don't understand why the code uses i+d*rows; I think the correct (symmetric) index should be
+   max(i,j)+m*abs(i-j) = max(i,d)+rows*abs(i-d), where j=d and m=rows. Unless d is something else? *)
+Definition bandmatn_get_spec :=
+  DECLARE _bandmatn_get
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m) * ('I_(m) * 'I_(m)) }%type,
+       b:nat, p: val, sh: share, x: ftype the_type
+  PRE [ tptr the_ctype, tint, tint, tint ] let '(existT _ m (M,(i,d))) := X in
+    PROP(readable_share sh; M i d = Some x)
+    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr i); Vint (Int.repr d))
+    SEP(bandmatn sh b M p)
+  POST [ the_ctype ] let '(existT _ m (M,(i,d))) := X in
+    PROP () 
+    RETURN (val_of_float x) 
+    SEP(bandmatn sh b M p).
+
+Definition bandmat_get_spec :=
+  DECLARE _bandmat_get
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m) * ('I_(m) * 'I_(m)) }%type,
+       b:nat, p: val, sh: share, x: ftype the_type
+  PRE [ tptr bandmat_t , tint, tint ] let '(existT _ m (M,(i,d))) := X in
+    PROP(readable_share sh; M i d = Some x)
+    PARAMS (p ; Vint (Int.repr i); Vint (Int.repr d))
+    SEP(bandmat sh b M p)
+  POST [ the_ctype ]  let '(existT _ m (M,(i,d))) := X in
+    PROP () 
+    RETURN (val_of_float x) 
+    SEP(bandmat sh b M p).
+
+Definition bandmatn_set_spec :=
+  DECLARE _bandmatn_set
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m) * ('I_(m) * 'I_(m)) }%type,
+       b:nat, p: val, sh: share, x: ftype the_type
+  PRE [ tptr the_ctype, tint, tint, tint, the_ctype ] let '(existT _ m (M,(i,d))) := X in
+    PROP(writable_share sh) 
+    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr i); Vint (Int.repr d); val_of_float x)
+    SEP(bandmatn sh b M p)
+  POST [ tvoid ] let '(existT _ m (M,(i,d))) := X in
+    PROP () 
+    RETURN () 
+    SEP(bandmatn sh b (update_mx M i d (Some x)) p).
+
+Definition bandmat_set_spec :=
+  DECLARE _bandmat_set
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m) * ('I_(m) * 'I_(m)) }%type,
+       b:nat, p: val, sh: share, x: ftype the_type
+  PRE [ tptr bandmat_t, tint, tint, the_ctype ] let '(existT _ m (M,(i,d))) := X in
+    PROP(writable_share sh) 
+    PARAMS (p ; Vint (Int.repr i); Vint (Int.repr d); val_of_float x)
+    SEP(bandmat sh b M p)
+  POST [ tvoid ] let '(existT _ m (M,(i,d))) := X in
+    PROP () 
+    RETURN () 
+    SEP(bandmat sh b (update_mx M i d (Some x)) p).
+
+Definition bandmatn_addto_spec :=
+  DECLARE _bandmatn_addto
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m) * ('I_(m) * 'I_(m)) }%type,
+       b:nat, p: val, sh: share, y: ftype the_type, x: ftype the_type
+  PRE [ tptr the_ctype, tint, tint, tint, the_ctype ] let '(existT _ m (M,(i,d))) := X in
+    PROP(writable_share sh; M i d = Some y) 
+    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr i); Vint (Int.repr d); val_of_float x)
+    SEP(bandmatn sh b M p)
+  POST [ tvoid ] let '(existT _ m (M,(i,d))) := X in
+    PROP () 
+    RETURN () 
+    SEP(bandmatn sh b (update_mx M i d (Some (BPLUS y x))) p).
+
+Definition bandmat_addto_spec :=
+  DECLARE _bandmat_addto
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m) * ('I_(m) * 'I_(m)) }%type,
+       b:nat, p: val, sh: share, y: ftype the_type, x: ftype the_type
+  PRE [ tptr bandmat_t, tint, tint, the_ctype ] let '(existT _ m (M,(i,d))) := X in
+    PROP(writable_share sh; M i d = Some y) 
+    PARAMS (p ; Vint (Int.repr i); Vint (Int.repr d);
+            val_of_float x)
+    SEP(bandmat sh b M p)
+  POST [ tvoid ] let '(existT _ m (M,(i,d))) := X in
+    PROP () 
+    RETURN () 
+    SEP(bandmat sh b (update_mx M i d (Some (BPLUS y x))) p).
