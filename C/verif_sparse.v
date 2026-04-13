@@ -288,6 +288,41 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 
+Lemma Znth_nth {A} (i : nat) (v : list A) (d : A):
+  (i < Z.to_nat (Zlength v))%nat ->
+  @Znth A d (Z.of_nat i) v = seq.nth d v i.
+Proof. 
+  intros. unfold Znth.
+  destruct (Z_lt_dec (Z.of_nat i) 0); [lia |].
+  rewrite Nat2Z.id. clear H. clear n. 
+  revert i. induction v; intros. 
+  + rewrite seq.nth_nil. destruct i; simpl; auto.
+  + destruct i as [| i'].
+    - reflexivity.
+    - simpl. apply IHv.
+Qed. 
+
+Lemma Zlength_size {A} (v : list A):
+  Zlength v = Z.of_nat (seq.size v).
+Proof. 
+  induction v. 
+  + unfold Zlength. simpl. auto. 
+  + rewrite Zlength_cons. simpl. lia. 
+Qed.
+
+Lemma matvec_mulmx {t} {rows cols} (m : 'M[ftype t]_(rows, cols)) (v : 'cV[ftype t]_cols):
+  forall (i : 'I_rows), (i < rows)%nat ->
+  feq (Znth (Z.of_nat i) (floatlib.matrix_vector_mult (listlist_of_mx m) (list_of_cV v)))
+    (F.mulmx m v i ord0).
+Proof. 
+  intros. unfold floatlib.matrix_vector_mult. unfold F.mulmx. 
+  rewrite mxE. rewrite Znth_map. 
+  2:{ Search (Z.to_nat (Zlength _) = (seq.size _)). rewrite Zlength_size.
+    rewrite matrix_rows_listlist_of_mx. split.
+    + apply Zle_0_nat.
+    + rewrite <-Nat2Z.inj_lt. pose proof (ltn_ord i). lia. }
+Admitted.
+
 
 Lemma body_csr_mat_vec_multiply: semax_body Vprog Gprog f_csr_mat_vec_multiply csr_mat_vec_multiply_spec.
 Proof. 
@@ -307,9 +342,23 @@ Proof.
   forward_call (sh1, sh2, sh3, m, (listlist_of_mx mval), csr, v, (list_of_cV vval), p).
   Intros vret. Exists (@cV_of_list (ftype Tdouble) (Zconst Tdouble 0) rows vret).
   entailer!!.
-  
-    
-
-  + assert (Zlength vret = Zlength (floatlib.matrix_vector_mult (matrix2listlist mval') (list_of_cV vval'))).
-    { Search floatlib.matrix_vector_mult. }
-    pose proof (Forall2_forall_Znth feq _ _ H5).
+  { intros.
+    rewrite Forall2_forall_Znth in H7. destruct H7.
+    rewrite Zlength_matrix_vector_mult in H7.
+    rewrite <- H5 in H7. rewrite H7 in H8.
+    specialize (H8 (Z.of_nat i)). spec H8.
+    { split.
+      + apply Zle_0_nat.
+      + rewrite <- Nat2Z.inj_lt. pose proof (ltn_ord i). lia. }
+    unfold cV_of_list. rewrite mxE. rewrite <- Znth_nth.
+    2:{ rewrite H7. rewrite Nat2Z.id. pose proof (ltn_ord i). lia. }
+    etransitivity; [exact H8 |].
+    apply matvec_mulmx.
+    pose proof (ltn_ord i). lia. }
+  rewrite H4, H5. cancel.
+  rewrite list_of_cV_of_list. entailer!!.
+  rewrite Forall2_forall_Znth in H7. destruct H7.
+  rewrite Zlength_matrix_vector_mult in H7. rewrite <-H5 in H7.
+  rewrite Zlength_correct in H7.
+  apply Nat2Z.inj in H7. apply H7.
+Abort.

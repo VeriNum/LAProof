@@ -243,7 +243,8 @@ Definition reset_csr_spec :=
     SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv)
     . *)
 (* How to say that (r, c) is in the csr representation? *)
-(* Convert the csr to normal matrices / define predicates on the csrs directly? *)
+(* Convert the csr to mathcomp matrices / define predicates on the csrs directly? *)
+(* option 1 is better *)
 
 
 

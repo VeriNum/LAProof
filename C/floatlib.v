@@ -384,6 +384,14 @@ unfold matrix_rows.
 induction m; simpl; auto. list_solve.
 Qed.
 
+Lemma Zlength_matrix_vector_mult : forall {t} {NAN : FPCore.Nans} (m : matrix t) (v : vector t),
+  Zlength (matrix_vector_mult m v) = matrix_rows m.
+Proof.
+  intros. 
+  unfold matrix_vector_mult. rewrite Zlength_map. auto.
+Qed.
+
+
 Add Parametric Morphism {NAN: FPCore.Nans}{t: type}: (@norm2 _ t)
   with signature Forall2 feq ==> feq
  as norm2_mor.

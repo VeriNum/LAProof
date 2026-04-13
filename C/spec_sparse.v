@@ -281,17 +281,19 @@ Definition csr_mat_vec_multiply_spec :=
       csr_to_M csr mval;
       Z.of_nat rows < Int.max_unsigned;
       Z.of_nat cols < Int.max_unsigned;
-      cV_finite vval;
-      M_finite mval)
+      cV_finite vval; M_finite mval)
     PARAMS (m; v; p)
-    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat (list_of_cV vval)) v; 
+    SEP (csr_rep sh1 csr m; 
+      data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat (list_of_cV vval)) v; 
+      (* maybe use densematn instead of data_at; maybe also define a cV rep predicate *)
       data_at_ sh3 (tarray tdouble (Z.of_nat rows)) p)
   POST [tvoid]
     let '(existT _ (rows, cols) (mval, vval)) := X in 
     EX result : 'cV[ftype Tdouble]_rows, 
     PROP (forall i:'I_rows, feq (result i ord0) ((F.mulmx mval vval) i ord0))
     RETURN ()
-    SEP (csr_rep sh1 csr m; data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat (list_of_cV vval)) v;
+    SEP (csr_rep sh1 csr m; 
+      data_at sh2 (tarray tdouble (Z.of_nat cols)) (map Vfloat (list_of_cV vval)) v;
       data_at sh3 (tarray tdouble (Z.of_nat rows)) (map Vfloat (list_of_cV result)) p).
 
 
