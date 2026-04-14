@@ -310,18 +310,41 @@ Proof.
   + rewrite Zlength_cons. simpl. lia. 
 Qed.
 
-Lemma matvec_mulmx {t} {rows cols} (m : 'M[ftype t]_(rows, cols)) (v : 'cV[ftype t]_cols):
-  forall (i : 'I_rows), (i < rows)%nat ->
-  feq (Znth (Z.of_nat i) (floatlib.matrix_vector_mult (listlist_of_mx m) (list_of_cV v)))
-    (F.mulmx m v i ord0).
-Proof. 
-  intros. unfold floatlib.matrix_vector_mult. unfold F.mulmx. 
-  rewrite mxE. rewrite Znth_map. 
-  2:{ Search (Z.to_nat (Zlength _) = (seq.size _)). rewrite Zlength_size.
-    rewrite matrix_rows_listlist_of_mx. split.
-    + apply Zle_0_nat.
-    + rewrite <-Nat2Z.inj_lt. pose proof (ltn_ord i). lia. }
-Admitted.
+Lemma Fmulmx_flib_matrix_vector_mult {t} {rows cols} (m : 'M[ftype t]_(rows, cols)) (v : 'cV[ftype t]_cols):
+  floatlib.matrix_vector_mult (listlist_of_mx m) (list_of_cV v) =
+  list_of_cV (F.FMA_mulmx m v).
+Proof.
+  assert (dotprod_eq : forall (v1 v2 : list (ftype t)),
+      floatlib.dotprod v1 v2 = mv_mathcomp.list_dotprod v1 v2).
+  { intros v1 v2. unfold floatlib.dotprod, mv_mathcomp.list_dotprod.
+    assert (zc : seq.zip v1 v2 = List.combine v1 v2).
+    { revert v2; induction v1 as [|x v1' IH]; intro v2.
+      - destruct v2; reflexivity.
+      - destruct v2 as [|y v2']; simpl; [reflexivity | rewrite IH; reflexivity]. }
+    rewrite zc.
+    generalize (List.combine v1 v2) (Zconst t 0).
+    intro l. induction l as [|a l' IH]; intro z.
+    + simpl. reflexivity. 
+    + simpl. apply IH. }
+  assert (key : floatlib.matrix_vector_mult (listlist_of_mx m) (list_of_cV v) =
+    mv_mathcomp.matrix_vector_mult (listlist_of_mx m) (list_of_cV v)).
+  { unfold floatlib.matrix_vector_mult, mv_mathcomp.matrix_vector_mult.
+    apply List.map_ext. intro row. exact (dotprod_eq row (list_of_cV v)). }
+  rewrite key.
+  pose proof (@Fmulmx_matrix_vector_mult _ _ rows cols (listlist_of_mx m) (list_of_cV v)
+    (eq_sym (matrix_rows_listlist_of_mx m)) (eq_sym (size_list_of_cV v))
+    (matrix_cols_listlist_of_mx m)).
+  rewrite mx_of_listlist_of_mx, cV_of_list_of_cV in H.
+  exact H.
+Qed.
+
+Lemma Znth_of_nat_list_of_cV {t} {n} (i : 'I_n) (v : 'cV[ftype t]_n):
+  Znth (Z.of_nat i) (list_of_cV v) = v i ord0.
+Proof.
+  rewrite Znth_nth.
+  - apply nth_list_of_cV.
+  - rewrite Zlength_size, size_list_of_cV, Nat2Z.id. pose proof (ltn_ord i). lia.
+Qed.
 
 
 Lemma body_csr_mat_vec_multiply: semax_body Vprog Gprog f_csr_mat_vec_multiply csr_mat_vec_multiply_spec.
@@ -336,9 +359,12 @@ Proof.
   rewrite H5.
   assert (matrix_cols (listlist_of_mx mval) (Z.of_nat cols)).
   { unfold matrix_cols, listlist_of_mx. rewrite Forall_Znth.
-    intros. erewrite Znth_map.
+    intros. 
+    destruct rows as [|rows'].
+    { simpl in H6. rewrite Zlength_nil in H6. lia. }
+    rewrite (@Znth_map _ ord0).
     2:{ rewrite Zlength_map in H6. auto. }
-    erewrite Zlength_map. rewrite Zlength_correct, size_ord_enum. auto. } 
+    erewrite Zlength_map. rewrite Zlength_correct, size_ord_enum. auto. }
   forward_call (sh1, sh2, sh3, m, (listlist_of_mx mval), csr, v, (list_of_cV vval), p).
   Intros vret. Exists (@cV_of_list (ftype Tdouble) (Zconst Tdouble 0) rows vret).
   entailer!!.
@@ -353,12 +379,12 @@ Proof.
     unfold cV_of_list. rewrite mxE. rewrite <- Znth_nth.
     2:{ rewrite H7. rewrite Nat2Z.id. pose proof (ltn_ord i). lia. }
     etransitivity; [exact H8 |].
-    apply matvec_mulmx.
-    pose proof (ltn_ord i). lia. }
+    rewrite Fmulmx_flib_matrix_vector_mult.
+    rewrite Znth_of_nat_list_of_cV. auto. }
   rewrite H4, H5. cancel.
   rewrite list_of_cV_of_list. entailer!!.
   rewrite Forall2_forall_Znth in H7. destruct H7.
   rewrite Zlength_matrix_vector_mult in H7. rewrite <-H5 in H7.
   rewrite Zlength_correct in H7.
-  apply Nat2Z.inj in H7. apply H7.
-Abort.
+  apply Nat2Z.inj in H7. apply H7. 
+Qed.
