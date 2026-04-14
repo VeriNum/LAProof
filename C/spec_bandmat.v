@@ -413,3 +413,54 @@ Definition bandmat_addto_spec :=
     PROP () 
     RETURN () 
     SEP(bandmat sh b (update_mx M i j (Some (BPLUS y x))) p).
+
+From LAProof.C Require Import spec_densemat.
+
+Definition bandmat_norm2_spec :=
+  DECLARE _bandmat_norm2
+  WITH sh: share, b:nat, X: {m & 'M[ftype the_type]_(m, m)}, p: val
+  (* No option forces M to be fully initialized *)
+  PRE [ tptr bandmat_t ] let '(existT _ m M) := X in
+    PROP (readable_share sh)
+    PARAMS (p)
+    SEP(bandmat sh b (map_mx Some M) p)
+  POST [ the_ctype ] let '(existT _ m M) := X in
+    PROP() RETURN (val_of_float (norm2 (banded_repr b M))) (* or maybe (frobenius_norm2 M) *)
+    SEP(bandmat sh b (map_mx Some M) p).
+(* A little odd that M doesn't have type 'M[option (ftype the_type)]_(m, m).
+   But what would you return if it's completely uninitialized? *)
+(* Ideally we would want to compute frobenius_norm2 M. But if some of the leading zeros
+   in the bands are uninitialized, that could create issues.
+   The code takes the norm2 of the whole array, including the leading
+   zeros in the bands. But those could be uninitialized.
+   Solution 1: Change the spec of bandmat_norm2_spec to use `norm2 (banded_repr b M)`,
+               instead of `(frobenius_norm2 M)`. Feels like cheating + very fragile.
+               Also what happens to the None?
+               But no issue thanks to type: because M does not contain options, the leading elements
+               of the bands are initialized to the default ftype, which is 0.
+               This would not work with an M of type 'M[option (ftype the_type)]_(m, m).
+               But then to verify you would need to asume the leading zeros are actually zero, 
+               which dense_to_band doesn't enforce in the code.
+   Solution 2: Change the code of bandmat_norm2 to not add up the leading potentially uninitialized zeros
+   Solution 3: Enforce that the leading zeros are actually 0 (instead of None), but that doesn't 
+               match the code of dense_to_band.
+               In bandmatn_clear this is done. But not in dense_to_band.
+               There might be a bug if one does dense_to_band followed by bandmat_norm2.
+*)
+(* Because M is not of type 'M[option (ftype the_type)], banded_repr imposes 0's (as default)
+   for the leading elements of the bands; this would not work with options *)
+(* Same comment for bandmat_norm_spec *)
+
+Definition bandmat_norm_spec :=
+  DECLARE _bandmat_norm
+  WITH sh: share, b:nat, X: {m & 'M[ftype the_type]_(m, m)}, p: val
+  PRE [ tptr bandmat_t ] let '(existT _ m M) := X in
+    PROP (readable_share sh)
+    PARAMS (p)
+    SEP(bandmat sh b (map_mx Some M) p)
+  POST [ the_ctype ] let '(existT _ m M) := X in
+    PROP() RETURN (val_of_float (BSQRT (norm2 (banded_repr b M)))) (* or maybe (frobenius_norm M) *)
+    SEP(bandmat sh b (map_mx Some M) p).
+
+
+
