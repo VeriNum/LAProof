@@ -462,5 +462,20 @@ Definition bandmat_norm_spec :=
     PROP() RETURN (val_of_float (BSQRT (norm2 (banded_repr b M)))) (* or maybe (frobenius_norm M) *)
     SEP(bandmat sh b (map_mx Some M) p).
 
+(* Note: the densematn_print_spec is Admitted *)
+(* Note: there is no bandmatn_print in bandmat.h or bandmat.c *)
+(* Doesn't say anything about the output *)
+Definition bandmat_print_spec :=
+  DECLARE _bandmat_print
+  WITH b:nat, X: {m & 'M[ftype the_type]_(m, m)}, p: val, sh: share
+  PRE [ tptr bandmat_t ] let '(existT _ m M) := X in 
+    (PROP(readable_share sh) 
+    PARAMS (p)
+    SEP(bandmat sh b (map_mx Some M)  p))
+   POST [ tvoid ] let '(existT _ m M) := X in 
+    PROP () 
+    RETURN () 
+    SEP(bandmat sh b (map_mx Some M) p).
+
 
 
