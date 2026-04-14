@@ -166,16 +166,6 @@ Definition bandmat_data_offset :=
   ltac:(let x := constr:(nested_field_offset bandmat_t (DOT _data))
         in let y := eval compute in x in exact y).
 
-(* Old version not being used anymore *)
-(* TODO: replace option (ftype t) with T *)
-(* Remark: might need None instead of Some (Zconst t 0), given that dense_to_band doesn't initialize them *)
-(* Remark: we use (S m) for the size otherwise (@inord m (j+i)) creates issues *)
-Definition banded_repr' (*{T}*) {t: type} [m: nat] (b: nat) (f: 'M[(*T*)option (ftype t)]_(S m,S m)) :=
- concat (map (fun j => (map (fun i => (*default*)Some (Zconst t 0)) (ord_enum (nat_of_ord j))) ++ (* repeat 0, j times *)
-                         (* we put default's but technically it could be anything *)
-                       (map (fun i => f i (@inord m (j+i))) (sublist 0 (S m-j) (ord_enum (S m)))))
-             (ord_enum (S b))).
-
 (* An attempt to have the matrix size m*m instead (S m) * (S m) by using auxiliary definitions. *)
 Definition inord_add {m n : nat} (j : 'I_n) (i : 'I_(m-j)) : 'I_m.
 apply (@Ordinal m (i+j)).
@@ -187,15 +177,17 @@ apply (@Ordinal m i).
 pose proof (ltn_ord i). lia.
 Defined.
 
-Definition banded_repr (*{T}*) {t: type} [m: nat] (b: nat) (f: 'M[(*T*)option (ftype t)]_(m,m)) :=
- concat (map (fun j => (map (fun i => (*default*)Some (Zconst t 0)) (ord_enum (nat_of_ord j))) ++
+Definition banded_repr {T: Type} {InhT: Inhabitant T} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
+ concat (map (fun j => (repeat InhT (nat_of_ord j)) ++
                        (map (fun (i : 'I_(m-j)) => f (@inord_inj m j i) (@inord_add m (S b) j i)) (ord_enum (m-j))))
              (ord_enum (S b))).
+
+(* Could define a predicate Banded *)
 
 (** Spatial predicate (mpred) to represent the [data] field of a [struct bandmat_t] *)
 Definition bandmatn {t: type} (sh: share) [m] (b: nat) (M: 'M[option (ftype t)]_(m,m)) (p: val) : mpred :=
  !! (0 < m <= Int.max_signed /\ m * S b <= Int.max_signed /\ trmx M = M /\ 
-     forall (i j : 'I_m), j>i+b -> M i j = Some (Zconst t 0)) (* might need to be None instead *)
+     forall (i j : 'I_m), j>i+b -> M i j = Some (Zconst t 0))
  && data_at sh (tarray (ctype_of_type t) (m * S b))
       (reptype_ftype (m * S b) (map (@val_of_optfloat t) (banded_repr b M)))
       p.
