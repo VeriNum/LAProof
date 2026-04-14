@@ -1,6 +1,6 @@
 Require Import VST.floyd.proofauto.
 (* Require Import Iterative.floatlib. *)
-From LAProof.C Require Import floatlib sparse sparse_model distinct spec_alloc build_csr2 partial_csrg.
+From LAProof.C Require Import floatlib sparse sparse_model distinct spec_alloc build_csr2 partial_csrg spec_sparse.
 (* From Iterative.sparse Require Import sparse_model build_csr2 distinct partial_csrg. *)
 Require Import vcfloat.FPStdCompCert.
 Require Import vcfloat.FPStdLib.
@@ -211,6 +211,15 @@ Definition csr_same_graph {t : type} (csr1 csr2 : csr_matrix t) :=
   csr_row_ptr csr1 = csr_row_ptr csr2.
 
 
+From LAProof.accuracy_proofs Require Import mv_mathcomp.
+From mathcomp Require ssreflect.
+Import fintype matrix.
+
+Unset Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+Set Bullet Behavior "Strict Subproofs".
+
 Definition reset_csr_spec := 
   DECLARE _reset_csr
   WITH sh : share, csr : csr_matrix Tdouble, csr' : csr_matrix Tdouble, q : val, gv : globals
@@ -225,28 +234,35 @@ Definition reset_csr_spec :=
     SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv).
 
 
-(* a notion of a csr graph *)
+Definition rc_in_csrg {t} (r c : Z) (csrg : csr_matrix t) : Prop :=
+  0 <= r < csr_rows csrg /\
+  0 <= c < csr_cols csrg /\
+  In c (sublist (Znth r (csr_row_ptr csrg)) (Znth (r+1) (csr_row_ptr csrg)) (csr_col_ind csrg)).  
 
-(* a predicate: rc is in the csr graph *)
-(* *)
 
-(* Definition add_to_csr_spec :=
+Definition add_rcx_to_csr_rel {t} {rows cols : nat} (r c : Z) (x : ftype t)
+  (csr csr' : csr_matrix t): Prop :=
+  0 <= r < Z.of_nat rows /\ 0 <= c < Z.of_nat cols /\
+  exists (m m' : 'M[ftype t]_(rows, cols)),
+    csr_to_M csr m /\ csr_to_M csr' m' /\
+    (forall (ir : 'I_rows) (ic : 'I_cols),
+      (ir : nat) = Z.to_nat r -> (ic : nat) = Z.to_nat c ->
+      feq (m ir ic) (BPLUS (m' ir ic) x)) /\
+    forall (i : 'I_rows) (j : 'I_cols),
+      Z.of_nat i <> r -> Z.of_nat j <> c -> feq (m i j) (m' i j).
+
+Definition add_to_csr_spec :=
   DECLARE _add_to_csr
-  WITH 
+  WITH sh : share, csr : csr_matrix Tdouble, csr' : csr_matrix Tdouble, r : Z, c : Z,  
+    x : ftype Tdouble, q : val, gv : globals
   PRE [tptr (Tstruct _csr_matrix noattr), tuint, tuint, tdouble]
-    PROP ((* rc is in the csr graph *))
+    PROP (rc_in_csrg r c csr)
     PARAMS (q; Vint (Int.repr r); Vint (Int.repr c); Vfloat x)
     SEP (csr_rep sh csr q; csrg_token csr q; mem_mgr gv)
   POST [Tvoid]
-    PROP ((* relation between csr and csr' *))
+    PROP (@add_rcx_to_csr_rel _ (Z.to_nat (csr_rows csr')) (Z.to_nat (csr_cols csr')) r c x csr csr')
     RETURN ()
-    SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv)
-    . *)
-(* How to say that (r, c) is in the csr representation? *)
-(* Convert the csr to mathcomp matrices / define predicates on the csrs directly? *)
-(* option 1 is better *)
-
-
+    SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv).
 
 
 Definition surely_malloc_spec :=
