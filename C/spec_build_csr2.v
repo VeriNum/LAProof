@@ -222,14 +222,17 @@ Set Bullet Behavior "Strict Subproofs".
 
 Definition reset_csr_spec := 
   DECLARE _reset_csr
-  WITH sh : share, csr : csr_matrix Tdouble, csr' : csr_matrix Tdouble, q : val, gv : globals
+  WITH sh : share, csr : csr_matrix Tdouble, q : val, gv : globals
   PRE [tptr (Tstruct _csr_matrix noattr)]
     PROP (writable_share sh)
     PARAMS (q)
     SEP (csrg_rep sh csr q; csrg_token csr q; mem_mgr gv)
   POST [Tvoid]    
-    PROP (csr_same_graph csr csr'; 
-      Forall (fun x => x = Zconst Tdouble 0) (csr_vals csr'))
+    EX csr' : csr_matrix Tdouble,
+    EX X : {mn : nat * nat & 'M[ftype Tdouble]_(fst mn, snd mn)}%type,
+    let '(existT _ (rows, cols) m) := X in 
+    PROP (csr_same_graph csr csr'; csr_to_M csr' m;
+          forall i j, m i j = Zconst Tdouble 0)
     RETURN ()
     SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv).
 
