@@ -239,31 +239,49 @@ Definition rc_in_csrg {t} (r c : Z) (csrg : csr_matrix t) : Prop :=
   0 <= c < csr_cols csrg /\
   In c (sublist (Znth r (csr_row_ptr csrg)) (Znth (r+1) (csr_row_ptr csrg)) (csr_col_ind csrg)).  
 
+Fixpoint find_index (c : Z) (l : list Z) : Z :=
+  match l with
+  | nil => 0
+  | h :: t => if Z.eqb h c then 0 else 1 + find_index c t
+  end.
 
-Definition add_rcx_to_csr_rel {t} {rows cols : nat} (r c : Z) (x : ftype t)
-  (csr csr' : csr_matrix t): Prop :=
-  0 <= r < Z.of_nat rows /\ 0 <= c < Z.of_nat cols /\
-  exists (m m' : 'M[ftype t]_(rows, cols)),
-    csr_to_M csr m /\ csr_to_M csr' m' /\
-    (forall (ir : 'I_rows) (ic : 'I_cols),
-      (ir : nat) = Z.to_nat r -> (ic : nat) = Z.to_nat c ->
-      feq (m ir ic) (BPLUS (m' ir ic) x)) /\
-    forall (i : 'I_rows) (j : 'I_cols),
-      Z.of_nat i <> r -> Z.of_nat j <> c -> feq (m i j) (m' i j).
+(* predicate only using csr *)
+Definition add_rcx_to_csr_rel' {t} (r c : Z) (x : ftype t) 
+  (csr csr' : csr_matrix t) : Prop := 
+  rc_in_csrg r c csr /\
+  csr_same_graph csr csr' /\
+  let vi := Znth r (csr_row_ptr csr) + 
+    find_index c (sublist (Znth r (csr_row_ptr csr)) (Znth (r+1) (csr_row_ptr csr)) (csr_col_ind csr)) in 
+  feq (BPLUS (Znth vi (csr_vals csr)) x) (Znth vi (csr_vals csr')) /\
+  forall i, 0 <= i < Zlength (csr_vals csr) -> i <> vi -> (Znth i (csr_vals csr)) = (Znth i (csr_vals csr')).
+
+Definition add_rcx_to_csr_rel {t : type} {rows cols : nat} (r c : Z) (x : ftype t) 
+  (m m' : 'M[ftype t]_(rows, cols)) : Prop :=
+  exists csr csr', 
+  csr_to_M csr m /\ csr_to_M csr' m' /\
+  add_rcx_to_csr_rel' r c x csr csr'.
 
 Definition add_to_csr_spec :=
   DECLARE _add_to_csr
-  WITH sh : share, csr : csr_matrix Tdouble, csr' : csr_matrix Tdouble, r : Z, c : Z,  
-    x : ftype Tdouble, q : val, gv : globals
+  WITH sh : share, 
+    csr : csr_matrix Tdouble, csr' : csr_matrix Tdouble, r : Z, c : Z, 
+    x : ftype Tdouble, q : val, gv : globals,
+    X : {mn : nat * nat & 'M[ftype Tdouble]_(fst mn, snd mn) * 'M[ftype Tdouble]_(fst mn, snd mn)}%type
   PRE [tptr (Tstruct _csr_matrix noattr), tuint, tuint, tdouble]
-    PROP (rc_in_csrg r c csr)
+    let '(existT _ (rows, cols) (m, m')) := X in 
+    PROP (writable_share sh; rc_in_csrg r c csr; csr_to_M csr m)
     PARAMS (q; Vint (Int.repr r); Vint (Int.repr c); Vfloat x)
     SEP (csr_rep sh csr q; csrg_token csr q; mem_mgr gv)
   POST [Tvoid]
-    PROP (@add_rcx_to_csr_rel _ (Z.to_nat (csr_rows csr')) (Z.to_nat (csr_cols csr')) r c x csr csr')
+    EX csr' : csr_matrix Tdouble,
+    let '(existT _ (rows, cols) (m, m')) := X in 
+    PROP (writable_share sh; add_rcx_to_csr_rel r c x m m'; csr_to_M csr' m')
     RETURN ()
-    SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv).
+    SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv). 
 
+(* m' cannot be existentially quantified in the post-condition *)
+(* since otherwise the size of m' will be represented with different variables *)
+(* and add_rcs_to_csr_rel will not type check *)
 
 Definition surely_malloc_spec :=
   DECLARE _surely_malloc
