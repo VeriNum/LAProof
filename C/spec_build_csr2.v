@@ -220,21 +220,21 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 
-(* todo: lemma -> for any csr graph, there exists a csr matrix represented *)
+(* csr_rep entails csrg_rep *)
 
 Definition reset_csr_spec := 
   DECLARE _reset_csr
-  WITH sh : share, csr : csr_matrix Tdouble, q : val, rows : Z, cols : Z, gv : globals
+  WITH sh : share, csr : csr_matrix Tdouble, q : val
   PRE [tptr (Tstruct _csr_matrix noattr)]
     PROP (writable_share sh) (* size of csr *)
     PARAMS (q)
-    SEP (csrg_rep sh csr q; csrg_token csr q; mem_mgr gv)
+    SEP (csrg_rep sh csr q; csrg_token csr q)
   POST [Tvoid]    
     EX csr' : csr_matrix Tdouble,
     PROP (csr_same_graph csr csr'; 
-      csr_to_M csr' (@const_mx (ftype Tdouble) (Z.to_nat rows) (Z.to_nat cols) (Zconst Tdouble 0)))
+      csr_to_M csr' (@const_mx (ftype Tdouble) (Z.to_nat (csr_rows csr)) (Z.to_nat (csr_cols csr)) (Zconst Tdouble 0)))
     RETURN ()
-    SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv).
+    SEP (csr_rep sh csr' q; csrg_token csr' q).
 
 Definition rc_in_csrg {t} (r c : Z) (csrg : csr_matrix t) : Prop :=
   0 <= r < csr_rows csrg /\
@@ -270,7 +270,8 @@ Definition add_to_csr_spec :=
     X : {mn : nat * nat & 'M[ftype Tdouble]_(fst mn, snd mn) * ('I_(fst mn) * 'I_(snd mn))}%type
   PRE [tptr (Tstruct _csr_matrix noattr), tuint, tuint, tdouble]
     let '(existT _ (rows, cols) (m, (r, c))) := X in 
-    PROP (writable_share sh; rc_in_csrg (Z.of_nat r) (Z.of_nat c) csr; csr_to_M csr m)
+    PROP (writable_share sh; rc_in_csrg (Z.of_nat r) (Z.of_nat c) csr; csr_to_M csr m
+    (* csr_rows csr_cols finite *) )
     PARAMS (q; Vint (Int.repr (Z.of_nat r)); Vint (Int.repr (Z.of_nat c)); Vfloat x)
     SEP (csr_rep sh csr q; csrg_token csr q)
   POST [tvoid]
@@ -279,11 +280,6 @@ Definition add_to_csr_spec :=
     PROP (csr_to_M csr' (update_mx m r c (BPLUS (m r c) x)); csr_same_graph csr csr')
     RETURN ()
     SEP (csr_rep sh csr' q; csrg_token csr' q).
-
-
-(* m' cannot be existentially quantified in the post-condition *)
-(* since otherwise the size of m' will be represented with different variables *)
-(* and add_rcs_to_csr_rel will not type check *)
 
 Definition surely_malloc_spec :=
   DECLARE _surely_malloc

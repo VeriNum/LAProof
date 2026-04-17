@@ -270,6 +270,47 @@ Definition cV_finite {t} {n} (v : 'cV[ftype t]_n) :=
 Definition M_finite {t} {rows cols} (M : 'M[ftype t]_(rows, cols)) :=
   Forall (Forall finite) (listlist_of_mx M).
 
+Lemma matrix_cols_matrix_cols_nat {t : type} (m : floatlib.matrix t) x y :
+  m <> nil ->
+  matrix_cols m x -> 
+  matrix_cols_nat m y ->
+  x = Z.of_nat y.
+Proof. 
+  intros.
+  unfold matrix_cols, matrix_cols_nat in *.
+  destruct m as [|mh mt].
+  { destruct H. auto. }
+  inversion H0. inversion H1.
+  rewrite <- H4, <- H8. rewrite Zlength_correct. f_equal.
+Qed.
+
+Lemma csr_to_M_rows {t} {rows cols} (csr : csr_matrix t) (m : 'M[ftype t]_(rows, cols)) :
+  csr_to_M csr m ->
+  csr_rows csr = Z.of_nat rows.
+Proof. 
+  intros. unfold csr_to_M in H.
+  pose proof (csr_to_matrix_rows (listlist_of_mx m) csr H). rewrite H0.
+  pose proof (@matrix_rows_listlist_of_mx _ rows cols m).
+  unfold matrix_rows. rewrite Zlength_correct. f_equal.
+  rewrite <- H1. list_solve.
+Qed.
+
+Lemma csr_to_M_cols {t} {rows cols} (csr : csr_matrix t) (m : 'M[ftype t]_(rows, cols)) :
+  rows <> O ->
+  csr_to_M csr m ->
+  csr_cols csr = Z.of_nat cols. 
+Proof. 
+  intros. unfold csr_to_M in H0.
+  pose proof (csr_to_matrix_cols (listlist_of_mx m) csr H0).
+  pose proof (@matrix_cols_listlist_of_mx _ rows cols m).
+  assert (listlist_of_mx m <> nil).
+  { intro. apply H. unfold listlist_of_mx in H3.
+    destruct rows; auto. pose proof (size_ord_enum (S rows)). 
+    pose proof (seq.size_map (fun i : 'I_(S rows) => seq.map (m i) (ord_enum cols)) (ord_enum (S rows))).
+    rewrite H3 in H5. rewrite H4 in H5. inversion H5. } 
+  pose proof (matrix_cols_matrix_cols_nat (listlist_of_mx m) _ _ H3 H1 H2). auto. 
+Qed.
+
 Definition csr_mat_vec_multiply_spec :=
   DECLARE _csr_mat_vec_multiply 
   WITH sh1 : share, sh2 : share, sh3 : share,
