@@ -211,7 +211,7 @@ Definition csr_same_graph {t : type} (csr1 csr2 : csr_matrix t) :=
   csr_row_ptr csr1 = csr_row_ptr csr2.
 
 
-From LAProof.accuracy_proofs Require Import mv_mathcomp.
+From LAProof.accuracy_proofs Require Import mv_mathcomp solve_model.
 From mathcomp Require ssreflect.
 Import fintype matrix.
 
@@ -220,27 +220,26 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Set Bullet Behavior "Strict Subproofs".
 
+(* todo: lemma -> for any csr graph, there exists a csr matrix represented *)
+
 Definition reset_csr_spec := 
   DECLARE _reset_csr
-  WITH sh : share, csr : csr_matrix Tdouble, q : val, gv : globals
+  WITH sh : share, csr : csr_matrix Tdouble, q : val, rows : Z, cols : Z, gv : globals
   PRE [tptr (Tstruct _csr_matrix noattr)]
-    PROP (writable_share sh)
+    PROP (writable_share sh) (* size of csr *)
     PARAMS (q)
     SEP (csrg_rep sh csr q; csrg_token csr q; mem_mgr gv)
   POST [Tvoid]    
     EX csr' : csr_matrix Tdouble,
-    EX X : {mn : nat * nat & 'M[ftype Tdouble]_(fst mn, snd mn)}%type,
-    let '(existT _ (rows, cols) m) := X in 
-    PROP (csr_same_graph csr csr'; csr_to_M csr' m;
-          forall i j, m i j = Zconst Tdouble 0)
+    PROP (csr_same_graph csr csr'; 
+      csr_to_M csr' (@const_mx (ftype Tdouble) (Z.to_nat rows) (Z.to_nat cols) (Zconst Tdouble 0)))
     RETURN ()
     SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv).
-
 
 Definition rc_in_csrg {t} (r c : Z) (csrg : csr_matrix t) : Prop :=
   0 <= r < csr_rows csrg /\
   0 <= c < csr_cols csrg /\
-  In c (sublist (Znth r (csr_row_ptr csrg)) (Znth (r+1) (csr_row_ptr csrg)) (csr_col_ind csrg)).  
+  In c (sublist (Znth r (csr_row_ptr csrg)) (Znth (r+1) (csr_row_ptr csrg)) (csr_col_ind csrg)). 
 
 Fixpoint find_index (c : Z) (l : list Z) : Z :=
   match l with
@@ -267,20 +266,20 @@ Definition add_rcx_to_csr_rel {t : type} {rows cols : nat} (r c : Z) (x : ftype 
 Definition add_to_csr_spec :=
   DECLARE _add_to_csr
   WITH sh : share, 
-    csr : csr_matrix Tdouble, csr' : csr_matrix Tdouble, r : Z, c : Z, 
-    x : ftype Tdouble, q : val, gv : globals,
-    X : {mn : nat * nat & 'M[ftype Tdouble]_(fst mn, snd mn) * 'M[ftype Tdouble]_(fst mn, snd mn)}%type
+    csr : csr_matrix Tdouble, x : ftype Tdouble, q : val,
+    X : {mn : nat * nat & 'M[ftype Tdouble]_(fst mn, snd mn) * ('I_(fst mn) * 'I_(snd mn))}%type
   PRE [tptr (Tstruct _csr_matrix noattr), tuint, tuint, tdouble]
-    let '(existT _ (rows, cols) (m, m')) := X in 
-    PROP (writable_share sh; rc_in_csrg r c csr; csr_to_M csr m)
-    PARAMS (q; Vint (Int.repr r); Vint (Int.repr c); Vfloat x)
-    SEP (csr_rep sh csr q; csrg_token csr q; mem_mgr gv)
-  POST [Tvoid]
+    let '(existT _ (rows, cols) (m, (r, c))) := X in 
+    PROP (writable_share sh; rc_in_csrg (Z.of_nat r) (Z.of_nat c) csr; csr_to_M csr m)
+    PARAMS (q; Vint (Int.repr (Z.of_nat r)); Vint (Int.repr (Z.of_nat c)); Vfloat x)
+    SEP (csr_rep sh csr q; csrg_token csr q)
+  POST [tvoid]
     EX csr' : csr_matrix Tdouble,
-    let '(existT _ (rows, cols) (m, m')) := X in 
-    PROP (writable_share sh; add_rcx_to_csr_rel r c x m m'; csr_to_M csr' m')
+    let '(existT _ (rows, cols) (m, (r, c))) := X in 
+    PROP (csr_to_M csr' (update_mx m r c (BPLUS (m r c) x)); csr_same_graph csr csr')
     RETURN ()
-    SEP (csr_rep sh csr' q; csrg_token csr' q; mem_mgr gv). 
+    SEP (csr_rep sh csr' q; csrg_token csr' q).
+
 
 (* m' cannot be existentially quantified in the post-condition *)
 (* since otherwise the size of m' will be represented with different variables *)
