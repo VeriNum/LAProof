@@ -501,6 +501,35 @@ Definition dense_to_band_spec :=
     RETURN (q) 
     SEP(bandmat Ews bw M q; mem_mgr gv).
 
+Definition bandmat_factor_spec :=
+ DECLARE _bandmat_factor
+ WITH sh: share, X: {n & 'M[option (ftype the_type)]_n}, p: val, b: nat
+ PRE [ tptr bandmat_t ] let '(existT _ m M) := X in
+    PROP (writable_share sh;
+          forall i j, isSome (mirror_UT M i j))
+    PARAMS (p)
+    SEP (bandmat sh b M p)
+ POST [ tint ] let '(existT _ m M) := X in
+   EX R: 'M_m,
+    PROP (cholesky_jik_spec (map_mx optfloat_to_float (mirror_UT M)) R)
+    RETURN (Vint (Int.repr (Zcholesky_return (cholesky_return R))))
+    SEP (bandmat sh b (joinLU M (map_mx Some R)) p).
 
-
+Definition bandmat_solve_spec :=
+ DECLARE _bandmat_solve
+ WITH rsh: share, sh: share, X: {m & 'M[option (ftype the_type)]_m * 'cV[ftype the_type]_m}%type,
+      b: nat, p: val, xp: val
+ PRE [ tptr bandmat_t, tptr the_ctype ] let '(existT _ m (M,x)) := X in
+    PROP (readable_share rsh; writable_share sh;
+          forall i j, isSome (mirror_UT M i j))
+    PARAMS (p; xp)
+    SEP (bandmat rsh b M p; densematn sh (map_mx Some x) xp)
+ POST [ tvoid ] let '(existT _ m (M,x)) := X in
+    PROP ()
+    RETURN ()
+    SEP (bandmat rsh b M p;
+         densematn sh (map_mx Some 
+                      (backward_subst (map_mx optfloat_to_float M)
+                          (forward_subst (trmx (map_mx optfloat_to_float M)) x)))
+           xp).
 
