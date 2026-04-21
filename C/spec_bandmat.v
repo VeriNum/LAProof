@@ -417,9 +417,38 @@ Definition bandmat_addto_spec :=
 (* Importing for now, should probably refactor eventually *)
 From LAProof.C Require Import spec_densemat.
 
-Definition banded_repr_nopadding {T: Type} {InhT: Inhabitant T} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
+(* problem here is that the symmetric elements are not repeated *)
+Definition banded_repr_nopadding_aux {T: Type} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
  concat (map (fun (j:'I_(S b)) => map (fun (i : 'I_(m-j)) => f (@inord_inj m j i) (@inord_add m (S b) j i)) (ord_enum (m-j)))
              (ord_enum (S b))).
+
+(* with repeated elements, in order abcd,efghi,efghi for a 4x4 2-banded matrix *)
+Definition banded_repr_nopadding {T: Type} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
+  let l := banded_repr_nopadding_aux b f in
+  l ++ (sublist m (length l) l).
+
+Fixpoint duplicate {A:Type} (l: list A) : list A :=
+  match l with
+  nil => nil
+| h :: t => cons h (cons h (duplicate t))
+end.
+
+(* with repeated elements, in order abcd,eeffgg,hhii for a 4x4 2-banded matrix *)
+Definition banded_repr_nopadding' {T: Type} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
+  let l := banded_repr_nopadding_aux b f in
+  let s := sublist m (length l) l in
+  (sublist 0 m l) ++ (duplicate s).
+
+Definition repeat {A:Type} (l: list A) : list A := l ++ l.
+
+Definition banded_repr_nopadding_aux'' {T: Type} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
+ concat (map (fun (j:'I_(S b)) => repeat (map (fun (i : 'I_(m-j)) => f (@inord_inj m j i) (@inord_add m (S b) j i)) (ord_enum (m-j))))
+             (ord_enum (S b))).
+
+(* with repeated elements, in order abcd,efgefg,hihi for a 4x4 2-banded matrix *)
+Definition banded_repr_nopadding'' {T: Type} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
+  let l := banded_repr_nopadding_aux'' b f in
+  sublist m (length l) l.
 
 (* THERE ARE KNOWN PROBLEMS IN THIS SPEC, SEE BELOW *)
 Definition bandmat_norm2_spec :=
@@ -431,34 +460,33 @@ Definition bandmat_norm2_spec :=
     PARAMS (p)
     SEP(bandmat sh b (map_mx Some M) p)
   POST [ the_ctype ] let '(existT _ m M) := X in
-    PROP() RETURN (val_of_float (norm2 (banded_repr b M)))
-    (* (frobenius_norm M) would not work because the order of addition is different *)
-    (* technically (banded_repr b M) would work, but only because the default float is 0 *)
+    PROP() RETURN (val_of_float (norm2 (banded_repr_nopadding b M)))
+    (* (frobenius_norm2 M) would not work because the order of addition is different *)
+    (* technically (banded_repr b M) might work, but only because the default float is 0 *)
     SEP(bandmat sh b (map_mx Some M) p).
-(* A little odd that M doesn't have type 'M[option (ftype the_type)]_(m, m).
+(* It is a little odd that M doesn't have type 'M[option (ftype the_type)]_(m, m).
    But what would you return if it's completely uninitialized? *)
-(* Ideally we would want to compute frobenius_norm2 M. But if some of the leading zeros
-   in the bands are uninitialized, that could create issues.
-   The code takes the norm2 of the whole array, including the leading
-   zeros in the bands. But those could be uninitialized.
+(* ISSUE 1: The current code is incorrect: if some of the leading zeros in the bands are uninitialized, 
+   since they're added up but not initialized (hence could be anything), that could create issues.
+   This is because the code takes the norm2 of the whole array, including the leading zeros in the bands.
    Solution 1: Change the spec of bandmat_norm2_spec to use `norm2 (banded_repr b M)`,
-               instead of `(frobenius_norm2 M)`. Feels like cheating + very fragile.
+               instead of `(norm2 (banded_repr_nopadding b M))`. Feels like cheating + very fragile.
                Also what happens to the None?
-               Actually we cannot put `(frobenius_norm2 M)` because the order of summation is different
                But no issue thanks to type: because M does not contain options, the leading elements
                of the bands are initialized to the default ftype, which is 0.
                This would not work with an M of type 'M[option (ftype the_type)]_(m, m).
                But then to verify you would need to asume the leading zeros are actually zero, 
                which dense_to_band doesn't enforce in the code.
-   Solution 2: Change the code of bandmat_norm2 to not add up the leading potentially uninitialized zeros
+   Solution 2: Change the code of bandmat_norm2 to not add up the leading potentially uninitialized zeros/
+               Probably the best option.
    Solution 3: Enforce that the leading zeros are actually 0 (instead of None), but that doesn't 
                match the code of dense_to_band.
                In bandmatn_clear this is done. But not in dense_to_band.
-               There might be a bug if one does dense_to_band followed by bandmat_norm2.
-*)
-(* Because M is not of type 'M[option (ftype the_type)], banded_repr imposes 0's (as default)
-   for the leading elements of the bands; this would not work with options *)
-(* Same comment for bandmat_norm_spec *)
+               There might be a bug if one does dense_to_band followed by bandmat_norm2. *)
+(* ISSUE 2: bandmat_norm2 (and also bandmat_norm, densemat_norm2, densemat_norm) appear to be 
+            computing the Frobenius norm, not the 2-norm of the matrix. At a minimum we should rename. *)
+(* ISSUE 3: densemat_norm2 and densemat_norm are only adding up the bands once, but they should
+            appear twice in the Frobenius sum since the matrix is symmetric *)
 
 Definition bandmat_norm_spec :=
   DECLARE _bandmat_norm
