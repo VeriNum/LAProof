@@ -414,8 +414,14 @@ Definition bandmat_addto_spec :=
     RETURN () 
     SEP(bandmat sh b (update_mx M i j (Some (BPLUS y x))) p).
 
+(* Importing for now, should probably refactor eventually *)
 From LAProof.C Require Import spec_densemat.
 
+Definition banded_repr_nopadding {T: Type} {InhT: Inhabitant T} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
+ concat (map (fun (j:'I_(S b)) => map (fun (i : 'I_(m-j)) => f (@inord_inj m j i) (@inord_add m (S b) j i)) (ord_enum (m-j)))
+             (ord_enum (S b))).
+
+(* THERE ARE KNOWN PROBLEMS IN THIS SPEC, SEE BELOW *)
 Definition bandmat_norm2_spec :=
   DECLARE _bandmat_norm2
   WITH sh: share, b:nat, X: {m & 'M[ftype the_type]_(m, m)}, p: val
@@ -425,7 +431,9 @@ Definition bandmat_norm2_spec :=
     PARAMS (p)
     SEP(bandmat sh b (map_mx Some M) p)
   POST [ the_ctype ] let '(existT _ m M) := X in
-    PROP() RETURN (val_of_float (norm2 (banded_repr b M))) (* or maybe (frobenius_norm2 M) *)
+    PROP() RETURN (val_of_float (norm2 (banded_repr b M)))
+    (* (frobenius_norm M) would not work because the order of addition is different *)
+    (* technically (banded_repr b M) would work, but only because the default float is 0 *)
     SEP(bandmat sh b (map_mx Some M) p).
 (* A little odd that M doesn't have type 'M[option (ftype the_type)]_(m, m).
    But what would you return if it's completely uninitialized? *)
@@ -436,6 +444,7 @@ Definition bandmat_norm2_spec :=
    Solution 1: Change the spec of bandmat_norm2_spec to use `norm2 (banded_repr b M)`,
                instead of `(frobenius_norm2 M)`. Feels like cheating + very fragile.
                Also what happens to the None?
+               Actually we cannot put `(frobenius_norm2 M)` because the order of summation is different
                But no issue thanks to type: because M does not contain options, the leading elements
                of the bands are initialized to the default ftype, which is 0.
                This would not work with an M of type 'M[option (ftype the_type)]_(m, m).
@@ -459,7 +468,7 @@ Definition bandmat_norm_spec :=
     PARAMS (p)
     SEP(bandmat sh b (map_mx Some M) p)
   POST [ the_ctype ] let '(existT _ m M) := X in
-    PROP() RETURN (val_of_float (BSQRT (norm2 (banded_repr b M)))) (* or maybe (frobenius_norm M) *)
+    PROP() RETURN (val_of_float (BSQRT (norm2 (banded_repr_nopadding b M))))
     SEP(bandmat sh b (map_mx Some M) p).
 
 (* Note: the densematn_print_spec is Admitted *)
@@ -476,6 +485,22 @@ Definition bandmat_print_spec :=
     PROP () 
     RETURN () 
     SEP(bandmat sh b (map_mx Some M) p).
+
+Definition dense_to_band_spec :=
+  DECLARE _dense_to_band
+  WITH X: {m & 'M[option (ftype the_type)]_(m, m)}, p: val, sh: share, bw: nat, gv:globals
+  PRE [ tptr densemat_t, tint ] let '(existT _ m M) := X in
+    (* enforcing that M is banded with band width bw *)
+    (PROP(readable_share sh ; 0 < m <= Int.max_signed ; m * S bw <= Int.max_signed ;
+          trmx M = M ; forall (i j : 'I_m), j>i+bw -> M i j = Some (Zconst the_type 0) )
+    PARAMS (p ; Vint (Int.repr bw)) GLOBALS (gv)
+    SEP(densemat sh M p))
+  POST [ tptr bandmat_t ] let '(existT _ m M) := X in
+   EX q: val,
+    PROP () 
+    RETURN (q) 
+    SEP(bandmat Ews bw M q; mem_mgr gv).
+
 
 
 
