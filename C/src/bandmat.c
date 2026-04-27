@@ -176,10 +176,20 @@ void bandmat_solve(bandmat_t PR, double* x)
 
 double bandmat_norm2(bandmat_t vm)
 {
-  return data_norm2(vm->data, vm->m*(vm->b+1));
+  double result = 0.0;
+  for (int d = 0; d <= vm->b; ++d) {
+    for (int j = d; j < vm->m; ++j) {
+      double xj = bandmat_get(vm, j, d);
+      result = fma(xj, xj, result);
+      if(j != 0) {
+        result = fma(xj, xj, result);
+      }
+    }
+  }
+  return result;
 }
 
 double bandmat_norm(bandmat_t vm)
 {
-  return data_norm(vm->data, vm->m*(vm->b+1));
+  return sqrt(bandmat_norm2(vm));
 }
