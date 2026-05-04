@@ -177,6 +177,7 @@ apply (@Ordinal m i).
 pose proof (ltn_ord i). lia.
 Defined.
 
+(* When T is an option, this function relies on having the Inhabitant be None *)
 Definition banded_repr {T: Type} {InhT: Inhabitant T} [m: nat] (b: nat) (f: 'M[T]_(m,m)) :=
  concat (map (fun j => (repeat InhT (nat_of_ord j)) ++
                        (map (fun (i : 'I_(m-j)) => f (@inord_inj m j i) (@inord_add m (S b) j i)) (ord_enum (m-j))))
