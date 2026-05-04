@@ -253,6 +253,12 @@ Qed.
 (** * Function specifications (funspecs) *)
 (** Compare these to the function headers in [bandmat.h] *)
 
+(* Builds a banded matrix of Nones, with zeros in the corners *)
+Definition bandmat_init b m : 'M_(m, m) :=
+  matrix_of_fun tt
+  (fun i j => if andb (i-b <=? j) (j <=? i+b)
+              then None else Some (Zconst the_type 0)).
+
 (** [bandmat_malloc] takes [m] and [b] such that [m * S b] is representable as a signed integer, 
     and returns a b-banded uninitialized [m * m] matrix. *)
 (* Note: the argument in C code is n instead of m, might want to change it for clarity *)
@@ -267,7 +273,7 @@ Definition bandmat_malloc_spec :=
    EX p: val,
     PROP () 
     RETURN (p) 
-    SEP(bandmat Ews b (@const_mx (option(ftype the_type)) m m None) p; mem_mgr gv).
+    SEP(bandmat Ews b (bandmat_init b m) p; mem_mgr gv).
     (* alternative: build the matrix with zeros in the corners and None on the bands *)
 
 (** [bandmat_free] takes a b-banded m * m banded matrix and returns nothing. *)
