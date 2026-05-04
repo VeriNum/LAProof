@@ -518,7 +518,7 @@ Definition dense_to_band_spec :=
     (PROP(readable_share sh ; 0 < m * S bw <= Int.max_signed ;
           trmx M = M ; forall (i j : 'I_m), j>i+bw -> (option_rel feq) (M i j) (Some (Zconst the_type 0)) )
     PARAMS (p ; Vint (Int.repr bw)) GLOBALS (gv)
-    SEP(densemat sh M p))
+    SEP(densemat sh M p; mem_mgr gv))
   POST [ tptr bandmat_t ] let '(existT _ m M) := X in
    EX q: val,
     PROP () 
