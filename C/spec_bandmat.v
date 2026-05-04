@@ -365,7 +365,7 @@ Definition bandmatn_set_spec :=
   POST [ tvoid ] let '(existT _ m (M,(i,j))) := X in
     PROP () 
     RETURN () 
-    SEP(bandmatn sh b (update_mx M i j (Some x)) p).
+    SEP(bandmatn sh b (update_mx (update_mx M i j (Some x)) j i (Some x)) p).
 
 Definition bandmat_set_spec :=
   DECLARE _bandmat_set
@@ -379,7 +379,7 @@ Definition bandmat_set_spec :=
   POST [ tvoid ] let '(existT _ m (M,(i,j))) := X in
     PROP () 
     RETURN () 
-    SEP(bandmat sh b (update_mx M i j (Some x)) p).
+    SEP(bandmat sh b (update_mx (update_mx M i j (Some x)) j i (Some x)) p).
 
 Definition bandmatn_addto_spec :=
   DECLARE _bandmatn_addto
@@ -393,7 +393,7 @@ Definition bandmatn_addto_spec :=
   POST [ tvoid ] let '(existT _ m (M,(i,j))) := X in
     PROP () 
     RETURN () 
-    SEP(bandmatn sh b (update_mx M i j (Some (BPLUS y x))) p).
+    SEP(bandmatn sh b (update_mx (update_mx M i j (Some (BPLUS y x))) j i (Some (BPLUS y x))) p).
 
 Definition bandmat_addto_spec :=
   DECLARE _bandmat_addto
@@ -408,7 +408,7 @@ Definition bandmat_addto_spec :=
   POST [ tvoid ] let '(existT _ m (M,(i,j))) := X in
     PROP () 
     RETURN () 
-    SEP(bandmat sh b (update_mx M i j (Some (BPLUS y x))) p).
+    SEP(bandmat sh b (update_mx (update_mx M i j (Some (BPLUS y x))) j i (Some (BPLUS y x))) p).
 
 (* Importing for now, should probably refactor eventually *)
 From LAProof.C Require Import spec_densemat.
