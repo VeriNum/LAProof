@@ -186,7 +186,7 @@ Definition banded_repr {T: Type} {InhT: Inhabitant T} [m: nat] (b: nat) (f: 'M[T
 
 (** Spatial predicate (mpred) to represent the [data] field of a [struct bandmat_t] *)
 Definition bandmatn {t: type} (sh: share) [m] (b: nat) (M: 'M[option (ftype t)]_(m,m)) (p: val) : mpred :=
- !! (0 < m * S b <= Int.max_signed /\ trmx M = M /\ 
+ !! (0 < m * S b <= Int.max_signed /\ b < m /\ trmx M = M /\ 
      forall (i j : 'I_m), j>i+b -> M i j = Some (Zconst t 0))
  && data_at sh (tarray (ctype_of_type t) (m * S b))
       (reptype_ftype (m * S b) (map (@val_of_optfloat t) (banded_repr b M)))
