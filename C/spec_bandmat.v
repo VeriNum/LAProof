@@ -186,7 +186,7 @@ Definition banded_repr {T: Type} {InhT: Inhabitant T} [m: nat] (b: nat) (f: 'M[T
 
 (** Spatial predicate (mpred) to represent the [data] field of a [struct bandmat_t] *)
 Definition bandmatn {t: type} (sh: share) [m] (b: nat) (M: 'M[option (ftype t)]_(m,m)) (p: val) : mpred :=
- !! (0 < m <= Int.max_signed /\ m * S b <= Int.max_signed /\ trmx M = M /\ 
+ !! (0 < m * S b <= Int.max_signed /\ trmx M = M /\ 
      forall (i j : 'I_m), j>i+b -> M i j = Some (Zconst t 0))
  && data_at sh (tarray (ctype_of_type t) (m * S b))
       (reptype_ftype (m * S b) (map (@val_of_optfloat t) (banded_repr b M)))
@@ -203,8 +203,7 @@ Definition bandmat (sh: share) [m] (b: nat) (M: 'M[option (ftype the_type)]_(m, 
 (** As usual with new spatial predicates, populate the Hint databases [saturate_local] and [valid_pointer] *)
 Definition bandmatn_local_facts: forall {t} sh m b M p,
   @bandmatn t sh m b M p |-- 
-      !! (0 < m <= Int.max_signed
-          /\ m * S b <= Int.max_signed
+      !! (0 < m * S b <= Int.max_signed
           /\ trmx M = M 
           /\ forall (i j : 'I_(m)), j>i+b -> M i j = Some (Zconst t 0)
           /\ field_compatible (tarray (ctype_of_type t) (m * S b)) [] p).
@@ -216,8 +215,7 @@ Qed.
 
 Definition bandmat_local_facts: forall sh m b M p,
   @bandmat sh m b M p |-- 
-      !! (0 < m <= Int.max_signed
-          /\ m * S b <= Int.max_signed
+      !! (0 < m * S b <= Int.max_signed
           /\ trmx M = M 
           /\ forall (i j : 'I_m), j>i+b -> M i j = Some (Zconst the_type 0)
           /\ malloc_compatible (bandmat_data_offset + sizeof (tarray the_ctype (m * S b))) p).
@@ -262,9 +260,7 @@ Definition bandmat_malloc_spec :=
   DECLARE _bandmat_malloc
   WITH m: nat, b: nat, gv: globals
   PRE [ tint, tint ]
-    PROP(0 < m <= Int.max_signed;
-         0 <= b <= Int.max_signed;
-         m * S b <= Int.max_signed)
+    PROP(0 < m * S b <= Int.max_signed)
     PARAMS (Vint (Int.repr m); Vint (Int.repr b) ) GLOBALS (gv)
     SEP( mem_mgr gv )
   POST [ tptr bandmat_t ]
@@ -519,7 +515,7 @@ Definition dense_to_band_spec :=
   WITH X: {m & 'M[option (ftype the_type)]_(m, m)}, p: val, sh: share, bw: nat, gv:globals
   PRE [ tptr densemat_t, tint ] let '(existT _ m M) := X in
     (* enforcing that M is banded with band width bw *)
-    (PROP(readable_share sh ; 0 < m <= Int.max_signed ; m * S bw <= Int.max_signed ;
+    (PROP(readable_share sh ; 0 < m * S bw <= Int.max_signed ;
           trmx M = M ; forall (i j : 'I_m), j>i+bw -> (option_rel feq) (M i j) (Some (Zconst the_type 0)) )
     PARAMS (p ; Vint (Int.repr bw)) GLOBALS (gv)
     SEP(densemat sh M p))
