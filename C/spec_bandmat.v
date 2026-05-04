@@ -520,7 +520,7 @@ Definition dense_to_band_spec :=
   PRE [ tptr densemat_t, tint ] let '(existT _ m M) := X in
     (* enforcing that M is banded with band width bw *)
     (PROP(readable_share sh ; 0 < m <= Int.max_signed ; m * S bw <= Int.max_signed ;
-          trmx M = M ; forall (i j : 'I_m), j>i+bw -> M i j = Some (Zconst the_type 0) )
+          trmx M = M ; forall (i j : 'I_m), j>i+bw -> (option_rel feq) (M i j) (Some (Zconst the_type 0)) )
     PARAMS (p ; Vint (Int.repr bw)) GLOBALS (gv)
     SEP(densemat sh M p))
   POST [ tptr bandmat_t ] let '(existT _ m M) := X in
