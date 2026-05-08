@@ -61,6 +61,7 @@ LAProof 2.0 is based on MathComp--that is, specifications of matrix and vector o
 <li><a href="densemat.html">densemat.[c,h]</a>:&nbsp;&nbsp;&nbsp;Dense matrix operations
 <li><a href="bandmat.html">bandmat.[c,h]</a>:&nbsp;&nbsp;&nbsp;Symmetric band matrix operations
 <li><a href="sparse.html">sparse.[c,h]</a>:&nbsp;&nbsp;&nbsp;CSR (Compressed Sparse Row) matrix operations
+<li><a href="build_csr.html">build_csr.c</a>:&nbsp;&nbsp;&nbsp;CSR (Compressed Sparse Row) matrix construction
 </ul>
 
 <h3 class="section">Algorithm Accuracy Proofs</h3>
@@ -130,7 +131,7 @@ Most of the definitions and lemmas listed here are parameterized by a floating-p
   (see also <a href="LAProof.accuracy_proofs.solve_model.html">Cholesky/triangular-solve functional model</a>)
 </ul>
 
-<h3 class="section">C Programs and their Correctness Proofs</h3>
+<h3 class="section">C Program Correctness Proofs</h3>
 <p>
  See also the <a href="toc.html">specs-and-proofs table of contents</a>.
 </p>
@@ -150,15 +151,14 @@ Generally these prove that the C programs correctly implement the algorithms.  T
       <li><a href="LAProof.C.VSU_densemat.html">Verified Software Unit</a>
     </ul>
   <dt>Band Matrices: <a href="bandmat.html">bandmat.c</a>
-  <dt>Sparse Matrices:
+  <dt>Sparse Matrices: <a href="sparse.html">sparse.c</a>, <a href="build_csr.html">build_csr.c</a>
     <dd><ul>
-      <li> <a href="sparse.html">sparse.h, sparse.c</a> (CSR matrix-vector multiply header+implementation, COO->CSR header)
-      <li> <a href="build_csr.html">build_csr.c</a> (COO->CSR implementation)
       <li><a href="LAProof.C.spec_sparse.html">Specification of CSR matrix-vector multiply</a>
       <li><a href="LAProof.C.spec_build_csr.html">Specification of COO->CSR conversion</a>
       <li><a href="LAProof.C.verif_sparse.html">Verification of CSR matrix-vector multiply</a>;
             <a href="LAProof.C.verif_sparse_byrows.html">verification of row-by-row variant</a>
       <li><a href="LAProof.C.VSU_sparse.html">Verified Software Unit</a>
+      <li><a href="LAProof.C.spec_build_csr.html">Specification of COO->CSR conversion</a>
       <li><a href="LAProof.C.verif_build_csr.html">Verification of COO->CSR conversion</a>
     </ul>
 </dl>
