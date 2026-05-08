@@ -21,19 +21,25 @@
 <h1 class="libtitle">LAProof: accuracy and correctness of linear algebra programs</h1>
 
 <p>
-LAProof is a modular, portable proof layer between
-the verification of application software and the verification
-of programs implementing operations defined by the basic linear algebra subprograms (BLAS) specification.
+  LAProof is a package of software and Rocq proofs that verify
+  <ol><li>C programs for linear algebra on dense and sparse matrices correctly implement the specified floating-point algorithms; and
+    <li>Those floating-point algorithms are accurate within stated concrete bounds.
+  </ol>
+  These two layers can be used together or separately (if, for example, you have other implementations
+  of the same floating-point algorithms, you can make use of these accuracy proofs)
 </p>
 <p><i>See also:</i></p>
 <ul><li><a href="https://github.com/VeriNum/LAProof">GitHub repo</a>
-  <li><a href="https://doi.org/10.1109/ARITH58626.2023.00021">Our paper in <i>30th IEEE International Symposium on Computer Arithmetic (ARITH '23)</i></a> or <a href="https://www.cs.princeton.edu/~appel/papers/LAProof.pdf">non-paywall version</a>
+  <li><a href="https://doi.org/10.1109/ARITH58626.2023.00021">LAProof paper in <i>30th IEEE International Symposium on Computer Arithmetic (ARITH '23)</i></a> or <a href="https://www.cs.princeton.edu/~appel/papers/LAProof.pdf">non-paywall version</a>
+  <li><a href="https://doi.org/10.4204/EPTCS.432.3">Formal Verification of COO to CSR Sparse Matrix Conversion</a>,
+    in <i>VSS 2025: International Workshop on Verification of Scientific Software</i>.
 </ul>
 <p>
 LAProof provides formal machine-checked proofs of the accuracy of basic linear algebra operations:
 inner product using conventional multiply and add, inner product
 using fused multiply-add (each with independent error bound proofs), scaled matrix-vector and matrix-matrix
-multiplication, and scaled vector and matrix addition. LAProof error bounds are backward error
+multiplication, and scaled vector and matrix addition; plus Cholesky factor and solve.
+LAProof error bounds are backward error
 bounds and mixed backward-forward error bounds that account
 for underflow, proved subject to no assumptions except a low-
 level formal model of IEEE-754 arithmetic. We treat low-order
@@ -44,8 +50,7 @@ The LAProof repository contains a machine-checked correctness proof of a C funct
 implementing compressed sparse row matrix-vector multiplication as an example of connecting LAProof to concrete programs.
 </p>
 <p>
-LAProof 2.0beta1 is based more directly on MathComp (compared to <a href="https://github.com/VeriNum/LAProof/tree/0045d7bf34def80d770dec87155a28eb3e58c938">LAProof 1.0</a> which used
-a list-of-list representation for matrices).   That is, matrix and vector operations use definitions in <a href="https://math-comp.github.io/htmldoc_2_5_0/mathcomp.algebra.matrix.html">mathcomp.algebra.matrix</a>.
+LAProof 2.0 is based on MathComp--that is, specifications of matrix and vector operations use definitions in <a href="https://math-comp.github.io/htmldoc_2_5_0/mathcomp.algebra.matrix.html">mathcomp.algebra.matrix</a>.
 </p>
 
 <h2 class="section">Documentation</h2>
@@ -56,6 +61,7 @@ a list-of-list representation for matrices).   That is, matrix and vector operat
 <li><a href="densemat.html">densemat.[c,h]</a>:&nbsp;&nbsp;&nbsp;Dense matrix operations
 <li><a href="bandmat.html">bandmat.[c,h]</a>:&nbsp;&nbsp;&nbsp;Symmetric band matrix operations
 <li><a href="sparse.html">sparse.[c,h]</a>:&nbsp;&nbsp;&nbsp;CSR (Compressed Sparse Row) matrix operations
+<li><a href="build_csr.html">build_csr.c</a>:&nbsp;&nbsp;&nbsp;CSR (Compressed Sparse Row) matrix construction
 </ul>
 
 <h3 class="section">Algorithm Accuracy Proofs</h3>
@@ -145,13 +151,15 @@ Generally these prove that the C programs correctly implement the algorithms.  T
       <li><a href="LAProof.C.VSU_densemat.html">Verified Software Unit</a>
     </ul>
   <dt>Band Matrices: <a href="bandmat.html">bandmat.c</a>
-  <dt>Sparse Matrices: <a href="sparse.html">sparse.c</a> (CSR matrix-vector multiply)
+  <dt>Sparse Matrices: <a href="sparse.html">sparse.c</a>, <a href="build_csr.html">build_csr.c</a>
     <dd><ul>
-      <li><a href="LAProof.C.spec_sparse.html">Specification</a>
-      <li>Correctness proofs:
-        <a href="LAProof.C.verif_sparse.html">standard</a>,
-        <a href="LAProof.C.verif_sparse_byrows.html">row-by-row variant</a>
+      <li><a href="LAProof.C.spec_sparse.html">Specification of CSR matrix-vector multiply</a>
+      <li><a href="LAProof.C.spec_build_csr.html">Specification of COO->CSR conversion</a>
+      <li><a href="LAProof.C.verif_sparse.html">Verification of CSR matrix-vector multiply</a>;
+            <a href="LAProof.C.verif_sparse_byrows.html">verification of row-by-row variant</a>
       <li><a href="LAProof.C.VSU_sparse.html">Verified Software Unit</a>
+      <li><a href="LAProof.C.spec_build_csr.html">Specification of COO->CSR conversion</a>
+      <li><a href="LAProof.C.verif_build_csr.html">Verification of COO->CSR conversion</a>
     </ul>
 </dl>
 

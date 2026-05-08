@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.27">
+<meta name="generator" content="quarto-1.8.25">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -20,6 +20,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -31,7 +66,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="build_csr_files/libs/quarto-html/tippy.umd.min.js"></script>
 <script src="build_csr_files/libs/quarto-html/anchor.min.js"></script>
 <link href="build_csr_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="build_csr_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="build_csr_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="build_csr_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="build_csr_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="build_csr_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
@@ -48,7 +83,108 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-
+<section id="build_csr.c-build-a-compressed-sparse-row-matrix" class="level1">
+<h1><code>build_csr.c</code>: Build a Compressed Sparse Row matrix</h1>
+<p>To build a CSR matrix, first construct a Coordinate-form (COO) matrix, then use function <code>coo_to_csr_matrix()</code> to convert it into a CSR matrix. To build the COO matrix, first use <code>create_coo_matrix()</code> and then add individual elements using <code>add_to_coo_matrix()</code>. <code>create_coo_matrix(n,r,c)</code> Creates an empty COO matrix with enough space for up to n nonzero elements. All elements will be triples (i,j,x) where 0&lt;=i&lt;r and 0&lt;=j&lt;c.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> coo_matrix <span class="op">*</span>create_coo_matrix <span class="op">(</span><span class="dt">unsigned</span> maxn<span class="op">,</span> <span class="dt">unsigned</span> rows<span class="op">,</span> <span class="dt">unsigned</span> cols<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">struct</span> coo_matrix <span class="op">*</span>p <span class="op">=</span> surely_malloc <span class="op">(</span><span class="kw">sizeof</span> <span class="op">(*</span>p<span class="op">));</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>row_ind <span class="op">=</span> <span class="op">(</span><span class="dt">unsigned</span> <span class="op">*)</span>surely_malloc<span class="op">(</span>maxn <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">unsigned</span><span class="op">));</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>col_ind <span class="op">=</span> <span class="op">(</span><span class="dt">unsigned</span> <span class="op">*)</span>surely_malloc<span class="op">(</span>maxn <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">unsigned</span><span class="op">));</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>val <span class="op">=</span> <span class="op">(</span><span class="dt">double</span> <span class="op">*)</span>surely_malloc<span class="op">(</span>maxn <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">double</span><span class="op">));</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>n<span class="op">=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>maxn<span class="op">=</span>maxn<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>rows<span class="op">=</span>rows<span class="op">;</span> p<span class="op">-&gt;</span>cols<span class="op">=</span>cols<span class="op">;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> p<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>add_to_coo_matrix(p,i,j,x)</code> Add the triple (i,j,x) to the COO matrix. Multiple elements at the same position are permitted, with the semantics that they are to be added together. That is, if another triple (i,j,y) is already present with the same i,j, the meaning is that the element at (i,j) has value (y+x).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> add_to_coo_matrix<span class="op">(</span><span class="kw">struct</span> coo_matrix <span class="op">*</span>p<span class="op">,</span> <span class="dt">unsigned</span> i<span class="op">,</span> <span class="dt">unsigned</span> j<span class="op">,</span> <span class="dt">double</span> x<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">unsigned</span> n <span class="op">=</span> p<span class="op">-&gt;</span>n<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>n<span class="op">&gt;=</span>p<span class="op">-&gt;</span>maxn<span class="op">)</span> exit<span class="op">(</span><span class="dv">2</span><span class="op">);</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>row_ind<span class="op">[</span>n<span class="op">]=</span>i<span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>col_ind<span class="op">[</span>n<span class="op">]=</span>j<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>val<span class="op">[</span>n<span class="op">]=</span>x<span class="op">;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  p<span class="op">-&gt;</span>n <span class="op">=</span> n<span class="op">+</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The functions <code>swap, coo_less, coo_quicksort, coo_count</code> are internal functions not part of the API.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">/* adapted from qsort3 in cbench:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">   https://github.com/cverified/cbench/blob/master/src/qsort/qsort3.c */</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">/* sort the coordinate elements of a coo_matrix */</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> coo_quicksort<span class="op">(</span><span class="kw">struct</span> coo_matrix <span class="op">*</span>p<span class="op">,</span> <span class="dt">unsigned</span> base<span class="op">,</span> <span class="dt">unsigned</span> n<span class="op">)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="op">{</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">/* Count the number of distinct row/col entries in a sorted coordinate list */</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="dt">unsigned</span> coo_count <span class="op">(</span><span class="kw">struct</span> coo_matrix <span class="op">*</span>p<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">unsigned</span> i<span class="op">,</span>r<span class="op">,</span>c<span class="op">,</span>ri<span class="op">,</span>ci<span class="op">,</span>n<span class="op">,</span>count<span class="op">;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">unsigned</span> <span class="op">*</span>row_ind <span class="op">=</span> p<span class="op">-&gt;</span>row_ind<span class="op">,</span> <span class="op">*</span>col_ind <span class="op">=</span> p<span class="op">-&gt;</span>col_ind<span class="op">;</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  n <span class="op">=</span> p<span class="op">-&gt;</span>n<span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  count<span class="op">=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  r<span class="op">=-</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  c<span class="op">=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>n<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    ri<span class="op">=</span>row_ind<span class="op">[</span>i<span class="op">];</span> </span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    ci<span class="op">=</span>col_ind<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>ri<span class="op">!=</span>r <span class="op">||</span> ci<span class="op">!=</span>c<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>      count<span class="op">++;</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>      r<span class="op">=</span>ri<span class="op">;</span> c<span class="op">=</span>ci<span class="op">;</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> count<span class="op">;</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>coo_to_csr_matrix(p)</code> Given a COO matrix p, convert to a CSR matrix. This takes NlogN time, where N is the number of triples in the COO matrix, because the first step is to sort the triples by lexicographic order of (i,j). This function has the side effect of rearranging (sorting) the triples.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> csr_matrix <span class="op">*</span>coo_to_csr_matrix<span class="op">(</span><span class="kw">struct</span> coo_matrix <span class="op">*</span>p<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">struct</span> csr_matrix <span class="op">*</span>q<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">unsigned</span> count<span class="op">,</span> i<span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">unsigned</span> r<span class="op">,</span>c<span class="op">,</span> ri<span class="op">,</span> ci<span class="op">,</span> cols<span class="op">,</span> k<span class="op">,</span> l<span class="op">,</span> rows<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">unsigned</span> <span class="op">*</span>col_ind<span class="op">,</span> <span class="op">*</span>row_ptr<span class="op">,</span> <span class="op">*</span>prow_ind<span class="op">,</span> <span class="op">*</span>pcol_ind<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">double</span> x<span class="op">,</span> <span class="op">*</span>val<span class="op">,</span> <span class="op">*</span>pval<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">unsigned</span> n <span class="op">=</span> p<span class="op">-&gt;</span>n<span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  coo_quicksort<span class="op">(</span>p<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  k <span class="op">=</span> coo_count<span class="op">(</span>p<span class="op">);</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  rows <span class="op">=</span> p<span class="op">-&gt;</span>rows<span class="op">;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  prow_ind<span class="op">=</span>p<span class="op">-&gt;</span>row_ind<span class="op">;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  pcol_ind<span class="op">=</span>p<span class="op">-&gt;</span>col_ind<span class="op">;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  pval <span class="op">=</span> p<span class="op">-&gt;</span>val<span class="op">;</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  q <span class="op">=</span> surely_malloc<span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span><span class="kw">struct</span> csr_matrix<span class="op">));</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  val <span class="op">=</span> surely_malloc<span class="op">(</span>k <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">double</span><span class="op">));</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  col_ind <span class="op">=</span> surely_malloc<span class="op">(</span>k <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">unsigned</span><span class="op">));</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  row_ptr <span class="op">=</span> surely_malloc <span class="op">((</span>rows<span class="op">+</span><span class="dv">1</span><span class="op">)</span> <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">unsigned</span><span class="op">));</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  r<span class="op">=-</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  c<span class="op">=</span><span class="dv">0</span><span class="op">;</span> <span class="co">/* this line is unnecessary for correctness but simplifies the proof */</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  l<span class="op">=</span><span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="co">/* partial_csr_0 */</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> <span class="op">(</span>i<span class="op">=</span><span class="dv">0</span><span class="op">;</span> i<span class="op">&lt;</span>n<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    ri <span class="op">=</span> prow_ind<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    ci <span class="op">=</span> pcol_ind<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pval<span class="op">[</span>i<span class="op">];</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>ri<span class="op">==</span>r<span class="op">)</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>ci<span class="op">==</span>c<span class="op">)</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    val<span class="op">[</span>l<span class="op">-</span><span class="dv">1</span><span class="op">]</span> <span class="op">+=</span> x<span class="op">;</span> <span class="co">/* partial_CSR_duplicate */</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>      <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    c<span class="op">=</span>ci<span class="op">;</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    col_ind<span class="op">[</span>l<span class="op">]</span> <span class="op">=</span> ci<span class="op">;</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    val<span class="op">[</span>l<span class="op">]</span> <span class="op">=</span> x<span class="op">;</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    l<span class="op">++;</span>           <span class="co">/* partial_CSR_newcol */</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>      <span class="cf">while</span> <span class="op">(</span>r<span class="op">+</span><span class="dv">1</span><span class="op">&lt;=</span>ri<span class="op">)</span> row_ptr<span class="op">[++</span>r<span class="op">]=</span>l<span class="op">;</span> <span class="co">/* partial_CSR_skiprow */</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>      c<span class="op">=</span> ci<span class="op">;</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>      col_ind<span class="op">[</span>l<span class="op">]</span> <span class="op">=</span> ci<span class="op">;</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>      val<span class="op">[</span>l<span class="op">]</span> <span class="op">=</span> x<span class="op">;</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>      l<span class="op">++;</span>            <span class="co">/* partial_CSR_newrow */</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>  cols <span class="op">=</span> p<span class="op">-&gt;</span>cols<span class="op">;</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span> <span class="op">(</span>r<span class="op">+</span><span class="dv">1</span><span class="op">&lt;=</span>rows<span class="op">)</span> row_ptr<span class="op">[++</span>r<span class="op">]=</span>l<span class="op">;</span>  <span class="co">/* partial_CSR_lastrows */</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>  q<span class="op">-&gt;</span>val <span class="op">=</span> val<span class="op">;</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>  q<span class="op">-&gt;</span>col_ind <span class="op">=</span> col_ind<span class="op">;</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>  q<span class="op">-&gt;</span>row_ptr <span class="op">=</span> row_ptr<span class="op">;</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>  q<span class="op">-&gt;</span>rows <span class="op">=</span> rows<span class="op">;</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>  q<span class="op">-&gt;</span>cols <span class="op">=</span> cols<span class="op">;</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> q<span class="op">;</span>          <span class="co">/* partial_CSR_properties */</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
 
 </main>
 <!-- /main column -->
