@@ -18,7 +18,7 @@
 
 1.  Edit comments in those .c and .h files that are mentioned in line CDOCS line of Makefile.coq.local.  Write comments in a form that can be processed by [Quarto](https://quarto.org/docs/guide/).
 
-2.  If you add a new .c and/or .h file, update the CDOCS line, and add a link in html/index.html in the `C programs` section.
+2.  If you add a new .c and/or .h file, update the CDOCS line, and add a link in index.html in the `C programs` section.
 
 3.  Build the HTML from C by doing `make cdocs`.   This puts individual .html files in the `cdocs` directory.  You can inspect them there using `open file` in your browser.  Unfortunately, when viewing this way, the links in the `C programs` section go to the wrong place; the `make publish` command will put them in the right place when publishing.
 

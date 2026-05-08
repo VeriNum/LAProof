@@ -1,6 +1,20 @@
 #include <sparse.h>
-
 void exit(int code);
+
+//ldoc on
+/**
+ * # `build_csr.c`: Build a Compressed Sparse Row matrix
+ * To build a CSR matrix, first construct a Coordinate-form (COO) matrix, then
+ * use function `coo_to_csr_matrix()` to convert it into a CSR matrix.
+ *   To build the COO matrix, first use `create_coo_matrix()` and then add
+ * individual elements using `add_to_coo_matrix()`.
+ */
+
+/**
+ * `create_coo_matrix(n,r,c)`
+ *    Creates an empty COO matrix with enough space for up to n nonzero elements.
+ * All elements will be triples (i,j,x) where 0<=i<r and 0<=j<c.
+ */
 
 struct coo_matrix *create_coo_matrix (unsigned maxn, unsigned rows, unsigned cols) {
   struct coo_matrix *p = surely_malloc (sizeof (*p));
@@ -13,6 +27,14 @@ struct coo_matrix *create_coo_matrix (unsigned maxn, unsigned rows, unsigned col
   return p;
 }
 
+/**
+ * `add_to_coo_matrix(p,i,j,x)`
+ *    Add the triple (i,j,x) to the COO matrix.  Multiple elements at the same position
+ * are permitted, with the semantics that they are to be added together.
+ * That is, if another triple (i,j,y) is already present with the same i,j, the meaning
+ * is that the element at (i,j) has value (y+x).
+ */
+
 void add_to_coo_matrix(struct coo_matrix *p, unsigned i, unsigned j, double x) {
   unsigned n = p->n;
   if (n>=p->maxn) exit(2);
@@ -22,7 +44,11 @@ void add_to_coo_matrix(struct coo_matrix *p, unsigned i, unsigned j, double x) {
   p->n = n+1;
 }
 
+/**
+ * The functions `swap, coo_less, coo_quicksort, coo_count` are internal functions not part of the API.
+ */
 
+//ldoc off
 void swap(struct coo_matrix *p, unsigned a, unsigned b) {
   unsigned i,j; double x;
   i=p->row_ind[a];
@@ -42,6 +68,7 @@ int coo_less (struct coo_matrix *p, unsigned a, unsigned b) {
   if (ra>rb) return 0;
   return p->col_ind[a] < p->col_ind[b];
 }
+//ldoc on
 
 /* adapted from qsort3 in cbench:
    https://github.com/cverified/cbench/blob/master/src/qsort/qsort3.c */
@@ -49,6 +76,7 @@ int coo_less (struct coo_matrix *p, unsigned a, unsigned b) {
 /* sort the coordinate elements of a coo_matrix */
 void coo_quicksort(struct coo_matrix *p, unsigned base, unsigned n)
 {
+//ldoc off
   unsigned lo, hi, left, right, mid;
 
   if (n == 0)
@@ -94,6 +122,7 @@ void coo_quicksort(struct coo_matrix *p, unsigned base, unsigned n)
       lo = left;
     }
   }
+//ldoc on
 }
 
 /* Count the number of distinct row/col entries in a sorted coordinate list */
@@ -114,6 +143,14 @@ unsigned coo_count (struct coo_matrix *p) {
   }
   return count;
 }
+
+/**
+ *    `coo_to_csr_matrix(p)`
+ *  Given a COO matrix p, convert to a CSR matrix.  This takes NlogN time, where
+ *  N is the number of triples in the COO matrix, because the first step is to
+ *  sort the triples by lexicographic order of (i,j).  This function has the side effect
+ *  of rearranging (sorting) the triples.
+ */
 
 struct csr_matrix *coo_to_csr_matrix(struct coo_matrix *p) {
   struct csr_matrix *q;

@@ -1,22 +1,6 @@
 opam-version: "2.0"
 synopsis: "LAProof: a library of formal proofs of accuracy and correctness for linear algebra programs"
-description: """LAProof is a modular, portable proof layer between
-the verification of application software and the verification
-of programs implementing operations defined by the basic linear algebra subprograms (BLAS) specification.
-
-LAProof provides formal machine-checked proofs of the accuracy of basic linear algebra operations:
-inner product using conventional multiply and add, inner product
-using fused multiply-add, scaled matrix-vector and matrix-matrix
-multiplication, and scaled vector and matrix addition. LAProof error bounds are backward error
-bounds and mixed backward-forward error bounds that account
-for underflow, proved subject to no assumptions except a low-
-level formal model of IEEE-754 arithmetic. We treat low-order
-error terms concretely, not approximating as $O(u^2)$.
-
-The LAProof repository contains a machine-checked correctness proof of a C function
-implementing compressed sparse row matrix-
-vector multiplication as an example of connecting LAProof to concrete programs.
-"""
+description: "LAProof is a package of software and Rocq proofs that verify (1) C programs for linear algebra on dense and sparse matrices correctly implement the specified floating-point algorithms; and (2) those floating-point algorithms are accurate within stated concrete bounds."
 authors: [
   "Ariel E. Kellison"
   "Andrew W. Appel"
@@ -42,7 +26,7 @@ depends: [
   "coq-coquelicot"
   "coq-vcfloat" {>= "2.4.1~"}
   "coq-mathcomp-ssreflect" {>= "2.4.0~"}
-  "coq-mathcomp-algebra"
+  "coq-mathcomp-algebra" {>= "2.5.0~"}
   "coq-mathcomp-analysis"
   "coq-mathcomp-algebra-tactics"
   "coq-mathcomp-reals-stdlib"
@@ -52,6 +36,6 @@ depends: [
   "coq-libvalidsdp" {>= "1.1.1"}
 ]
 tags: [
-  "date:2025-04-06"
+  "date:2025-05-08"
   "logpath:LAProof"
 ]

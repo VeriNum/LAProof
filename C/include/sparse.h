@@ -47,6 +47,20 @@ void dump_csr_matrix  (struct csr_matrix *m);
 void print_csr_matrix (struct csr_matrix *m);
 double timediff(struct timeval *start, struct timeval *finish);
 
+/**
+ * ## To build a CSR matrix,
+ * first construct a Coordinate-form (COO) matrix, then use function `coo_to_csr_matrix()` 
+ * to convert it into a CSR matrix.
+ *   To build the COO matrix, first use `create_coo_matrix()` and then add
+ * individual elements using `add_to_coo_matrix()`.  
+ *   
+ */
+
+/**
+ * A Coordinate-form (COO) sparse matrix
+ * is a list of triples (i,j,x), where 0<=i<rows and 0<=j<cols, and where space is allocated
+ * for up to maxn triples and the first n are populated.
+ */
 struct coo_matrix {
   unsigned *row_ind, *col_ind;
   double *val;
@@ -54,8 +68,30 @@ struct coo_matrix {
   unsigned rows, cols;
 };
 
+/**
+ * `create_coo_matrix(n,r,c)`
+ *    Creates an empty COO matrix with enough space for up to n nonzero elements.
+ * All elements will be triples (i,j,x) where 0<=i<r and 0<=j<c.
+ */
+
 struct coo_matrix *create_coo_matrix (unsigned maxn, unsigned rows, unsigned cols);
+/**
+ * `add_to_coo_matrix(p,i,j,x)`
+ *    Add the triple (i,j,x) to the COO matrix.  Multiple elements at the same position
+ * are permitted, with the semantics that they are to be added together.
+ * That is, if another triple (i,j,y) is already present with the same i,j, the meaning
+ * is that the element at (i,j) has value (y+x).
+ */
 void add_to_coo_matrix(struct coo_matrix *p, unsigned i, unsigned j, double x);
+
+/**
+ *    `coo_to_csr_matrix(p)`
+ *  Given a COO matrix p, convert to a CSR matrix.  This takes NlogN time, where
+ *  N is the number of triples in the COO matrix, because the first step is to
+ *  sort the triples by lexicographic order of (i,j).  This function has the side effect
+ *  of rearranging (sorting) the triples.
+ */
 struct csr_matrix *coo_to_csr_matrix(struct coo_matrix *p);
 
+//ldoc off
 #endif
