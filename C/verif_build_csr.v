@@ -9,6 +9,58 @@ Set Bullet Behavior "Strict Subproofs".
 
 Open Scope logic.
 
+
+Lemma body_add_to_coo_matrix: semax_body Vprog Gprog f_add_to_coo_matrix add_to_coo_matrix_spec.
+Proof.
+start_function.
+forward.
+forward.
+forward_if (Zlength (coo_entries coo) < maxn).
+forward_call.
+entailer!!.
+forward.
+entailer!!.
+set (n := Zlength (coo_entries coo)).
+forward.
+forward.
+forward.
+forward.
+forward.
+forward.
+forward.
+rewrite <- !repeat_Zrepeat.
+rewrite !upd_init by (try lia; list_solve).
+rewrite !repeat_Zrepeat.
+unfold coo_rep.
+Exists maxn rp cp vp.
+entailer!!.
+-
+unfold add_to_coo; simpl.
+split. list_solve.
+red.
+red in H5; decompose [and] H5.
+simpl. split; try lia.
+apply Forall_app; split; auto.
+-
+set (f := fun _ => _).
+set (g := fun _ => _).
+set (h := fun _ => _).
+repeat change (?A ++ ?B :: ?C) with (A ++ [B] ++ C).
+rewrite !app_assoc.
+replace (map f (coo_entries coo) ++ [Vint (Int.repr i)])
+  with (map f (coo_entries (add_to_coo coo i j x)))
+ by (unfold f, add_to_coo; simpl; rewrite map_app; simpl; auto).
+replace (map g(coo_entries coo) ++ [Vint (Int.repr j)]) 
+  with (map g(coo_entries (add_to_coo coo i j x)))
+ by (unfold add_to_coo; simpl; rewrite map_app; simpl; auto).
+replace (map h (coo_entries coo) ++ [Vfloat x]) 
+  with (map h(coo_entries (add_to_coo coo i j x)))
+ by (unfold add_to_coo; simpl; rewrite map_app; simpl; auto).
+replace (Zlength (coo_entries (add_to_coo coo i j x))) with (n+1) 
+   by (simpl; list_solve).
+cancel.
+Qed.
+
 Lemma body_coo_count: semax_body Vprog Gprog f_coo_count coo_count_spec.
 Proof.
 start_function.

@@ -167,7 +167,7 @@ Definition add_to_coo_matrix_spec :=
  DECLARE _add_to_coo_matrix
  WITH sh: share, p : val, i: Z, j: Z, x: ftype Tdouble, coo: coo_matrix Tdouble
  PRE [ tptr t_coo, tuint, tuint, tdouble ]
-   PROP (writable_share sh; 0 <= i < Int.max_unsigned; 0 <= j < Int.max_unsigned) 
+   PROP (writable_share sh; 0 <= i < coo_rows coo; 0 <= j < coo_cols coo) 
    PARAMS ( p; Vint (Int.repr i); Vint (Int.repr j); Vfloat x) 
    SEP (coo_rep sh coo p)
  POST [ tvoid ]
@@ -243,7 +243,7 @@ Definition SparseASI : funspecs := [
  ].
 
 
-Definition sparse_imports := [fma_spec] ++ [spec_alloc.surely_malloc_spec'].
+Definition sparse_imports := [fma_spec] ++ [spec_alloc.surely_malloc_spec'; spec_alloc.exit_spec].
 
 Definition Gprog: funspecs := sparse_imports ++ SparseASI.
 
