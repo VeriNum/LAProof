@@ -52,3 +52,8 @@ C/cblas/ddot.v
 C/cblas/ddot_model.v
 C/cblas/spec_ddot.v
 C/cblas/verif_ddot.v
+
+C/cblas/dasum.v
+C/cblas/asum_model.v
+C/cblas/spec_dasum.v
+C/cblas/verif_dasum.v
