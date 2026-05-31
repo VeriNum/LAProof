@@ -57,3 +57,8 @@ C/cblas/dasum.v
 C/cblas/asum_model.v
 C/cblas/spec_dasum.v
 C/cblas/verif_dasum.v
+
+C/cblas/dscal.v
+C/cblas/scal_model.v
+C/cblas/spec_dscal.v
+C/cblas/verif_dscal.v

@@ -84,17 +84,21 @@ copyright and license headers.
 |-----------|-----------|----------|-------|
 | Dot product | double | `cblas_ddot` | [`src/ddot.c`](src/ddot.c), [`src/source_dot_r.h`](src/source_dot_r.h), [`include/cblas.h`](include/cblas.h), [`ddot.v`](ddot.v), [`ddot_model.v`](ddot_model.v), [`spec_ddot.v`](spec_ddot.v), [`verif_ddot.v`](verif_ddot.v) |
 | Sum of absolute values | double | `cblas_dasum` | [`src/dasum.c`](src/dasum.c), [`src/source_asum_r.h`](src/source_asum_r.h), [`include/cblas.h`](include/cblas.h), [`dasum.v`](dasum.v), [`asum_model.v`](asum_model.v), [`spec_dasum.v`](spec_dasum.v), [`verif_dasum.v`](verif_dasum.v) |
+| Scalar multiply (in place) | double | `cblas_dscal` | [`src/dscal.c`](src/dscal.c), [`src/source_scal_r.h`](src/source_scal_r.h), [`include/cblas.h`](include/cblas.h), [`dscal.v`](dscal.v), [`scal_model.v`](scal_model.v), [`spec_dscal.v`](spec_dscal.v), [`verif_dscal.v`](verif_dscal.v) |
 
-**Scope limits (`cblas_ddot`, `cblas_dasum`):**
-- **Unit stride only** (`incX = incY = 1`). General strides are out of scope: LAProof has
-  no strided/gather separation-logic predicate, and the unit-stride case is the one that
-  maps directly onto the list-based models.
-- The postcondition is stated up to `feq` (IEEE-equality that identifies `+0.0`/`-0.0` and
-  NaN payloads), because the C accumulation adds the accumulator first while the models fold
-  the new term first, and IEEE addition is commutative only up to `feq`.
+**Scope limits (`cblas_ddot`, `cblas_dasum`, `cblas_dscal`):**
+- **Unit stride only** (`incX = incY = 1`), as a deliberate first milestone.
+- For the **reductions** (`ddot`, `dasum`) the postcondition is stated up to `feq`
+  (IEEE-equality that identifies `+0.0`/`-0.0` and NaN payloads), because the C accumulation
+  adds the accumulator first while the models fold the new term first, and IEEE addition is
+  commutative only up to `feq`.
 - `cblas_dasum` is verified against `sumF (map BABS X)`; its loop body calls `fabs`,
   discharged with VSTlib's `fabs_spec` (whose result is `BABS`). The matching accuracy
   theorem is `sum_acc.fSUM`.
+- `cblas_dscal` is the first **in-place** routine: it overwrites the array (writable share,
+  `void` return) and is verified against an *exact* model `scal_model alpha X =
+  map (fun x => BMULT x alpha) X` (no `feq` — scaling is deterministic elementwise). The
+  per-element accuracy is a direct unit-roundoff bound on `BMULT`.
 
 ## Conventions
 

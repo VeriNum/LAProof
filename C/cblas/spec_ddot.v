@@ -42,9 +42,7 @@ Definition Vprog : varspecs. mk_varspecs prog. Defined.
     [spec_sparse] split).  This file states only the VST [funspec]. *)
 
 (** ** Funspec for [cblas_ddot] (unit-stride case [incX = incY = 1]). *)
-(** General strides are out of scope: LAProof has no strided/gather
-    separation-logic predicate, and the unit-stride case is the one that maps
-    directly onto the list-based [dotprodF] model. *)
+(** Unit stride is a deliberate first milestone, not a fundamental limit. *)
 Definition cblas_ddot_spec :=
  DECLARE _cblas_ddot
  WITH shX: share, shY: share, n: Z,
