@@ -1,14 +1,16 @@
 (**  * LAProof.C.cblas.scal_model: functional model of GSL's [cblas_dscal]. *)
 (** ** Corresponds to C program [C/cblas/src/dscal.c] (ported from GSL cblas). *)
 
-(** Unlike the reduction routines ([ddot]/[dasum]), scaling is a deterministic
-    *elementwise* update with no accumulation, so the C computes the model
-    exactly (no [feq] needed).  GSL's kernel ([source_scal_r.h]) is
+(** This file provides [scal_model], the elementwise scaling that [cblas_dscal]
+    computes.  Scaling is a deterministic *elementwise* update with no
+    accumulation, so there is no loop invariant tracking a running accumulator
+    and no [feq] bridge -- the C program computes the model exactly.  GSL's
+    kernel ([source_scal_r.h]) is
 <<
       for (i = 0; i < N; i++) { X[ix] *= alpha; ix += incX; }
 >>
-    and [X[ix] *= alpha] is [BMULT (X[ix]) alpha] (element-first), so the model
-    is the C-faithful list map below.
+    i.e., [X[ix] *= alpha] is [BMULT (X[ix]) alpha] (element-first), so the model
+    is the list map below, matching what the C program computes.
 
     LAProof's existing scale model [mv_mathcomp.scalemx] is alpha-first
     ([map_mx (BMULT a)]) and matrix-based; relating to it would need a [BMULT]

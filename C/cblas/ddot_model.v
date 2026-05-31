@@ -1,30 +1,29 @@
 (**  * LAProof.C.cblas.ddot_model: functional model of GSL's [cblas_ddot]. *)
 (** ** Corresponds to C program [C/cblas/src/ddot.c] (ported from GSL cblas). *)
 
-(** This file plays the same role for [cblas_ddot] that [LAProof.C.sparse_model]
-    plays for the sparse routines: it defines the partial-accumulation *model
-    function* the loop invariant tracks, together with the *start* / *step* /
-    *end* lemmas about it (cf. [partial_row]/[partial_row_start]/
-    [partial_row_next]/[partial_row_end]).  No VST [funspec]s or Clight ASTs
-    appear here -- those live in [spec_ddot] and [verif_ddot].
-
-    GSL's loop (after macro expansion of [source_dot_r.h]) is
+(** This file provides [ddot_model], the partial accumulation that the
+    [cblas_ddot] loop invariant tracks, with the *step* lemma (how one loop
+    iteration extends the accumulation) and the *end* lemma (the result of the
+    accumulation once the loop finishes).  No VST [funspec]s or Clight ASTs
+    appear here -- those live in [spec_ddot] and [verif_ddot].  GSL's loop
+    (after macro expansion of [source_dot_r.h]) is
 <<
       double r = 0.0;
       for (i = 0; i < N; i++) { r += X[ix] * Y[iy]; ix += incX; iy += incY; }
       return r;
 >>
-    i.e. a forward, left-to-right accumulation using *separate* multiply-then-add
-    (not fused multiply-add), starting from +0.0.  That is exactly the [dotprodF]
-    model of [LAProof.accuracy_proofs.dotprod_model]
-    ([dotprodF = dotprod BMULT BPLUS pos_zero]), over which the forward-error
-    theorem [dot_acc.dotprod_forward_error] is proved -- *not* the FMA-based
-    [floatlib.dotprod].
+    i.e., it adds [X[i]*Y[i]] left to right into the accumulator
+    ([BPLUS acc prod]), using separate multiply-then-add (not fused
+    multiply-add), starting from [+0.0].
 
-    Note on operand order: the C statement [r += X*Y] computes [BPLUS acc prod]
-    (accumulator first), whereas [dotprodF]'s fold step is [BPLUS prod acc]
-    (product first).  IEEE addition is commutative *up to [feq]*, hence the
-    end/bridge lemma below relates the two by [feq]. *)
+    The matching LAProof accuracy model is [dotprodF]
+    ([dotprodF = dotprod BMULT BPLUS pos_zero]) of
+    [LAProof.accuracy_proofs.dotprod_model]; over it
+    [dot_acc.dotprod_forward_error] proves the forward-error bound -- *not* the
+    FMA-based [floatlib.dotprod].  The C's operand order ([BPLUS acc prod] vs
+    [dotprodF]'s [BPLUS prod acc]) and initial accumulator ([+0.0] =
+    [Zconst Tdouble 0] vs [dotprodF]'s [pos_zero]) differ, so the end/bridge
+    lemma relates the two by [feq] (IEEE addition is commutative up to [feq]). *)
 
 Require Import VST.floyd.proofauto.
 Require Import vcfloat.VCFloat.
@@ -43,8 +42,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 (** [ddot_model X Y] is the value the C loop *literally* computes: a left fold
     with the accumulator as the first [BPLUS] operand, separate multiply then
-    add, starting from [+0.0].  This mirrors the Clight AST in [ddot.v] exactly,
-    which makes it the natural value to carry in the loop invariant. *)
+    add, starting from [+0.0].  This mirrors the Clight AST in [ddot.v] exactly. *)
 Definition ddot_loop (xy: list (ftype Tdouble * ftype Tdouble)) : ftype Tdouble :=
   fold_left (fun acc p => BPLUS acc (BMULT (fst p) (snd p))) xy (Zconst Tdouble 0).
 
@@ -65,9 +63,9 @@ Lemma ddot_loop_snoc: forall xy p,
   ddot_loop (xy ++ [p]) = BPLUS (ddot_loop xy) (BMULT (fst p) (snd p)).
 Proof. intros. unfold ddot_loop. rewrite fold_left_app. reflexivity. Qed.
 
-(** *step*: extending both length-[k] prefixes by their [k]-th element adds one
-    [BMULT] term, with the accumulator as the first [BPLUS] operand -- exactly
-    the Clight statement [r = r + X[k]*Y[k]]. (cf. [partial_row_next]) *)
+(** *step*: extending both length-[k] prefixes [X[0..k-1]]/[Y[0..k-1]] with the
+    elements [X[k]]/[Y[k]] adds one [BMULT] term, with the accumulator as the
+    first [BPLUS] operand -- exactly the Clight statement [r = r + X[k]*Y[k]]. *)
 Lemma ddot_model_step: forall (X Y: list (ftype Tdouble)) k,
   Zlength X = Zlength Y -> 0 <= k < Zlength X ->
   ddot_model (sublist 0 (k+1) X) (sublist 0 (k+1) Y)

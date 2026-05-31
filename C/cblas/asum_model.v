@@ -1,22 +1,22 @@
 (**  * LAProof.C.cblas.asum_model: functional model of GSL's [cblas_dasum]. *)
 (** ** Corresponds to C program [C/cblas/src/dasum.c] (ported from GSL cblas). *)
 
-(** Sibling of [LAProof.C.cblas.ddot_model]: the partial-accumulation *model
-    function* the [cblas_dasum] loop invariant tracks, with the *start* / *step*
-    / *end* lemmas about it.  GSL's kernel ([source_asum_r.h]) is
+(** This file provides [asum_model], the partial accumulation that the
+    [cblas_dasum] loop invariant tracks, with the *step* lemma (how one loop
+    iteration extends the accumulation) and the *end* lemma (the result of the
+    accumulation once the loop finishes).  GSL's kernel ([source_asum_r.h]) is
 <<
       double r = 0.0;
       for (i = 0; i < N; i++) { r += fabs(X[ix]); ix += incX; }
       return r;
 >>
-    a forward accumulation of [|X[i]|] with separate abs-then-add, accumulator
-    first ([BPLUS acc |x|]), starting from [+0.0].  The C [fabs] call computes
-    [BABS] (the result of VSTlib's [fabs_spec], whose [ff_func] is [BABS]), so the
-    model uses [BABS].
+    i.e., it adds [|X[i]|] left to right into the accumulator ([BPLUS acc |x|]),
+    starting from [+0.0].  The C [fabs] computes [BABS] (the result of VSTlib's
+    [fabs_spec], whose [ff_func] is [BABS]), so the model uses [BABS].
 
-    The matching LAProof accuracy model is [sum_model.sumF] applied to the list
+    The matching LAProof accuracy model is [sum_model.sumF] applied to
     [map BABS X] (the absolute values); over it [sum_acc.fSUM] proves the
-    forward-error bound.  As with [ddot], the C's operand order ([BPLUS acc x]
+    forward-error bound.  The C's operand order ([BPLUS acc x]
     vs [sumF]'s [BPLUS x acc]) and initial accumulator ([+0.0] = [Zconst Tdouble 0]
     vs [sumF]'s [neg_zero]) differ, so the end/bridge lemma relates the two by
     [feq] (IEEE-equality identifying [±0]/NaN). *)
@@ -37,7 +37,7 @@ Set Bullet Behavior "Strict Subproofs".
 
 (** [asum_model X] is the value the C loop *literally* computes: a left fold with
     the accumulator as the first [BPLUS] operand, separate abs-then-add, starting
-    from [+0.0]. *)
+    from [+0.0].  This mirrors the Clight AST in [dasum.v] exactly. *)
 Definition asum_loop (l: list (ftype Tdouble)) : ftype Tdouble :=
   fold_left (fun acc x => BPLUS acc (BABS x)) l (Zconst Tdouble 0).
 
@@ -49,9 +49,9 @@ Lemma asum_loop_snoc: forall l x,
   asum_loop (l ++ [x]) = BPLUS (asum_loop l) (BABS x).
 Proof. intros. unfold asum_loop. rewrite fold_left_app. reflexivity. Qed.
 
-(** *step*: extending the length-[k] prefix by its [k]-th element adds one
-    [BABS] term, with the accumulator as the first [BPLUS] operand -- exactly the
-    Clight statement [r = r + fabs(X[k])]. *)
+(** *step*: extending the length-[k] prefix [X[0..k-1]] with the element [X[k]]
+    adds one [BABS] term, with the accumulator as the first [BPLUS] operand --
+    exactly the Clight statement [r = r + fabs(X[k])]. *)
 Lemma asum_model_step: forall (X: list (ftype Tdouble)) k,
   0 <= k < Zlength X ->
   asum_model (sublist 0 (k+1) X)
