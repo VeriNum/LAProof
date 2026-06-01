@@ -17,6 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+//ldoc on
+/**
+ * ## Accumulation kernel (`source_asum_r.h`)
+ *
+ * A forward, left-to-right accumulation of `fabs(X[ix])` into `r`, starting
+ * from `+0.0`.  The `incX <= 0` guard returns `0` for nonpositive stride; with
+ * unit stride (`incX = 1`) it is dead and `ix` advances one element per
+ * iteration.
+ */
 {
   BASE r = 0.0;
   INDEX i;

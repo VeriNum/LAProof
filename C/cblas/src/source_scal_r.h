@@ -17,6 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+//ldoc on
+/**
+ * ## Scaling kernel (`source_scal_r.h`)
+ *
+ * An in-place elementwise update `X[ix] *= alpha` with no accumulation.  The
+ * `incX <= 0` guard returns early for nonpositive stride; with unit stride
+ * (`incX = 1`) it is dead and `ix` advances one element per iteration.
+ */
 {
   INDEX i;
   INDEX ix = 0;

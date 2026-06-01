@@ -1,3 +1,11 @@
+//ldoc on
+/**
+ * # `dscal.c`: GSL CBLAS real double-precision scaling (in place)
+ *
+ * Thin wrapper that instantiates the generic kernel `source_scal_r.h` at type
+ * `double`.  Verified in `LAProof.C.cblas.verif_dscal` against the functional
+ * model `LAProof.C.cblas.scal_model`.
+ */
 /* The following GSL headers are commented out for clightgen: they are
    unresolvable here (GSL's gsl/ symlink dir is not generated) and contribute
    nothing to cblas_dscal's body (only INDEX from "cblas.h" is needed; the loop

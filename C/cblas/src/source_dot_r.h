@@ -17,6 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+//ldoc on
+/**
+ * ## Accumulation kernel (`source_dot_r.h`)
+ *
+ * A forward, left-to-right accumulation with separate multiply-then-add (not
+ * fused).  With unit stride (`incX = incY = 1`) the `OFFSET` conditionals are
+ * `0` and the indices `ix`, `iy` advance one element per iteration.
+ */
 {
   ACC_TYPE r = INIT_VAL;
   INDEX i;
