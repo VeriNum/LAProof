@@ -2,7 +2,7 @@
 COQDOCEXTRAFLAGS= -g --no-lib-name --with-header header.html --index genindex --lib-subtitles --interpolate -utf8
 
 accuracy: accuracy_proofs/export.vo
-C: C/verif_alloc.vo C/verif_sparse.vo C/verif_sparse_byrows.vo C/VSU_densemat.vo C/verif_build_csr.vo
+C: C/verif_alloc.vo C/verif_sparse.vo C/verif_sparse_byrows.vo C/VSU_densemat.vo C/verif_build_csr.vo C/cblas/verif_ddot.vo C/cblas/verif_dasum.vo C/cblas/verif_dscal.vo
 
 #  Ugh.  We can't just store the reference copy of index.html in html/index.html, because Makefile.coq's
 #   standard "make clean" removes the html directory entirely.  So we gotta do this hack:
@@ -31,7 +31,8 @@ install-extra:: $(CFILES) $(HFILES)
 
 # Quarto documentation of C programs
 LDOC= 	lua cdoc/ldoc.lua
-CDOCS= cdoc/alloc.qmd cdoc/densemat.qmd cdoc/bandmat.qmd cdoc/sparse.qmd cdoc/build_csr.qmd
+CDOCS= cdoc/alloc.qmd cdoc/densemat.qmd cdoc/bandmat.qmd cdoc/sparse.qmd cdoc/build_csr.qmd \
+       cdoc/cblas_ddot.qmd cdoc/cblas_dasum.qmd cdoc/cblas_dscal.qmd
 
 cdoc/%.html: cdoc/%.qmd
 	cd cdoc; quarto render $(notdir $^) --to html --quiet
@@ -42,12 +43,24 @@ cdoc/%.qmd: C/include/%.h C/src/%.c
 cdoc/build_csr.qmd: C/include/sparse.h C/src/build_csr.c
 	$(LDOC) -highlight c -p quarto -o $@ C/src/build_csr.c
 
+# GSL CBLAS routines: document the wrapper .c together with its source_*_r.h kernel.
+cdoc/cblas_ddot.qmd: C/cblas/src/ddot.c C/cblas/src/source_dot_r.h
+	$(LDOC) -highlight c -p quarto -o $@ $^
+cdoc/cblas_dasum.qmd: C/cblas/src/dasum.c C/cblas/src/source_asum_r.h
+	$(LDOC) -highlight c -p quarto -o $@ $^
+cdoc/cblas_dscal.qmd: C/cblas/src/dscal.c C/cblas/src/source_scal_r.h
+	$(LDOC) -highlight c -p quarto -o $@ $^
+
 cdocs: $(patsubst %.qmd,%.html,$(CDOCS))
 
 
 # CONVERTING .c FILES TO .v FILES USING clightgen
 C/%.v: C/src/%.c
 	clightgen -normalize -IC/include $< -o $@
+
+# cblas subdirectory: GSL BLAS routines ported into LAProof
+C/cblas/%.v: C/cblas/src/%.c
+	clightgen -normalize -IC/cblas/include $< -o $@
 
 
 # the rest of this is adapted from the makedepend part of ../Makefile
@@ -57,3 +70,6 @@ C/alloc.v: C/include/alloc.h
 C/bandmat.v: C/include/densemat.h C/include/bandmat.h
 C/densemat.v: C/include/densemat.h
 C/build_csr.v: C/include/sparse.h
+C/cblas/ddot.v: C/cblas/include/cblas.h C/cblas/src/source_dot_r.h
+C/cblas/dasum.v: C/cblas/include/cblas.h C/cblas/src/source_asum_r.h
+C/cblas/dscal.v: C/cblas/include/cblas.h C/cblas/src/source_scal_r.h
