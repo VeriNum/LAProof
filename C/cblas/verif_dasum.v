@@ -3,11 +3,11 @@
 
 (** [body_cblas_dasum] proves that the compiled C [cblas_dasum] (unit stride)
     refines LAProof's summation model: its result is [feq]-equal to
-    [sumF (map BABS X)].  Sibling of [verif_ddot]; the loop invariant carries the
-    partial accumulation [asum_model (sublist 0 k X)], with the per-step / start /
-    bridge reasoning in [LAProof.C.cblas.asum_model].  The only structural
-    additions over [ddot] are an [fabs] [forward_call] in the loop body and the
-    dead [if (incX<=0) return 0;] guard (unreachable since [incX = 1]). *)
+    [sumF (map BABS X)].  The loop invariant carries the partial accumulation
+    [asum_model (sublist 0 k X)]; the step and bridge reasoning that discharges
+    it lives in [LAProof.C.cblas.asum_model].  The loop body makes an [fabs]
+    [forward_call], and a dead [if (incX<=0) return 0;] guard precedes the loop
+    (unreachable since [incX = 1]). *)
 
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.

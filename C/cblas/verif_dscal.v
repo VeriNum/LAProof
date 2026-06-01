@@ -3,10 +3,9 @@
 
 (** [body_cblas_dscal] proves that after the compiled C [cblas_dscal] (unit
     stride) the array holds exactly [scal_model alpha X] (= [map (fun x => BMULT
-    x alpha) X]).  First in-place routine in this directory: a writable array
-    with a store in the loop, whose invariant is "scaled prefix ++ original
-    suffix"; the per-step [upd_Znth]/[sublist] identity is discharged by
-    [list_solve]. *)
+    x alpha) X]).  This is an in-place routine: a writable array with a store in
+    the loop, whose invariant is "scaled prefix ++ original suffix"; the per-step
+    [upd_Znth]/[sublist] identity is discharged by [list_solve]. *)
 
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.
@@ -79,6 +78,8 @@ forward_for_simple_bound (Zlength X)
 Qed.
 
 (** Payoff: each element [BMULT (Znth k X) alpha] is the correctly-rounded
-    product, so its relative error vs the exact product is bounded by the unit
-    roundoff (vcfloat's [BMULT] accuracy lemma); there is no accumulation, hence
-    no global/no-overflow hypothesis as in the reduction routines. *)
+    product, so when that product is finite its relative error vs the exact
+    product is bounded by the unit roundoff (vcfloat's [BMULT] accuracy lemma).
+    A product can still overflow, but the finiteness (no-overflow) requirement is
+    per element -- each [X[k]*alpha] independently -- rather than a single global
+    hypothesis over an accumulation. *)

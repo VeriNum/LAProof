@@ -1,12 +1,13 @@
-(**  * LAProof.C.cblas.verif_ddot: VST proof scaffold for GSL's [cblas_ddot]. *)
+(**  * LAProof.C.cblas.verif_ddot: VST proof for GSL's [cblas_ddot]. *)
 (** ** Corresponds to C program [C/cblas/src/ddot.c]. *)
 
 (** [body_cblas_ddot] proves that the compiled C [cblas_ddot] (unit stride)
-    refines the [dotprodF] accuracy model, [feq]-equal to its result.  The proof
-    mirrors [LAProof.C.verif_densemat_mult.body_densematn_dotprod]: a
-    [forward_for_simple_bound] whose invariant carries the partial accumulation
-    [ddot_model (sublist 0 k X) (sublist 0 k Y)], with the per-step / start /
-    bridge reasoning factored into the lemmas of [LAProof.C.cblas.ddot_model]. *)
+    refines the [dotprodF] accuracy model: its result is [feq]-equal to
+    [dotprodF X Y].  The loop invariant carries the partial accumulation
+    [ddot_model (sublist 0 k X) (sublist 0 k Y)]; the step and bridge reasoning
+    that discharges it lives in [LAProof.C.cblas.ddot_model].  Two dead [OFFSET]
+    guards (the [incX>0]/[incY>0] conditionals) precede the loop, unreachable
+    since [incX = incY = 1]. *)
 
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.
