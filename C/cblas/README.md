@@ -53,7 +53,7 @@ For `cblas_ddot` that leftover precondition is exactly `Hfin`: that the accumula
 sum of finite products can still round to an infinity.
 
 The `feq` postcondition cooperates here: the funspec only guarantees that the C result is
-`feq`-equal to the model value (equality up to `±0`/NaN), but once the result is finite,
+`feq`-equal to the model value (equality up to `±0` and exceptional values), but once the result is finite,
 `feq` upgrades to real-value equality, so the bound on the model value is literally a bound
 on the compiled C output.
 
@@ -88,16 +88,13 @@ copyright and license headers.
 
 **Scope limits (`cblas_ddot`, `cblas_dasum`, `cblas_dscal`):**
 - **Unit stride only** (`incX = incY = 1`), as a deliberate first milestone.
-- For the **reductions** (`ddot`, `dasum`) the postcondition is stated up to `feq`
-  (IEEE-equality that identifies `+0.0`/`-0.0` and NaN payloads), because the C accumulation
-  adds the accumulator first while the models fold the new term first, and IEEE addition is
-  commutative only up to `feq`.
+- For the **reductions** (`ddot`, `dasum`) the postcondition is stated up to `feq`.
 - `cblas_dasum` is verified against `sumF (map BABS X)`; its loop body calls `fabs`,
   discharged with VSTlib's `fabs_spec` (whose result is `BABS`). The matching accuracy
   theorem is `sum_acc.fSUM`.
 - `cblas_dscal` is the first **in-place** routine: it overwrites the array (writable share,
   `void` return) and is verified against an *exact* model `scal_model alpha X =
-  map (fun x => BMULT x alpha) X` (no `feq` — scaling is deterministic elementwise). The
+  map (fun x => BMULT x alpha) X` (no `feq` required here). The
   per-element accuracy is a direct unit-roundoff bound on `BMULT`.
 
 ## Conventions
