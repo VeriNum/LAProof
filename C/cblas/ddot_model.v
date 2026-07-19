@@ -93,10 +93,9 @@ Qed.
 Lemma ddot_model_feq_dotprodF:
   forall (X Y: list (ftype Tdouble)),
     Zlength X = Zlength Y ->
-    Forall finite X -> Forall finite Y ->
     feq (ddot_model X Y) (dotprodF X Y).
 Proof.
-  intros X Y Hlen _ _.
+  intros X Y Hlen.
   assert (Hl: length X = length Y)
     by (apply Nat2Z.inj; rewrite <- !Zlength_correct; exact Hlen).
   clear Hlen.

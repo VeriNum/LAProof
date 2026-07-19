@@ -24,8 +24,7 @@ Definition cblas_dasum_spec :=
  DECLARE _cblas_dasum
  WITH shX: share, n: Z, X: list (ftype Tdouble), px: val
  PRE [ tint, tptr tdouble, tint ]
-   PROP (readable_share shX; Zlength X = n; 0 <= n <= Int.max_signed;
-         Forall finite X)
+   PROP (readable_share shX; Zlength X = n; 0 <= n <= Int.max_signed)
    PARAMS (Vint (Int.repr n); px; Vint (Int.repr 1))
    SEP (data_at shX (tarray tdouble n) (map Vfloat X) px)
  POST [ tdouble ]

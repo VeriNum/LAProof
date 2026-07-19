@@ -50,8 +50,7 @@ Definition cblas_ddot_spec :=
       px: val, py: val
  PRE [ tint, tptr tdouble, tint, tptr tdouble, tint ]
    PROP (readable_share shX; readable_share shY;
-         Zlength X = n; Zlength Y = n; 0 <= n <= Int.max_signed;
-         Forall finite X; Forall finite Y)
+         Zlength X = n; Zlength Y = n; 0 <= n <= Int.max_signed)
    PARAMS (Vint (Int.repr n); px; Vint (Int.repr 1); py; Vint (Int.repr 1))
    SEP (data_at shX (tarray tdouble n) (map Vfloat X) px;
         data_at shY (tarray tdouble n) (map Vfloat Y) py)

@@ -20,9 +20,6 @@ Set Bullet Behavior "Strict Subproofs".
 Lemma body_cblas_ddot: semax_body Vprog Gprog f_cblas_ddot cblas_ddot_spec.
 Proof.
 start_function.
-(* C: r = 0.0; ix = OFFSET(N,incX); iy = OFFSET(N,incY); with incX=incY=1 ⇒ ix=iy=0.
-   Each OFFSET is a (incX>0 ? 0 : ...) conditional; the else-branch is
-   unreachable here because incX=incY=1, so [rep_lia] closes it. *)
 forward.                       (* _r = 0.0 *)
 forward_if (PROP ()
   LOCAL (temp _t'1 (Vint (Int.repr 0));
@@ -85,10 +82,10 @@ forward_for_simple_bound n
   entailer!.
   rewrite (sublist_same 0 (Zlength X) X) by lia.
   rewrite (sublist_same 0 (Zlength X) Y) by lia.
-  apply ddot_model_feq_dotprodF; [ lia | auto | auto ].
+  apply ddot_model_feq_dotprodF; lia.
 Qed.
 
-(** Payoff (stub): because [cblas_ddot_spec]'s result is [feq]-equal to
+(** Payoff: because [cblas_ddot_spec]'s result is [feq]-equal to
     [dotprodF X Y], the forward-error bound
     [LAProof.accuracy_proofs.dot_acc.dotprod_forward_error] applies directly to
     the value computed by the compiled C [cblas_ddot]. *)
