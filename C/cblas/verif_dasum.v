@@ -2,12 +2,9 @@
 (** ** Corresponds to C program [C/cblas/src/dasum.c]. *)
 
 (** [body_cblas_dasum] proves that the compiled C [cblas_dasum] (unit stride)
-    refines LAProof's summation model: its result is [feq]-equal to
-    [sumF (map BABS X)].  The loop invariant carries the partial accumulation
-    [asum_model (sublist 0 k X)]; the step and bridge reasoning that discharges
-    it lives in [LAProof.C.cblas.asum_model].  The loop body makes an [fabs]
-    [forward_call], and a dead [if (incX<=0) return 0;] guard precedes the loop
-    (unreachable since [incX = 1]). *)
+    returns a value [feq]-equal to [sumF (map BABS X)].  Its invariant uses
+    [asum_model] on the length-[k] prefix; supporting lemmas are in
+    [LAProof.C.cblas.asum_model]. *)
 
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.
@@ -21,12 +18,11 @@ Set Bullet Behavior "Strict Subproofs".
 Lemma body_cblas_dasum: semax_body Vprog Gprog f_cblas_dasum cblas_dasum_spec.
 Proof.
 start_function.
-forward.                       (* r = 0.0 *)
-forward.                       (* ix = 0 *)
-(* if (incX <= 0) return 0;  -- dead, incX = 1 *)
+forward.
+forward.
 forward_if.
-{ rep_lia. }                   (* then-branch: incX <= 0 contradicts incX = 1 *)
-(* accumulation loop *)
+{ rep_lia. }
+(* [_r] models the first [k] elements; unit stride makes [_ix = k]. *)
 forward_for_simple_bound (Zlength X)
   (EX k:Z,
     PROP ()
@@ -36,18 +32,18 @@ forward_for_simple_bound (Zlength X)
            temp _incX (Vint (Int.repr 1));
            temp _X px)
     SEP (data_at shX (tarray tdouble (Zlength X)) (map Vfloat X) px))%assert.
-- (* entry (k = 0): asum_model nil = +0.0 *)
+-
   entailer!!.
-- (* body: t = X[ix]; r += fabs(t); ix += incX *)
-  forward.                     (* t'2 = X[ix] *)
-  forward_call (Znth i X).     (* t'1 = fabs(X[i]) = BABS (Znth i X) *)
-  forward.                     (* r = r + t'1 *)
-  forward.                     (* ix = ix + incX *)
+-
+  forward.
+  forward_call (Znth i X).
+  forward.
+  forward.
   entailer!!.
   rewrite (asum_model_step X i) by list_solve.
   reflexivity.
-- (* exit (k = Zlength X): return r = asum_model X *)
-  forward.                     (* return r *)
+-
+  forward.
   Exists (asum_model (sublist 0 (Zlength X) X)).
   entailer!!.
   rewrite sublist_same by lia.
