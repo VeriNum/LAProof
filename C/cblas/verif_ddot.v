@@ -85,7 +85,9 @@ forward_for_simple_bound n
   apply ddot_model_feq_dotprodF; lia.
 Qed.
 
-(** Payoff: because [cblas_ddot_spec]'s result is [feq]-equal to
-    [dotprodF X Y], the forward-error bound
-    [LAProof.accuracy_proofs.dot_acc.dotprod_forward_error] applies directly to
-    the value computed by the compiled C [cblas_ddot]. *)
+(** Conditional accuracy payoff: [cblas_ddot_spec]'s result is [feq]-equal to
+    [dotprodF X Y].  After additionally establishing that [dotprodF X Y] is
+    finite (the accuracy theorem's [Hfin] hypothesis), one can transfer
+    [LAProof.accuracy_proofs.dot_acc.dotprod_forward_error] to the value computed
+    by the compiled C [cblas_ddot].  That composition is not stated as a checked
+    theorem here. *)

@@ -54,7 +54,9 @@ forward_for_simple_bound (Zlength X)
   apply asum_model_feq_sumF.
 Qed.
 
-(** Payoff (stub): because the result is [feq]-equal to [sumF (map BABS X)], the
-    forward-error bound [LAProof.accuracy_proofs.sum_acc.fSUM] (applied to the
-    list [map BABS X]) bounds the C result's error whenever that result is finite
-    (the no-overflow hypothesis [Hfin]; see [C/cblas/README.md]). *)
+(** Conditional accuracy payoff: the result is [feq]-equal to
+    [sumF (map BABS X)].  After additionally establishing that this model result
+    is finite (the accuracy theorem's [Hfin] hypothesis), one can transfer
+    [LAProof.accuracy_proofs.sum_acc.fSUM], applied to [map BABS X], to the value
+    computed by the compiled C [cblas_dasum].  That composition is not stated as
+    a checked theorem here; see [C/cblas/README.md]. *)

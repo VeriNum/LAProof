@@ -1,16 +1,19 @@
 (**  * LAProof.C.cblas.scal_model: functional model of GSL's [cblas_dscal]. *)
 (** ** Corresponds to C program [C/cblas/src/dscal.c] (ported from GSL cblas). *)
 
-(** This file provides [scal_model], the elementwise scaling that [cblas_dscal]
-    computes.  Scaling is a deterministic *elementwise* update with no
-    accumulation, so there is no loop invariant tracking a running accumulator
-    and no [feq] bridge -- the C program computes the model exactly.  GSL's
-    kernel ([source_scal_r.h]) is
+(** This file provides two exact scaling models.  [scal_model] maps a scaling
+    operation over an entire contiguous list; [scal_strided] models the general
+    positive-stride [cblas_dscal] proof by updating the selected positions in a
+    full backing buffer.  Scaling is a deterministic *elementwise* update with
+    no accumulation and needs no [feq] bridge.  GSL's kernel
+    ([source_scal_r.h]) is
 <<
       for (i = 0; i < N; i++) { X[ix] *= alpha; ix += incX; }
 >>
-    i.e., [X[ix] *= alpha] is [BMULT (X[ix]) alpha] (element-first), so the model
-    is the list map below, matching what the C program computes.
+    i.e., [X[ix] *= alpha] is [BMULT (X[ix]) alpha] (element-first).
+    [scal_model] below captures the contiguous whole-list special case; the
+    later [scal_strided] definition captures the kernel for arbitrary positive
+    stride and a possibly larger backing buffer.
 
     LAProof's existing scale model [mv_mathcomp.scalemx] is alpha-first
     ([map_mx (BMULT a)]) and matrix-based; relating to it would need a [BMULT]
