@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+<h1 class="libtitle">LAProof.C.cblas.verif_dasum: VST proof for GSL's [cblas_dasum].</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab177"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="definition">C</span>/<span class="id" title="var">cblas</span>/<span class="id" title="var">src</span>/<span class="id" title="var">dasum.c</span></span>.</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><a class="idref" href="LAProof.C.cblas.verif_dasum.html#body_cblas_dasum"><span class="id" title="lemma">body_cblas_dasum</span></a></span> proves the positive-stride accumulation over
+    <span class="inlinecode"><a class="idref" href="LAProof.C.cblas.scal_model.html#strided"><span class="id" title="definition">strided</span></a></span> <span class="inlinecode"><span class="id" title="var">incX</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.verif_cholesky.html#N"><span class="id" title="definition">N</span></a></span> <span class="inlinecode"><span class="id" title="var">X</span></span> and the kernel's early return for <span class="inlinecode"><span class="id" title="var">incX</span></span> <span class="inlinecode">≤</span> <span class="inlinecode">0</span>.  The
+    reduction models <span class="inlinecode"><a class="idref" href="LAProof.C.cblas.asum_model.html#asum_model"><span class="id" title="definition">asum_model</span></a></span> and <span class="inlinecode"><a class="idref" href="LAProof.C.verif_cholesky.html#sumF"><span class="id" title="definition">sumF</span></a></span> are unchanged. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">VST.floyd.proofauto</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">vcfloat</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">FPStdCompCert</span> <span class="id" title="library">FPStdLib</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">VSTlib</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">spec_math</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.C</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.C.floatlib.html#"><span class="id" title="library">floatlib</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.C.cblas</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.C.cblas.dasum.html#"><span class="id" title="library">dasum</span></a> <a class="idref" href="LAProof.C.cblas.scal_model.html#"><span class="id" title="library">scal_model</span></a> <a class="idref" href="LAProof.C.cblas.asum_model.html#"><span class="id" title="library">asum_model</span></a> <a class="idref" href="LAProof.C.cblas.spec_dasum.html#"><span class="id" title="library">spec_dasum</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.accuracy_proofs.sum_model.html#"><span class="id" title="library">LAProof.accuracy_proofs.sum_model</span></a>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="body_cblas_dasum" class="idref" href="#body_cblas_dasum"><span class="id" title="lemma">body_cblas_dasum</span></a>: <span class="id" title="definition">semax_body</span> <a class="idref" href="LAProof.C.cblas.spec_dasum.html#Vprog"><span class="id" title="definition">Vprog</span></a> <a class="idref" href="LAProof.C.cblas.spec_dasum.html#Gprog"><span class="id" title="definition">Gprog</span></a> <a class="idref" href="LAProof.C.cblas.dasum.html#f_cblas_dasum"><span class="id" title="definition">f_cblas_dasum</span></a> <a class="idref" href="LAProof.C.cblas.spec_dasum.html#cblas_dasum_spec"><span class="id" title="definition">cblas_dasum_spec</span></a>.<br/>
+</div>
+
+<div class="doc">
+For <span class="inlinecode"><span class="id" title="var">incX</span></span> <span class="inlinecode">&gt;</span> <span class="inlinecode">0</span>, the conditional accuracy payoff applies <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.sum_acc.html#fSUM"><span class="id" title="lemma">fSUM</span></a></span> to
+    <span class="inlinecode"><span class="id" title="definition">map</span></span> <span class="inlinecode"><span class="id" title="definition">BABS</span></span> <span class="inlinecode">(<a class="idref" href="LAProof.C.cblas.scal_model.html#strided"><span class="id" title="definition">strided</span></a></span> <span class="inlinecode"><span class="id" title="var">incX</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.verif_cholesky.html#N"><span class="id" title="definition">N</span></a></span> <span class="inlinecode"><span class="id" title="var">X</span>)</span> after establishing that its sum is finite.
+    The composition is not stated as a checked theorem here. 
+</div>
+<div class="code">
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

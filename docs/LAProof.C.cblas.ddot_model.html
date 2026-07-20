@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+<h1 class="libtitle">LAProof.C.cblas.ddot_model: functional model of GSL's [cblas_ddot].</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab168"></a><h2 class="section">Corresponds to C program <span class="inlinecode"><span class="id" title="definition">C</span>/<span class="id" title="var">cblas</span>/<span class="id" title="var">src</span>/<span class="id" title="var">ddot.c</span></span> (ported from GSL cblas).</h2>
+
+<div class="paragraph"> </div>
+
+ This file provides <span class="inlinecode"><a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_model"><span class="id" title="definition">ddot_model</span></a></span>, the partial accumulation that the
+    <span class="inlinecode"><span class="id" title="var">cblas_ddot</span></span> loop invariant tracks, with the *step* lemma (how one loop
+    iteration extends the accumulation) and the *end* lemma (the result of the
+    accumulation once the loop finishes).  No VST <span class="inlinecode"><span class="id" title="inductive">funspec</span></span>s or Clight ASTs
+    appear here -- those live in <span class="inlinecode"><span class="id" title="library">spec_ddot</span></span> and <span class="inlinecode"><span class="id" title="library">verif_ddot</span></span>.  GSL's loop
+    (after macro expansion of <span class="inlinecode"><span class="id" title="var">source_dot_r.h</span></span>) is
+<pre>
+      double r = 0.0;
+      for (i = 0; i &lt; N; i++) { r += X[ix] * Y[iy]; ix += incX; iy += incY; }
+      return r;
+</pre>
+    i.e., it adds <span class="inlinecode"><span class="id" title="var">X</span>[<span class="id" title="var">i</span>]*<span class="id" title="var">Y</span>[<span class="id" title="var">i</span>]</span> left to right into the accumulator
+    (<span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> <span class="inlinecode"><span class="id" title="var">acc</span></span> <span class="inlinecode"><span class="id" title="var">prod</span></span>), using separate multiply-then-add (not fused
+    multiply-add), starting from <span class="inlinecode">+0.0</span>.
+
+<div class="paragraph"> </div>
+
+    The matching LAProof accuracy model is <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a></span>
+    (<span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="LAProof.C.floatlib.html#dotprod"><span class="id" title="definition">dotprod</span></a></span> <span class="inlinecode"><span class="id" title="definition">BMULT</span></span> <span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.common.html#pos_zero"><span class="id" title="definition">pos_zero</span></a></span>) of
+    <span class="inlinecode"><span class="id" title="library">LAProof.accuracy_proofs.dotprod_model</span></span>; over it
+    <span class="inlinecode"><span class="id" title="var">dot_acc.dotprod_forward_error</span></span> proves the forward-error bound -- *not* the
+    FMA-based <span class="inlinecode"><span class="id" title="var">floatlib.dotprod</span></span>.  The C's operand order (<span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> <span class="inlinecode"><span class="id" title="var">acc</span></span> <span class="inlinecode"><span class="id" title="var">prod</span></span> vs
+    <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a></span>'s <span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> <span class="inlinecode"><span class="id" title="var">prod</span></span> <span class="inlinecode"><span class="id" title="var">acc</span></span>) and initial accumulator (<span class="inlinecode">+0.0</span> =
+    <span class="inlinecode"><span class="id" title="definition">Zconst</span></span> <span class="inlinecode"><span class="id" title="definition">Tdouble</span></span> <span class="inlinecode">0</span> vs <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a></span>'s <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.common.html#pos_zero"><span class="id" title="definition">pos_zero</span></a></span>) differ, so the end/bridge
+    lemma relates the two by <span class="inlinecode"><span class="id" title="definition">feq</span></span> (IEEE addition is commutative up to <span class="inlinecode"><span class="id" title="definition">feq</span></span>). 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">VST.floyd.proofauto</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">vcfloat.VCFloat</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">vcfloat.FPStdCompCert</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">vcfloat</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">FPStdLib</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">LAProof.C</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.C.floatlib.html#"><span class="id" title="library">floatlib</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#"><span class="id" title="library">LAProof.accuracy_proofs.dotprod_model</span></a>.<br/>
+
+<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_model"><span class="id" title="definition">ddot_model</span></a></span> <span class="inlinecode"><span class="id" title="var">X</span></span> <span class="inlinecode"><span class="id" title="var">Y</span></span> is the value the C loop *literally* computes: a left fold
+    with the accumulator as the first <span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> operand, separate multiply then
+    add, starting from <span class="inlinecode">+0.0</span>.  This mirrors the Clight AST in <span class="inlinecode"><span class="id" title="var">ddot.v</span></span> exactly. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="ddot_loop" class="idref" href="#ddot_loop"><span class="id" title="definition">ddot_loop</span></a> (<a id="xy:1" class="idref" href="#xy:1"><span class="id" title="binder">xy</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <span class="id" title="definition">Tdouble</span> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <span class="id" title="definition">ftype</span> <span class="id" title="definition">Tdouble</span>)) : <span class="id" title="definition">ftype</span> <span class="id" title="definition">Tdouble</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">fold_left</span> (<span class="id" title="keyword">fun</span> <a id="acc:2" class="idref" href="#acc:2"><span class="id" title="binder">acc</span></a> <a id="p:3" class="idref" href="#p:3"><span class="id" title="binder">p</span></a> ⇒ <span class="id" title="definition">BPLUS</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#acc:2"><span class="id" title="variable">acc</span></a> (<span class="id" title="definition">BMULT</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#p:3"><span class="id" title="variable">p</span></a>) (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#p:3"><span class="id" title="variable">p</span></a>))) <a class="idref" href="LAProof.C.cblas.ddot_model.html#xy:1"><span class="id" title="variable">xy</span></a> (<span class="id" title="definition">Zconst</span> <span class="id" title="definition">Tdouble</span> 0).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="ddot_model" class="idref" href="#ddot_model"><span class="id" title="definition">ddot_model</span></a> (<a id="X:4" class="idref" href="#X:4"><span class="id" title="binder">X</span></a> <a id="Y:5" class="idref" href="#Y:5"><span class="id" title="binder">Y</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <span class="id" title="definition">Tdouble</span>)) : <span class="id" title="definition">ftype</span> <span class="id" title="definition">Tdouble</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_loop"><span class="id" title="definition">ddot_loop</span></a> (<span class="id" title="definition">combine</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:4"><span class="id" title="variable">X</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:5"><span class="id" title="variable">Y</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab169"></a><h2 class="section">Model lemmas (the <span class="inlinecode"><span class="id" title="var">partial_row_</span>×</span> triple, specialised to a dense ddot).</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="combine_app_eqlen" class="idref" href="#combine_app_eqlen"><span class="id" title="lemma">combine_app_eqlen</span></a> {<a id="A:6" class="idref" href="#A:6"><span class="id" title="binder">A</span></a> <a id="B:7" class="idref" href="#B:7"><span class="id" title="binder">B</span></a>} (<a id="l1:8" class="idref" href="#l1:8"><span class="id" title="binder">l1</span></a> <a id="l1':9" class="idref" href="#l1':9"><span class="id" title="binder">l1'</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#A:6"><span class="id" title="variable">A</span></a>) (<a id="l2:10" class="idref" href="#l2:10"><span class="id" title="binder">l2</span></a> <a id="l2':11" class="idref" href="#l2':11"><span class="id" title="binder">l2'</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#B:7"><span class="id" title="variable">B</span></a>):<br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">length</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#l1:8"><span class="id" title="variable">l1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="abbreviation">length</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#l2:10"><span class="id" title="variable">l2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">combine</span> (<a class="idref" href="LAProof.C.cblas.ddot_model.html#l1:8"><span class="id" title="variable">l1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#l1':9"><span class="id" title="variable">l1'</span></a>) (<a class="idref" href="LAProof.C.cblas.ddot_model.html#l2:10"><span class="id" title="variable">l2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#l2':11"><span class="id" title="variable">l2'</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">combine</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#l1:8"><span class="id" title="variable">l1</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#l2:10"><span class="id" title="variable">l2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <span class="id" title="definition">combine</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#l1':9"><span class="id" title="variable">l1'</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#l2':11"><span class="id" title="variable">l2'</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="ddot_loop_snoc" class="idref" href="#ddot_loop_snoc"><span class="id" title="lemma">ddot_loop_snoc</span></a>: <span class="id" title="keyword">∀</span> <a id="xy:12" class="idref" href="#xy:12"><span class="id" title="binder">xy</span></a> <a id="p:13" class="idref" href="#p:13"><span class="id" title="binder">p</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_loop"><span class="id" title="definition">ddot_loop</span></a> (<a class="idref" href="LAProof.C.cblas.ddot_model.html#xy:12"><span class="id" title="variable">xy</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <span class="id" title="notation">[</span><a class="idref" href="LAProof.C.cblas.ddot_model.html#p:13"><span class="id" title="variable">p</span></a><span class="id" title="notation">]</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">BPLUS</span> (<a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_loop"><span class="id" title="definition">ddot_loop</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#xy:12"><span class="id" title="variable">xy</span></a>) (<span class="id" title="definition">BMULT</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#p:13"><span class="id" title="variable">p</span></a>) (<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#p:13"><span class="id" title="variable">p</span></a>)).<br/>
+ 
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="ddot_model_snoc" class="idref" href="#ddot_model_snoc"><span class="id" title="lemma">ddot_model_snoc</span></a>: <span class="id" title="keyword">∀</span> <a id="X:14" class="idref" href="#X:14"><span class="id" title="binder">X</span></a> <a id="Y:15" class="idref" href="#Y:15"><span class="id" title="binder">Y</span></a> <a id="x:16" class="idref" href="#x:16"><span class="id" title="binder">x</span></a> <a id="y:17" class="idref" href="#y:17"><span class="id" title="binder">y</span></a>,<br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">length</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:14"><span class="id" title="variable">X</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="abbreviation">length</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:15"><span class="id" title="variable">Y</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_model"><span class="id" title="definition">ddot_model</span></a> (<a class="idref" href="LAProof.C.cblas.ddot_model.html#X:14"><span class="id" title="variable">X</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <span class="id" title="notation">[</span><a class="idref" href="LAProof.C.cblas.ddot_model.html#x:16"><span class="id" title="variable">x</span></a><span class="id" title="notation">]</span>) (<a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:15"><span class="id" title="variable">Y</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <span class="id" title="notation">[</span><a class="idref" href="LAProof.C.cblas.ddot_model.html#y:17"><span class="id" title="variable">y</span></a><span class="id" title="notation">]</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">BPLUS</span> (<a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_model"><span class="id" title="definition">ddot_model</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:14"><span class="id" title="variable">X</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:15"><span class="id" title="variable">Y</span></a>) (<span class="id" title="definition">BMULT</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#x:16"><span class="id" title="variable">x</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#y:17"><span class="id" title="variable">y</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+*step*: extending both length-<span class="inlinecode"><span class="id" title="var">k</span></span> prefixes <span class="inlinecode"><span class="id" title="var">X</span>[0..<span class="id" title="var">k</span>-1]</span>/<span class="inlinecode"><span class="id" title="var">Y</span>[0..<span class="id" title="var">k</span>-1]</span> with the
+    elements <span class="inlinecode"><span class="id" title="var">X</span>[<span class="id" title="var">k</span>]</span>/<span class="inlinecode"><span class="id" title="var">Y</span>[<span class="id" title="var">k</span>]</span> adds one <span class="inlinecode"><span class="id" title="definition">BMULT</span></span> term, with the accumulator as the
+    first <span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> operand -- exactly the Clight statement <span class="inlinecode"><span class="id" title="var">r</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">r</span></span> <span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">X</span>[<span class="id" title="var">k</span>]*<span class="id" title="var">Y</span>[<span class="id" title="var">k</span>]</span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="ddot_model_step" class="idref" href="#ddot_model_step"><span class="id" title="lemma">ddot_model_step</span></a>: <span class="id" title="keyword">∀</span> (<a id="X:18" class="idref" href="#X:18"><span class="id" title="binder">X</span></a> <a id="Y:19" class="idref" href="#Y:19"><span class="id" title="binder">Y</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <span class="id" title="definition">Tdouble</span>)) <a id="k:20" class="idref" href="#k:20"><span class="id" title="binder">k</span></a>,<br/>
+&nbsp;&nbsp;<span class="id" title="definition">Zlength</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:18"><span class="id" title="variable">X</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">Zlength</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:19"><span class="id" title="variable">Y</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> 0 <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#k:20"><span class="id" title="variable">k</span></a> <span class="id" title="notation">&lt;</span> <span class="id" title="definition">Zlength</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:18"><span class="id" title="variable">X</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_model"><span class="id" title="definition">ddot_model</span></a> (<span class="id" title="definition">sublist</span> 0 (<a class="idref" href="LAProof.C.cblas.ddot_model.html#k:20"><span class="id" title="variable">k</span></a><span class="id" title="notation">+</span>1) <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:18"><span class="id" title="variable">X</span></a>) (<span class="id" title="definition">sublist</span> 0 (<a class="idref" href="LAProof.C.cblas.ddot_model.html#k:20"><span class="id" title="variable">k</span></a><span class="id" title="notation">+</span>1) <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:19"><span class="id" title="variable">Y</span></a>)<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">BPLUS</span> (<a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_model"><span class="id" title="definition">ddot_model</span></a> (<span class="id" title="definition">sublist</span> 0 <a class="idref" href="LAProof.C.cblas.ddot_model.html#k:20"><span class="id" title="variable">k</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:18"><span class="id" title="variable">X</span></a>) (<span class="id" title="definition">sublist</span> 0 <a class="idref" href="LAProof.C.cblas.ddot_model.html#k:20"><span class="id" title="variable">k</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:19"><span class="id" title="variable">Y</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">BMULT</span> (<span class="id" title="definition">Znth</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#k:20"><span class="id" title="variable">k</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:18"><span class="id" title="variable">X</span></a>) (<span class="id" title="definition">Znth</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#k:20"><span class="id" title="variable">k</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:19"><span class="id" title="variable">Y</span></a>)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+*end*/bridge: the finished accumulation equals LAProof's accuracy model
+    <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a></span> up to <span class="inlinecode"><span class="id" title="definition">feq</span></span>.  They differ only by the <span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> operand order
+    (<span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> <span class="inlinecode"><span class="id" title="var">acc</span></span> <span class="inlinecode"><span class="id" title="var">prod</span></span> here vs <span class="inlinecode"><span class="id" title="definition">BPLUS</span></span> <span class="inlinecode"><span class="id" title="var">prod</span></span> <span class="inlinecode"><span class="id" title="var">acc</span></span> in <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a></span>'s fold step), so the
+    proof is a generalized-accumulator induction using <span class="inlinecode"><span class="id" title="var">common.BPLUS_comm</span></span>
+    (feq (BPLUS x y) (BPLUS y x)) and the <span class="inlinecode"><span class="id" title="definition">BPLUS_mor</span></span> feq-congruence, plus the
+    fact that <span class="inlinecode"><span class="id" title="var">List.combine</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">seq.zip</span></span> on equal-length lists and that the two
+    initial zeros (<span class="inlinecode"><span class="id" title="definition">Zconst</span></span> <span class="inlinecode"><span class="id" title="definition">Tdouble</span></span> <span class="inlinecode">0</span> vs <span class="inlinecode"><a class="idref" href="LAProof.accuracy_proofs.common.html#pos_zero"><span class="id" title="definition">pos_zero</span></a></span>) are <span class="inlinecode"><span class="id" title="definition">feq</span></span>.  This is the one
+    remaining model obligation; once discharged, <span class="inlinecode"><span class="id" title="var">dot_acc.dotprod_forward_error</span></span>
+    transfers to the C result. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="ddot_model_feq_dotprodF" class="idref" href="#ddot_model_feq_dotprodF"><span class="id" title="lemma">ddot_model_feq_dotprodF</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="X:21" class="idref" href="#X:21"><span class="id" title="binder">X</span></a> <a id="Y:22" class="idref" href="#Y:22"><span class="id" title="binder">Y</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<span class="id" title="definition">ftype</span> <span class="id" title="definition">Tdouble</span>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Zlength</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:21"><span class="id" title="variable">X</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">Zlength</span> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:22"><span class="id" title="variable">Y</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">feq</span> (<a class="idref" href="LAProof.C.cblas.ddot_model.html#ddot_model"><span class="id" title="definition">ddot_model</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:21"><span class="id" title="variable">X</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:22"><span class="id" title="variable">Y</span></a>) (<a class="idref" href="LAProof.accuracy_proofs.dotprod_model.html#dotprodF"><span class="id" title="definition">dotprodF</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#X:21"><span class="id" title="variable">X</span></a> <a class="idref" href="LAProof.C.cblas.ddot_model.html#Y:22"><span class="id" title="variable">Y</span></a>).<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

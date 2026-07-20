@@ -62,6 +62,7 @@ LAProof 2.0 is based on MathComp--that is, specifications of matrix and vector o
 <li><a href="bandmat.html">bandmat.[c,h]</a>:&nbsp;&nbsp;&nbsp;Symmetric band matrix operations
 <li><a href="sparse.html">sparse.[c,h]</a>:&nbsp;&nbsp;&nbsp;CSR (Compressed Sparse Row) matrix operations
 <li><a href="build_csr.html">build_csr.c</a>:&nbsp;&nbsp;&nbsp;CSR (Compressed Sparse Row) matrix construction
+<li><a href="cblas_ddot.html">ddot.c</a>, <a href="cblas_dasum.html">dasum.c</a>, <a href="cblas_dscal.html">dscal.c</a>:&nbsp;&nbsp;&nbsp;GSL CBLAS Level-1 vector routines
 </ul>
 
 <h3 class="section">Algorithm Accuracy Proofs</h3>
@@ -162,6 +163,21 @@ Generally these prove that the C programs correctly implement the algorithms.  T
             <a href="LAProof.C.verif_sparse_byrows.html">verification of row-by-row variant</a>
       <li><a href="LAProof.C.verif_build_csr.html">Verification of COO->CSR conversion</a>
       <li><a href="LAProof.C.VSU_sparse.html">Verified Software Unit</a>
+    </ul>
+  <dt>BLAS Level-1 (GSL CBLAS): <a href="cblas_ddot.html">ddot.c</a>, <a href="cblas_dasum.html">dasum.c</a>, <a href="cblas_dscal.html">dscal.c</a>
+    <dd><ul>
+      <li>Functional models and model/accuracy-model bridge lemmas:
+        <a href="LAProof.C.cblas.ddot_model.html">ddot</a>,
+        <a href="LAProof.C.cblas.asum_model.html">dasum</a>,
+        <a href="LAProof.C.cblas.scal_model.html">dscal</a>
+      <li>Specifications:
+        <a href="LAProof.C.cblas.spec_ddot.html">ddot</a>,
+        <a href="LAProof.C.cblas.spec_dasum.html">dasum</a>,
+        <a href="LAProof.C.cblas.spec_dscal.html">dscal</a>
+      <li>Correctness proofs:
+        <a href="LAProof.C.cblas.verif_ddot.html">ddot</a>,
+        <a href="LAProof.C.cblas.verif_dasum.html">dasum</a>,
+        <a href="LAProof.C.cblas.verif_dscal.html">dscal</a>
     </ul>
 </dl>
 

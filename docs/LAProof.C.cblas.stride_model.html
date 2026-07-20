@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>LAProof</title>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var h1 = document.querySelector('h1');
+  if (h1) document.title = h1.textContent.trim();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+<h1 class="libtitle">LAProof.C.cblas.stride_model</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab181"></a><h1 class="section">Logical views of strided C arrays.</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">VST.floyd.proofauto</span>.<br/>
+
+<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="LAProof.C.cblas.stride_model.html#strided_from"><span class="id" title="definition">strided_from</span></a></span> <span class="inlinecode"><span class="id" title="var">start</span></span> <span class="inlinecode"><span class="id" title="var">inc</span></span> <span class="inlinecode"><a class="idref" href="LAProof.C.verif_cholesky.html#N"><span class="id" title="definition">N</span></a></span> <span class="inlinecode"><span class="id" title="var">X</span></span> is the logical length-<span class="inlinecode"><a class="idref" href="LAProof.C.verif_cholesky.html#N"><span class="id" title="definition">N</span></a></span> vector whose
+    element <span class="inlinecode"><span class="id" title="var">i</span></span> is stored at array index <span class="inlinecode"><span class="id" title="var">start</span></span> <span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">i</span>×<span class="id" title="var">inc</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="strided_from" class="idref" href="#strided_from"><span class="id" title="definition">strided_from</span></a> {<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>} `{<a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">Inhabitant</span></a> <a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">A</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="start:3" class="idref" href="#start:3"><span class="id" title="binder">start</span></a> <a id="inc:4" class="idref" href="#inc:4"><span class="id" title="binder">inc</span></a> <a id="N:5" class="idref" href="#N:5"><span class="id" title="binder">N</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) (<a id="X:6" class="idref" href="#X:6"><span class="id" title="binder">X</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#A:1"><span class="id" title="variable">A</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#A:1"><span class="id" title="variable">A</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Lists.ListDef.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="keyword">fun</span> <a id="i:7" class="idref" href="#i:7"><span class="id" title="binder">i</span></a> ⇒ <span class="id" title="definition">Znth</span> (<a class="idref" href="LAProof.C.cblas.stride_model.html#start:3"><span class="id" title="variable">start</span></a> <span class="id" title="notation">+</span> <a class="idref" href="LAProof.C.cblas.stride_model.html#i:7"><span class="id" title="variable">i</span></a><span class="id" title="notation">×</span><a class="idref" href="LAProof.C.cblas.stride_model.html#inc:4"><span class="id" title="variable">inc</span></a>) <a class="idref" href="LAProof.C.cblas.stride_model.html#X:6"><span class="id" title="variable">X</span></a>) (<span class="id" title="definition">upto</span> (<span class="id" title="definition">Z.to_nat</span> <a class="idref" href="LAProof.C.cblas.stride_model.html#N:5"><span class="id" title="variable">N</span></a>)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The starting index computed by GSL's <span class="inlinecode"><span class="id" title="var">OFFSET</span>(<a class="idref" href="LAProof.C.verif_cholesky.html#N"><span class="id" title="definition">N</span></a>,<span class="id" title="var">inc</span>)</span> macro. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="blas_offset" class="idref" href="#blas_offset"><span class="id" title="definition">blas_offset</span></a> (<a id="N:8" class="idref" href="#N:8"><span class="id" title="binder">N</span></a> <a id="inc:9" class="idref" href="#inc:9"><span class="id" title="binder">inc</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">if</span> 0 <span class="id" title="notation">&lt;?</span> <a class="idref" href="LAProof.C.cblas.stride_model.html#inc:9"><span class="id" title="variable">inc</span></a> <span class="id" title="keyword">then</span> 0 <span class="id" title="keyword">else</span> <span class="id" title="notation">(</span><a class="idref" href="LAProof.C.cblas.stride_model.html#N:8"><span class="id" title="variable">N</span></a><span class="id" title="notation">-</span>1<span class="id" title="notation">)</span> <span class="id" title="notation">×</span> <span class="id" title="notation">(</span><span class="id" title="notation">-</span><a class="idref" href="LAProof.C.cblas.stride_model.html#inc:9"><span class="id" title="variable">inc</span></a><span class="id" title="notation">)</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="blas_strided" class="idref" href="#blas_strided"><span class="id" title="definition">blas_strided</span></a> {<a id="A:10" class="idref" href="#A:10"><span class="id" title="binder">A</span></a>} `{<a id="H:11" class="idref" href="#H:11"><span class="id" title="binder">Inhabitant</span></a> <a id="H:11" class="idref" href="#H:11"><span class="id" title="binder">A</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="inc:12" class="idref" href="#inc:12"><span class="id" title="binder">inc</span></a> <a id="N:13" class="idref" href="#N:13"><span class="id" title="binder">N</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) (<a id="X:14" class="idref" href="#X:14"><span class="id" title="binder">X</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#A:10"><span class="id" title="variable">A</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#A:10"><span class="id" title="variable">A</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.C.cblas.stride_model.html#strided_from"><span class="id" title="definition">strided_from</span></a> (<a class="idref" href="LAProof.C.cblas.stride_model.html#blas_offset"><span class="id" title="definition">blas_offset</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#N:13"><span class="id" title="variable">N</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#inc:12"><span class="id" title="variable">inc</span></a>) <a class="idref" href="LAProof.C.cblas.stride_model.html#inc:12"><span class="id" title="variable">inc</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#N:13"><span class="id" title="variable">N</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#X:14"><span class="id" title="variable">X</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Zlength_strided_from" class="idref" href="#Zlength_strided_from"><span class="id" title="lemma">Zlength_strided_from</span></a>: <span class="id" title="keyword">∀</span> {<a id="A:15" class="idref" href="#A:15"><span class="id" title="binder">A</span></a>} `{<a id="H:16" class="idref" href="#H:16"><span class="id" title="binder">Inhabitant</span></a> <a id="H:16" class="idref" href="#H:16"><span class="id" title="binder">A</span></a>} <a id="start:17" class="idref" href="#start:17"><span class="id" title="binder">start</span></a> <a id="inc:18" class="idref" href="#inc:18"><span class="id" title="binder">inc</span></a> <a id="N:19" class="idref" href="#N:19"><span class="id" title="binder">N</span></a> (<a id="X:20" class="idref" href="#X:20"><span class="id" title="binder">X</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#A:15"><span class="id" title="variable">A</span></a>),<br/>
+&nbsp;&nbsp;0 <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.C.cblas.stride_model.html#N:19"><span class="id" title="variable">N</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="definition">Zlength</span> (<a class="idref" href="LAProof.C.cblas.stride_model.html#strided_from"><span class="id" title="definition">strided_from</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#start:17"><span class="id" title="variable">start</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#inc:18"><span class="id" title="variable">inc</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#N:19"><span class="id" title="variable">N</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#X:20"><span class="id" title="variable">X</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#N:19"><span class="id" title="variable">N</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="strided_from_snoc" class="idref" href="#strided_from_snoc"><span class="id" title="lemma">strided_from_snoc</span></a>: <span class="id" title="keyword">∀</span> {<a id="A:21" class="idref" href="#A:21"><span class="id" title="binder">A</span></a>} `{<a id="H:22" class="idref" href="#H:22"><span class="id" title="binder">Inhabitant</span></a> <a id="H:22" class="idref" href="#H:22"><span class="id" title="binder">A</span></a>} <a id="start:23" class="idref" href="#start:23"><span class="id" title="binder">start</span></a> <a id="inc:24" class="idref" href="#inc:24"><span class="id" title="binder">inc</span></a> <a id="k:25" class="idref" href="#k:25"><span class="id" title="binder">k</span></a> (<a id="X:26" class="idref" href="#X:26"><span class="id" title="binder">X</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#A:21"><span class="id" title="variable">A</span></a>),<br/>
+&nbsp;&nbsp;0 <span class="id" title="notation">≤</span> <a class="idref" href="LAProof.C.cblas.stride_model.html#k:25"><span class="id" title="variable">k</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.C.cblas.stride_model.html#strided_from"><span class="id" title="definition">strided_from</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#start:23"><span class="id" title="variable">start</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#inc:24"><span class="id" title="variable">inc</span></a> (<a class="idref" href="LAProof.C.cblas.stride_model.html#k:25"><span class="id" title="variable">k</span></a><span class="id" title="notation">+</span>1) <a class="idref" href="LAProof.C.cblas.stride_model.html#X:26"><span class="id" title="variable">X</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="LAProof.C.cblas.stride_model.html#strided_from"><span class="id" title="definition">strided_from</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#start:23"><span class="id" title="variable">start</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#inc:24"><span class="id" title="variable">inc</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#k:25"><span class="id" title="variable">k</span></a> <a class="idref" href="LAProof.C.cblas.stride_model.html#X:26"><span class="id" title="variable">X</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.0.1/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <span class="id" title="notation">[</span><span class="id" title="definition">Znth</span> (<a class="idref" href="LAProof.C.cblas.stride_model.html#start:23"><span class="id" title="variable">start</span></a> <span class="id" title="notation">+</span> <a class="idref" href="LAProof.C.cblas.stride_model.html#k:25"><span class="id" title="variable">k</span></a><span class="id" title="notation">×</span><a class="idref" href="LAProof.C.cblas.stride_model.html#inc:24"><span class="id" title="variable">inc</span></a>) <a class="idref" href="LAProof.C.cblas.stride_model.html#X:26"><span class="id" title="variable">X</span></a><span class="id" title="notation">]</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="genindex.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
