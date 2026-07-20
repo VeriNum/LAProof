@@ -4,6 +4,9 @@ C/bandmat.v
 C/build_csr.v
 C/cholesky.v
 C/densemat.v
+C/cblas/ddot.v
+C/cblas/dasum.v
+C/cblas/dscal.v
 Makefile.coq
 Makefile.coq.conf
 CoqMakefile
