@@ -49,10 +49,10 @@ theorem's own hypotheses, the bound holds of the C return value. In many cases (
 dot products and other reduction loops verified here) the one hypothesis the funspec does
 not already supply is a *no-overflow* condition: that the accumulated result is finite.
 
-For `cblas_ddot` that leftover precondition is exactly `Hfin`: that the accumulated result
-`dotprodF X Y` is finite. Requiring finite inputs would not establish it anyway, since a
-sum of finite products can still round to an infinity. The corresponding condition for
-`cblas_dasum` is that `sumF (map BABS X)` is finite.
+For `cblas_ddot` that leftover precondition is exactly `Hfin`: the `dotprodF` result over
+the two logical strided vectors must be finite. Requiring finite inputs would not establish
+it anyway, since a sum of finite products can still round to an infinity. The corresponding
+condition for `cblas_dasum` is that `sumF (map BABS (strided incX N X))` is finite.
 
 The `feq` postcondition cooperates here: the funspec only guarantees that the C result is
 `feq`-equal to the model value (equality up to `±0` and exceptional values), but once the result is finite,
@@ -88,21 +88,23 @@ copyright and license headers.
 | Sum of absolute values | double | `cblas_dasum` | [`src/dasum.c`](src/dasum.c), [`src/source_asum_r.h`](src/source_asum_r.h), [`include/cblas.h`](include/cblas.h), [`dasum.v`](dasum.v), [`asum_model.v`](asum_model.v), [`spec_dasum.v`](spec_dasum.v), [`verif_dasum.v`](verif_dasum.v) |
 | Scalar multiply (in place) | double | `cblas_dscal` | [`src/dscal.c`](src/dscal.c), [`src/source_scal_r.h`](src/source_scal_r.h), [`include/cblas.h`](include/cblas.h), [`dscal.v`](dscal.v), [`scal_model.v`](scal_model.v), [`spec_dscal.v`](spec_dscal.v), [`verif_dscal.v`](verif_dscal.v) |
 
-**Scope limits:**
-- `cblas_ddot` is currently **unit stride only** (`incX = incY = 1`).
-- `cblas_dasum` supports any positive stride; as in the GSL kernel, a nonpositive stride
-  returns `+0.0` without accessing the input array.
-- `cblas_dscal` supports any **positive stride**, subject to input-array bounds and a
-  signed-`int` bound on the final strided index.
-- For the **reductions** (`ddot`, `dasum`) the postcondition is stated up to `feq`.
-- `cblas_dasum` is verified against `sumF (map BABS X)`; its loop body calls `fabs`,
-  discharged with VSTlib's `fabs_spec` (whose result is `BABS`). The matching accuracy
-  theorem is `sum_acc.fSUM`.
-- `cblas_dscal` is the first **in-place** routine: it overwrites the array (writable share,
-  `void` return) and is verified against the exact model
-  `scal_strided incX N alpha X` (no `feq` required here). This model scales the `N`
-  positions selected by `incX` and leaves every unselected array element unchanged.
-  The per-element accuracy is a direct unit-roundoff bound on `BMULT`.
+**Scope and remaining limits:**
+
+- `cblas_ddot` supports positive, negative, and zero strides for both input arrays. Its
+  precondition ensures that every array access is in bounds and that computing and
+  updating the C array indices cannot overflow a signed `int`. The result is `feq`-equal
+  to `dotprodF` applied to the two logical strided vectors.
+- `cblas_dasum` supports every signed-`int` stride. For a positive stride, the result is
+  `feq`-equal to `sumF (map BABS (strided incX N X))`; for a nonpositive stride, the GSL
+  kernel returns `+0.0` without accessing the input array. The `fabs` call is verified with
+  VSTlib's `fabs_spec`.
+- `cblas_dscal` is currently specified only for positive strides. It updates the input
+  array in place and is verified exactly against `scal_strided incX N alpha X`, which
+  scales the selected elements and leaves every unselected element unchanged.
+- The proofs establish correspondence between the compiled C functions and the existing
+  LAProof functional models. Applying `dotprod_forward_error` or `fSUM` additionally
+  requires proving that the relevant model result is finite; this composition is not yet
+  packaged as a checked C-level accuracy theorem.
 
 ## Conventions
 

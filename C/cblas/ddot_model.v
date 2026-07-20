@@ -63,6 +63,16 @@ Lemma ddot_loop_snoc: forall xy p,
   ddot_loop (xy ++ [p]) = BPLUS (ddot_loop xy) (BMULT (fst p) (snd p)).
 Proof. intros. unfold ddot_loop. rewrite fold_left_app. reflexivity. Qed.
 
+Lemma ddot_model_snoc: forall X Y x y,
+  length X = length Y ->
+  ddot_model (X ++ [x]) (Y ++ [y]) =
+  BPLUS (ddot_model X Y) (BMULT x y).
+Proof.
+  intros. unfold ddot_model.
+  rewrite combine_app_eqlen by assumption.
+  cbn [combine]. rewrite ddot_loop_snoc. reflexivity.
+Qed.
+
 (** *step*: extending both length-[k] prefixes [X[0..k-1]]/[Y[0..k-1]] with the
     elements [X[k]]/[Y[k]] adds one [BMULT] term, with the accumulator as the
     first [BPLUS] operand -- exactly the Clight statement [r = r + X[k]*Y[k]]. *)
