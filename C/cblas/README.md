@@ -82,9 +82,9 @@ copyright and license headers.
 
 | Operation | Precision | Function | Files |
 |-----------|-----------|----------|-------|
-| Dot product | double | `cblas_ddot` | [`src/ddot.c`](src/ddot.c), [`src/source_dot_r.h`](src/source_dot_r.h), [`include/cblas.h`](include/cblas.h), [`ddot.v`](ddot.v), [`ddot_model.v`](ddot_model.v), [`spec_ddot.v`](spec_ddot.v), [`verif_ddot.v`](verif_ddot.v) |
-| Sum of absolute values | double | `cblas_dasum` | [`src/dasum.c`](src/dasum.c), [`src/source_asum_r.h`](src/source_asum_r.h), [`include/cblas.h`](include/cblas.h), [`dasum.v`](dasum.v), [`asum_model.v`](asum_model.v), [`spec_dasum.v`](spec_dasum.v), [`verif_dasum.v`](verif_dasum.v) |
-| Scalar multiply (in place) | double | `cblas_dscal` | [`src/dscal.c`](src/dscal.c), [`src/source_scal_r.h`](src/source_scal_r.h), [`include/cblas.h`](include/cblas.h), [`dscal.v`](dscal.v), [`scal_model.v`](scal_model.v), [`spec_dscal.v`](spec_dscal.v), [`verif_dscal.v`](verif_dscal.v) |
+| Dot product | double | `cblas_ddot` | [`src/ddot.c`](src/ddot.c), [`src/source_dot_r.h`](src/source_dot_r.h), [`include/cblas.h`](include/cblas.h), generated Clight AST `ddot.v`, [`ddot_model.v`](ddot_model.v), [`spec_ddot.v`](spec_ddot.v), [`verif_ddot.v`](verif_ddot.v) |
+| Sum of absolute values | double | `cblas_dasum` | [`src/dasum.c`](src/dasum.c), [`src/source_asum_r.h`](src/source_asum_r.h), [`include/cblas.h`](include/cblas.h), generated Clight AST `dasum.v`, [`asum_model.v`](asum_model.v), [`spec_dasum.v`](spec_dasum.v), [`verif_dasum.v`](verif_dasum.v) |
+| Scalar multiply (in place) | double | `cblas_dscal` | [`src/dscal.c`](src/dscal.c), [`src/source_scal_r.h`](src/source_scal_r.h), [`include/cblas.h`](include/cblas.h), generated Clight AST `dscal.v`, [`scal_model.v`](scal_model.v), [`spec_dscal.v`](spec_dscal.v), [`verif_dscal.v`](verif_dscal.v) |
 
 **Scope limits (`cblas_ddot`, `cblas_dasum`, `cblas_dscal`):**
 - **Unit stride only** (`incX = incY = 1`), as a deliberate first milestone.
