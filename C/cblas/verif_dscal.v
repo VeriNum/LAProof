@@ -1,11 +1,8 @@
 (**  * LAProof.C.cblas.verif_dscal: VST proof for GSL's [cblas_dscal]. *)
 (** ** Corresponds to C program [C/cblas/src/dscal.c]. *)
 
-(** [body_cblas_dscal] proves that after the compiled C [cblas_dscal] (general
-    positive stride [incX > 0]) the array holds exactly [scal_strided incX N
-    alpha X].  The invariant tracks that model after [i] stores with
-    [_ix = i*incX]; [Znth_scal_strided_self] shows that the next position still
-    contains its original value. *)
+(** [body_cblas_dscal] proves the positive-stride updates described by
+    [scal_strided] and the kernel's unchanged-array result for [incX <= 0]. *)
 
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.
@@ -19,9 +16,15 @@ Proof.
 start_function.
 forward.
 forward_if.
-{ rep_lia. }
-(* [L] contains the [k] completed updates and [_ix = k*incX]. *)
-forward_for_simple_bound N
+{ forward. entailer!!.
+  destruct (Z.leb incX 0) eqn:Hle.
+  - cancel.
+  - apply Z.leb_gt in Hle; lia. }
+{ assert (Hinc: 0 < incX) by rep_lia.
+  assert (Hbounds: (N-1)*incX < n /\ N*incX <= Int.max_signed)
+    by (destruct H3 as [Hnonpos | [_ Hbounds]]; [lia | exact Hbounds]).
+  (* [L] contains the [k] completed updates and [_ix = k*incX]. *)
+  forward_for_simple_bound N
   (EX k:Z, EX L:list (ftype Tdouble),
     PROP (L = scal_strided incX k alpha X; Zlength L = n)
     LOCAL (temp _alpha (Vfloat alpha);
@@ -62,11 +65,11 @@ forward_for_simple_bound N
   Intros L.
   assert (HL: L = scal_strided incX N alpha X) by assumption.
   subst L. entailer!!.
+  destruct (Z.leb incX 0) eqn:Hle.
+  + apply Z.leb_le in Hle; lia.
+  + cancel. }
 Qed.
 
-(** Payoff: each element [BMULT (Znth k X) alpha] is the correctly-rounded
-    product, so when that product is finite its relative error vs the exact
-    product is bounded by the unit roundoff (vcfloat's [BMULT] accuracy lemma).
-    A product can still overflow, but the finiteness (no-overflow) requirement is
-    per element -- each [X[k]*alpha] independently -- rather than a single global
-    hypothesis over an accumulation. *)
+(** In the positive-stride branch, each updated element is a correctly rounded
+    [BMULT].  Its relative-error bound requires that product to be finite; this
+    is a per-element condition rather than a global accumulation hypothesis. *)

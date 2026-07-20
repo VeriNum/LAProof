@@ -98,9 +98,10 @@ copyright and license headers.
   `feq`-equal to `sumF (map BABS (strided incX N X))`; for a nonpositive stride, the GSL
   kernel returns `+0.0` without accessing the input array. The `fabs` call is verified with
   VSTlib's `fabs_spec`.
-- `cblas_dscal` is currently specified only for positive strides. It updates the input
-  array in place and is verified exactly against `scal_strided incX N alpha X`, which
-  scales the selected elements and leaves every unselected element unchanged.
+- `cblas_dscal` supports every signed-`int` stride. For a positive stride, it updates the
+  input array in place and is verified exactly against `scal_strided incX N alpha X`,
+  which scales the selected elements and leaves every unselected element unchanged. For a
+  nonpositive stride, it returns without modifying the array.
 - The proofs establish correspondence between the compiled C functions and the existing
   LAProof functional models. Applying `dotprod_forward_error` or `fSUM` additionally
   requires proving that the relevant model result is finite; this composition is not yet
