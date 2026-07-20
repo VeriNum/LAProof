@@ -1,18 +1,14 @@
 (**  * LAProof.C.cblas.verif_ddot: VST proof for GSL's [cblas_ddot]. *)
 (** ** Corresponds to C program [C/cblas/src/ddot.c]. *)
 
-(** [body_cblas_ddot] proves that the compiled C [cblas_ddot] (unit stride)
-    refines the [dotprodF] accuracy model: its result is [feq]-equal to
-    [dotprodF X Y].  The loop invariant carries the partial accumulation
-    [ddot_model (sublist 0 k X) (sublist 0 k Y)]; the step and bridge reasoning
-    that discharges it lives in [LAProof.C.cblas.ddot_model].  Two dead [OFFSET]
-    guards (the [incX>0]/[incY>0] conditionals) precede the loop, unreachable
-    since [incX = incY = 1]. *)
+(** [body_cblas_ddot] proves the accumulation over the logical vectors selected
+    by arbitrary signed strides, including zero.  The reduction models
+    [ddot_model] and [dotprodF] are unchanged. *)
 
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.
 From LAProof.C Require Import floatlib.
-From LAProof.C.cblas Require Import ddot ddot_model spec_ddot.
+From LAProof.C.cblas Require Import ddot stride_model ddot_model spec_ddot.
 Require Import LAProof.accuracy_proofs.dotprod_model.
 
 Set Bullet Behavior "Strict Subproofs".
@@ -20,75 +16,111 @@ Set Bullet Behavior "Strict Subproofs".
 Lemma body_cblas_ddot: semax_body Vprog Gprog f_cblas_ddot cblas_ddot_spec.
 Proof.
 start_function.
-(* C: r = 0.0; ix = OFFSET(N,incX); iy = OFFSET(N,incY); with incX=incY=1 ⇒ ix=iy=0.
-   Each OFFSET is a (incX>0 ? 0 : ...) conditional; the else-branch is
-   unreachable here because incX=incY=1, so [rep_lia] closes it. *)
-forward.                       (* _r = 0.0 *)
+destruct H4 as (HincX & HnegX & HoffX & HidxX & HstepX).
+destruct H5 as (HincY & HnegY & HoffY & HidxY & HstepY).
+set (sx := blas_offset N incX).
+set (sy := blas_offset N incY).
+forward.
 forward_if (PROP ()
-  LOCAL (temp _t'1 (Vint (Int.repr 0));
+  LOCAL (temp _t'1 (Vint (Int.repr sx));
          temp _r (Vfloat (Float.of_bits (Int64.repr 0)));
-         temp _N (Vint (Int.repr n)); temp _X px;
-         temp _incX (Vint (Int.repr 1)); temp _Y py;
-         temp _incY (Vint (Int.repr 1)))
-  SEP (data_at shX (tarray tdouble n) (map Vfloat X) px;
-       data_at shY (tarray tdouble n) (map Vfloat Y) py)).
-{ forward. entailer!!. }       (* incX = 1 > 0 : t'1 := 0 *)
-{ rep_lia. }                   (* dead else-branch (incX = 1 is > 0) *)
-forward.                       (* _ix = _t'1 (= 0) *)
+         temp _N (Vint (Int.repr N)); temp _X px;
+         temp _incX (Vint (Int.repr incX)); temp _Y py;
+         temp _incY (Vint (Int.repr incY)))
+  SEP (data_at shX (tarray tdouble nX) (map Vfloat X) px;
+       data_at shY (tarray tdouble nY) (map Vfloat Y) py)).
+{ forward. entailer!!.
+  subst sx. unfold blas_offset.
+  destruct (0 <? incX) eqn:Hlt; [reflexivity |].
+  apply Z.ltb_ge in Hlt; lia. }
+{ assert (Hincmin: Int.min_signed < incX) by (apply HnegX; lia).
+  assert (Hminus: Int.min_signed <= -incX <= Int.max_signed) by rep_lia.
+  assert (Hprod: Int.min_signed <= (N-1)*(-incX) <= Int.max_signed).
+  { subst sx. unfold blas_offset in HoffX.
+    destruct (0 <? incX) eqn:Hlt.
+    - apply Z.ltb_lt in Hlt; lia.
+    - exact HoffX. }
+  forward. entailer!!.
+  subst sx. unfold blas_offset.
+  destruct (0 <? incX) eqn:Hlt.
+  - apply Z.ltb_lt in Hlt; lia.
+  - reflexivity. }
+forward.
 forward_if (PROP ()
-  LOCAL (temp _t'2 (Vint (Int.repr 0));
-         temp _ix (Vint (Int.repr 0));
+  LOCAL (temp _t'2 (Vint (Int.repr sy));
+         temp _ix (Vint (Int.repr sx));
          temp _r (Vfloat (Float.of_bits (Int64.repr 0)));
-         temp _N (Vint (Int.repr n)); temp _X px;
-         temp _incX (Vint (Int.repr 1)); temp _Y py;
-         temp _incY (Vint (Int.repr 1)))
-  SEP (data_at shX (tarray tdouble n) (map Vfloat X) px;
-       data_at shY (tarray tdouble n) (map Vfloat Y) py)).
-{ forward. entailer!!. }       (* incY = 1 > 0 : t'2 := 0 *)
-{ rep_lia. }                   (* dead else-branch (incY = 1 is > 0) *)
-forward.                       (* _iy = _t'2 (= 0) *)
-(* The accumulation loop.  Invariant: _r holds the value the C loop has
-   accumulated over the first k element-pairs, namely [ddot_model] of the
-   length-k prefixes; the strided indices ix,iy advance by 1 each step (= k). *)
-forward_for_simple_bound n
+         temp _N (Vint (Int.repr N)); temp _X px;
+         temp _incX (Vint (Int.repr incX)); temp _Y py;
+         temp _incY (Vint (Int.repr incY)))
+  SEP (data_at shX (tarray tdouble nX) (map Vfloat X) px;
+       data_at shY (tarray tdouble nY) (map Vfloat Y) py)).
+{ forward. entailer!!.
+  subst sy. unfold blas_offset.
+  destruct (0 <? incY) eqn:Hlt; [reflexivity |].
+  apply Z.ltb_ge in Hlt; lia. }
+{ assert (Hincmin: Int.min_signed < incY) by (apply HnegY; lia).
+  assert (Hminus: Int.min_signed <= -incY <= Int.max_signed) by rep_lia.
+  assert (Hprod: Int.min_signed <= (N-1)*(-incY) <= Int.max_signed).
+  { subst sy. unfold blas_offset in HoffY.
+    destruct (0 <? incY) eqn:Hlt.
+    - apply Z.ltb_lt in Hlt; lia.
+    - exact HoffY. }
+  forward. entailer!!.
+  subst sy. unfold blas_offset.
+  destruct (0 <? incY) eqn:Hlt.
+  - apply Z.ltb_lt in Hlt; lia.
+  - reflexivity. }
+forward.
+(* [_r] models the first [k] selected pairs. *)
+forward_for_simple_bound N
   (EX k:Z,
     PROP ()
-    LOCAL (temp _r (Vfloat (ddot_model (sublist 0 k X) (sublist 0 k Y)));
-           temp _ix (Vint (Int.repr k));
-           temp _iy (Vint (Int.repr k));
-           temp _N (Vint (Int.repr n));
-           temp _incX (Vint (Int.repr 1));
-           temp _incY (Vint (Int.repr 1));
+    LOCAL (temp _r (Vfloat
+             (ddot_model (strided_from sx incX k X)
+                         (strided_from sy incY k Y)));
+           temp _ix (Vint (Int.repr (sx + k*incX)));
+           temp _iy (Vint (Int.repr (sy + k*incY)));
+           temp _N (Vint (Int.repr N));
+           temp _incX (Vint (Int.repr incX));
+           temp _incY (Vint (Int.repr incY));
            temp _X px; temp _Y py)
-    SEP (data_at shX (tarray tdouble n) (map Vfloat X) px;
-         data_at shY (tarray tdouble n) (map Vfloat Y) py))%assert.
-- (* Loop entry (k = 0).  [sublist 0 0 = nil] and [ddot_model nil nil =
-     Zconst Tdouble 0] (= the C [+0.0]); [entailer!!] discharges it. *)
+    SEP (data_at shX (tarray tdouble nX) (map Vfloat X) px;
+         data_at shY (tarray tdouble nY) (map Vfloat Y) py))%assert.
+-
   entailer!!.
-- (* Loop body: read X[i], Y[i]; [r = r + X[i]*Y[i]]; ix++; iy++.  Re-establish
-     the invariant for [i+1] via the step lemma [ddot_model_step]. *)
-  forward.                       (* t'3 = X[ix] *)
-  forward.                       (* t'4 = Y[iy] *)
-  forward.                       (* r = r + t'3 * t'4 *)
-  forward.                       (* ix = ix + incX *)
-  forward.                       (* iy = iy + incY *)
-  assert (Hi: 0 <= i < Zlength X) by list_solve.
-  assert (Hxy: Zlength X = Zlength Y) by list_solve.
+-
+  assert (Hix: 0 <= sx + i*incX < nX)
+    by (subst sx; apply HidxX; lia).
+  assert (Hiy: 0 <= sy + i*incY < nY)
+    by (subst sy; apply HidxY; lia).
+  forward.
+  forward.
+  forward.
+  assert (Hsx: Int.min_signed <= sx + i*incX + incX <= Int.max_signed)
+    by (subst sx; apply HstepX; lia).
+  assert (Hsy: Int.min_signed <= sy + i*incY + incY <= Int.max_signed)
+    by (subst sy; apply HstepY; lia).
+  forward.
+  forward.
   entailer!.
-  rewrite (ddot_model_step X Y i Hxy Hi).
-  reflexivity.
-- (* Loop exit (k = n).  Return [r = ddot_model (sublist 0 n X) (sublist 0 n Y)];
-     [sublist_same] gives [= ddot_model X Y], and the bridge lemma
-     [ddot_model_feq_dotprodF] discharges [feq _ (dotprodF X Y)]. *)
-  forward.                       (* return r *)
-  Exists (ddot_model (sublist 0 (Zlength X) X) (sublist 0 (Zlength X) Y)).
+  rewrite !strided_from_snoc by lia.
+  rewrite ddot_model_snoc.
+  + repeat split; do 2 f_equal; ring.
+  + apply Nat2Z.inj. rewrite <- !Zlength_correct.
+    rewrite !Zlength_strided_from by lia. reflexivity.
+-
+  forward.
+  Exists (ddot_model (strided_from sx incX N X) (strided_from sy incY N Y)).
   entailer!.
-  rewrite (sublist_same 0 (Zlength X) X) by lia.
-  rewrite (sublist_same 0 (Zlength X) Y) by lia.
-  apply ddot_model_feq_dotprodF; [ lia | auto | auto ].
+  unfold blas_strided. fold sx sy.
+  apply ddot_model_feq_dotprodF.
+  rewrite !Zlength_strided_from by lia. reflexivity.
 Qed.
 
-(** Payoff (stub): because [cblas_ddot_spec]'s result is [feq]-equal to
-    [dotprodF X Y], the forward-error bound
-    [LAProof.accuracy_proofs.dot_acc.dotprod_forward_error] applies directly to
-    the value computed by the compiled C [cblas_ddot]. *)
+(** Conditional accuracy payoff: the result is [feq]-equal to [dotprodF]
+    applied to the two logical strided vectors.  After additionally establishing
+    that this model result is finite, one can transfer
+    [LAProof.accuracy_proofs.dot_acc.dotprod_forward_error] to the value computed
+    by the compiled C [cblas_ddot].  That composition is not stated as a checked
+    theorem here. *)

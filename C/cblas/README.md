@@ -35,22 +35,25 @@ however. To apply the bound to the C result, one must separately establish that 
 preconditions hold, and they fall into two kinds.
 
 - **Already guaranteed by the funspec precondition.** Some of the theorem's preconditions
-  are exactly things the funspec `PRE` already requires, so they hold for free (e.g. a
-  length precondition that the funspec already imposes on the input arrays).
+  follow directly from the funspec and its logical model. For example, the two logical
+  strided vectors in the `cblas_ddot` postcondition both contain `N` elements, even though
+  their backing arrays may have different lengths.
 - **Additional conditions one must discharge.** Other preconditions are not established by
-  the funspec and must be proved on the side. A typical example is a no-overflow assumption
-  that the accumulated result is finite: this does *not* follow from the funspec merely
-  requiring the inputs to be finite, since a combination of finite values can still
-  overflow to an infinity. Whoever applies the bound must supply this separately.
+  the funspec and must be proved on the side. The `cblas_ddot` and `cblas_dasum`
+  specifications deliberately accept arbitrary floating-point inputs, including infinities
+  and NaNs. Their accuracy theorems, however, require a no-overflow assumption that the
+  accumulated model result is finite. Thus, a proof of the absence of overflow must be
+  supplied separately for an accuracy bound to hold.
 
 So the honest statement is: for inputs satisfying both the funspec `PRE` and the accuracy
 theorem's own hypotheses, the bound holds of the C return value. In many cases (such as the
 dot products and other reduction loops verified here) the one hypothesis the funspec does
 not already supply is a *no-overflow* condition: that the accumulated result is finite.
 
-For `cblas_ddot` that leftover precondition is exactly `Hfin`: that the accumulated result
-`dotprodF X Y` is finite. It does not follow merely from the inputs being finite, since a
-sum of finite products can still round to an infinity.
+For `cblas_ddot` that leftover precondition is exactly `Hfin`: the `dotprodF` result over
+the two logical strided vectors must be finite. Requiring finite inputs would not establish
+it anyway, since a sum of finite products can still round to an infinity. The corresponding
+condition for `cblas_dasum` is that `sumF (map BABS (strided incX N X))` is finite.
 
 The `feq` postcondition cooperates here: the funspec only guarantees that the C result is
 `feq`-equal to the model value (equality up to `±0` and exceptional values), but once the result is finite,
@@ -86,16 +89,24 @@ copyright and license headers.
 | Sum of absolute values | double | `cblas_dasum` | [`src/dasum.c`](src/dasum.c), [`src/source_asum_r.h`](src/source_asum_r.h), [`include/cblas.h`](include/cblas.h), generated Clight AST `dasum.v`, [`asum_model.v`](asum_model.v), [`spec_dasum.v`](spec_dasum.v), [`verif_dasum.v`](verif_dasum.v) |
 | Scalar multiply (in place) | double | `cblas_dscal` | [`src/dscal.c`](src/dscal.c), [`src/source_scal_r.h`](src/source_scal_r.h), [`include/cblas.h`](include/cblas.h), generated Clight AST `dscal.v`, [`scal_model.v`](scal_model.v), [`spec_dscal.v`](spec_dscal.v), [`verif_dscal.v`](verif_dscal.v) |
 
-**Scope limits (`cblas_ddot`, `cblas_dasum`, `cblas_dscal`):**
-- **Unit stride only** (`incX = incY = 1`), as a deliberate first milestone.
-- For the **reductions** (`ddot`, `dasum`) the postcondition is stated up to `feq`.
-- `cblas_dasum` is verified against `sumF (map BABS X)`; its loop body calls `fabs`,
-  discharged with VSTlib's `fabs_spec` (whose result is `BABS`). The matching accuracy
-  theorem is `sum_acc.fSUM`.
-- `cblas_dscal` is the first **in-place** routine: it overwrites the array (writable share,
-  `void` return) and is verified against an *exact* model `scal_model alpha X =
-  map (fun x => BMULT x alpha) X` (no `feq` required here). The
-  per-element accuracy is a direct unit-roundoff bound on `BMULT`.
+**Scope and remaining limits:**
+
+- `cblas_ddot` supports positive, negative, and zero strides for both input arrays. Its
+  precondition ensures that every array access is in bounds and that computing and
+  updating the C array indices cannot overflow a signed `int`. The result is `feq`-equal
+  to `dotprodF` applied to the two logical strided vectors.
+- `cblas_dasum` supports every signed-`int` stride. For a positive stride, the result is
+  `feq`-equal to `sumF (map BABS (strided incX N X))`; for a nonpositive stride, the GSL
+  kernel returns `+0.0` without accessing the input array. The `fabs` call is verified with
+  VSTlib's `fabs_spec`.
+- `cblas_dscal` supports every signed-`int` stride. For a positive stride, it updates the
+  input array in place and is verified exactly against `scal_strided incX N alpha X`,
+  which scales the selected elements and leaves every unselected element unchanged. For a
+  nonpositive stride, it returns without modifying the array.
+- The proofs establish correspondence between the compiled C functions and the existing
+  LAProof functional models. Applying `dotprod_forward_error` or `fSUM` additionally
+  requires proving that the relevant model result is finite; this composition is not yet
+  packaged as a checked C-level accuracy theorem.
 
 ## Conventions
 

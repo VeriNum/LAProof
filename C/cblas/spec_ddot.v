@@ -26,7 +26,7 @@
 Require Import VST.floyd.proofauto.
 From vcfloat Require Import FPStdCompCert FPStdLib.
 From LAProof.C Require Import floatlib.
-From LAProof.C.cblas Require Import ddot ddot_model.
+From LAProof.C.cblas Require Import ddot stride_model ddot_model.
 (* [dotprod_model] only [Require Import]s (not [Export]s) the mathcomp preamble,
    so this does not pollute the VST namespace with ssreflect notations.  We need
    it here for [dotprodF], which the postcondition is stated against. *)
@@ -41,26 +41,43 @@ Definition Vprog : varspecs. mk_varspecs prog. Defined.
     live in [LAProof.C.cblas.ddot_model] (mirroring the [sparse_model] /
     [spec_sparse] split).  This file states only the VST [funspec]. *)
 
-(** ** Funspec for [cblas_ddot] (unit-stride case [incX = incY = 1]). *)
-(** Unit stride is a deliberate first milestone, not a fundamental limit. *)
+(** A stride is valid when GSL's initial [OFFSET] calculation, every selected
+    array index, and every signed-[int] index update are safe.  The strict lower
+    bound in the nonpositive case makes the C expression [-inc] defined when
+    [inc] is negative. *)
+Definition valid_ddot_stride (N inc n : Z) : Prop :=
+  Int.min_signed <= inc <= Int.max_signed /\
+  (inc <= 0 -> Int.min_signed < inc) /\
+  Int.min_signed <= blas_offset N inc <= Int.max_signed /\
+  (forall k, 0 <= k < N ->
+     0 <= blas_offset N inc + k*inc < n) /\
+  (forall k, 0 <= k < N ->
+     Int.min_signed <= blas_offset N inc + k*inc + inc <= Int.max_signed).
+
+(** ** Funspec for [cblas_ddot] at general stride. *)
 Definition cblas_ddot_spec :=
  DECLARE _cblas_ddot
- WITH shX: share, shY: share, n: Z,
+ WITH shX: share, shY: share, nX: Z, nY: Z, N: Z, incX: Z, incY: Z,
       X: list (ftype Tdouble), Y: list (ftype Tdouble),
       px: val, py: val
  PRE [ tint, tptr tdouble, tint, tptr tdouble, tint ]
    PROP (readable_share shX; readable_share shY;
-         Zlength X = n; Zlength Y = n; 0 <= n <= Int.max_signed;
-         Forall finite X; Forall finite Y)
-   PARAMS (Vint (Int.repr n); px; Vint (Int.repr 1); py; Vint (Int.repr 1))
-   SEP (data_at shX (tarray tdouble n) (map Vfloat X) px;
-        data_at shY (tarray tdouble n) (map Vfloat Y) py)
+         Zlength X = nX; Zlength Y = nY;
+         0 <= nX <= Int.max_signed; 0 <= nY <= Int.max_signed;
+         0 <= N <= Int.max_signed;
+         valid_ddot_stride N incX nX;
+         valid_ddot_stride N incY nY)
+   PARAMS (Vint (Int.repr N); px; Vint (Int.repr incX);
+           py; Vint (Int.repr incY))
+   SEP (data_at shX (tarray tdouble nX) (map Vfloat X) px;
+        data_at shY (tarray tdouble nY) (map Vfloat Y) py)
  POST [ tdouble ]
    EX s: ftype Tdouble,
-   PROP (feq s (dotprodF X Y))
+   PROP (feq s
+     (dotprodF (blas_strided incX N X) (blas_strided incY N Y)))
    RETURN (Vfloat s)
-   SEP (data_at shX (tarray tdouble n) (map Vfloat X) px;
-        data_at shY (tarray tdouble n) (map Vfloat Y) py).
+   SEP (data_at shX (tarray tdouble nX) (map Vfloat X) px;
+        data_at shY (tarray tdouble nY) (map Vfloat Y) py).
 
 Definition DdotASI : funspecs := [ cblas_ddot_spec ].
 Definition ddot_imports : funspecs := [].   (* no external calls: the loop is self-contained *)
