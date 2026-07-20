@@ -3,8 +3,8 @@
 
 (** This file provides two exact scaling models.  [scal_model] maps a scaling
     operation over an entire contiguous list; [scal_strided] models the general
-    positive-stride [cblas_dscal] proof by updating the selected positions in a
-    full backing buffer.  Scaling is a deterministic *elementwise* update with
+    positive-stride [cblas_dscal] proof by updating the selected positions in
+    the full input array.  Scaling is a deterministic *elementwise* update with
     no accumulation and needs no [feq] bridge.  GSL's kernel
     ([source_scal_r.h]) is
 <<
@@ -13,7 +13,7 @@
     i.e., [X[ix] *= alpha] is [BMULT (X[ix]) alpha] (element-first).
     [scal_model] below captures the contiguous whole-list special case; the
     later [scal_strided] definition captures the kernel for arbitrary positive
-    stride and a possibly larger backing buffer.
+    stride when the input array may contain unselected elements.
 
     LAProof's existing scale model [mv_mathcomp.scalemx] is alpha-first
     ([map_mx (BMULT a)]) and matrix-based; relating to it would need a [BMULT]

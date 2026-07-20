@@ -89,9 +89,10 @@ copyright and license headers.
 | Scalar multiply (in place) | double | `cblas_dscal` | [`src/dscal.c`](src/dscal.c), [`src/source_scal_r.h`](src/source_scal_r.h), [`include/cblas.h`](include/cblas.h), [`dscal.v`](dscal.v), [`scal_model.v`](scal_model.v), [`spec_dscal.v`](spec_dscal.v), [`verif_dscal.v`](verif_dscal.v) |
 
 **Scope limits:**
-- `cblas_ddot` and `cblas_dasum` are currently **unit stride only** (`incX = incY = 1`
-  for `ddot`, `incX = 1` for `dasum`), as a deliberate first milestone.
-- `cblas_dscal` supports any **positive stride**, subject to backing-buffer bounds and a
+- `cblas_ddot` is currently **unit stride only** (`incX = incY = 1`).
+- `cblas_dasum` supports any positive stride; as in the GSL kernel, a nonpositive stride
+  returns `+0.0` without accessing the input array.
+- `cblas_dscal` supports any **positive stride**, subject to input-array bounds and a
   signed-`int` bound on the final strided index.
 - For the **reductions** (`ddot`, `dasum`) the postcondition is stated up to `feq`.
 - `cblas_dasum` is verified against `sumF (map BABS X)`; its loop body calls `fabs`,
@@ -100,8 +101,8 @@ copyright and license headers.
 - `cblas_dscal` is the first **in-place** routine: it overwrites the array (writable share,
   `void` return) and is verified against the exact model
   `scal_strided incX N alpha X` (no `feq` required here). This model scales the `N`
-  positions selected by `incX` and leaves every other entry in the backing buffer
-  unchanged. The per-element accuracy is a direct unit-roundoff bound on `BMULT`.
+  positions selected by `incX` and leaves every unselected array element unchanged.
+  The per-element accuracy is a direct unit-roundoff bound on `BMULT`.
 
 ## Conventions
 

@@ -17,8 +17,9 @@ Set Bullet Behavior "Strict Subproofs".
 Definition Vprog : varspecs. mk_varspecs prog. Defined.
 
 (** ** Funspec for [cblas_dscal] (general positive stride [incX > 0]). *)
-(** [X] is the full backing buffer ([Zlength X = n]); [N] is the element count
-    the loop scales, touching positions [{i*incX : 0 <= i < N}].  Memory safety
+(** [X] represents the entire input array ([Zlength X = n]); [N] is the
+    element count the loop scales, touching positions
+    [{i*incX : 0 <= i < N}].  Memory safety
     needs the last touched index in range ([(N-1)*incX < n]); [N*incX <=
     Int.max_signed] keeps the final [ix += incX] from overflowing [int].  GSL's
     kernel early-returns for [incX <= 0], so [incX = 0]/[incX < 0] are out of
