@@ -39,7 +39,7 @@ Lemma Znth_scal_model: forall alpha X k,
   Znth k (scal_model alpha X) = BMULT (Znth k X) alpha.
 Proof. intros. unfold scal_model. rewrite Znth_map by lia. reflexivity. Qed.
 
-(** ** Shared strided-access helper (used by [dscal], and later [dasum]/[ddot]). *)
+(** ** Strided-access helper used by [dscal] and [dasum]. *)
 
 (** [strided incX N X] is the list of the [N] elements
     [[Znth 0 X; Znth incX X; ...; Znth ((N-1)*incX) X]] -- exactly the elements a

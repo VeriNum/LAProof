@@ -35,8 +35,9 @@ however. To apply the bound to the C result, one must separately establish that 
 preconditions hold, and they fall into two kinds.
 
 - **Already guaranteed by the funspec precondition.** Some of the theorem's preconditions
-  are exactly things the funspec `PRE` already requires, so they hold for free (e.g. the
-  equal-length precondition that the `cblas_ddot` funspec imposes on the input arrays).
+  follow directly from the funspec and its logical model. For example, the two logical
+  strided vectors in the `cblas_ddot` postcondition both contain `N` elements, even though
+  their backing arrays may have different lengths.
 - **Additional conditions one must discharge.** Other preconditions are not established by
   the funspec and must be proved on the side. The `cblas_ddot` and `cblas_dasum`
   specifications deliberately accept arbitrary floating-point inputs, including infinities
