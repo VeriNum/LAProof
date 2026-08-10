@@ -36,6 +36,7 @@ C/spec_alloc.v
 C/verif_alloc.v
 C/densemat.v
 C/spec_densemat.v
+C/spec_bandmat.v
 C/densemat_lemmas.v
 C/verif_densemat.v
 C/verif_densemat_mult.v
