@@ -267,7 +267,7 @@ Definition bandmat_malloc_spec :=
   DECLARE _bandmat_malloc
   WITH m: nat, b: nat, gv: globals
   PRE [ tint, tint ]
-    PROP(0 < m * S b <= Int.max_signed)
+    PROP(0 < m * S b <= Int.max_signed; b < m)
     PARAMS (Vint (Int.repr m); Vint (Int.repr b) ) GLOBALS (gv)
     SEP( mem_mgr gv )
   POST [ tptr bandmat_t ]
@@ -564,3 +564,17 @@ Definition bandmat_solve_spec :=
                           (forward_subst (trmx (map_mx optfloat_to_float M)) x)))
            xp).
 
+
+(** * Building the "Abstract Specification Interface", the list of funspecs for this module *)
+
+Definition bandmatASI : funspecs := [
+   bandmat_malloc_spec; bandmat_free_spec;
+   bandmatn_clear_spec; bandmat_clear_spec;
+   bandmatn_get_spec; bandmat_get_spec;
+   bandmatn_set_spec; bandmat_set_spec;
+   bandmatn_addto_spec; bandmat_addto_spec;
+   bandmat_norm2_spec; bandmat_norm_spec;
+   bandmat_print_spec;
+   dense_to_band_spec;
+   bandmat_factor_spec; bandmat_solve_spec
+].
