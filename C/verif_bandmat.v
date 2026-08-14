@@ -157,11 +157,99 @@ Qed.
 
 (** * [bandmat_free] verification *)
 Lemma body_bandmat_free: semax_body Vprog Gprog f_bandmat_free bandmat_free_spec.
-Proof. Admitted.
+Proof.
+start_function.
+unfold bandmat, bandmatn.
+destruct X as [m M].
+simpl in M|-*.
+Intros.
+assert_PROP (isptr p
+      /\ malloc_compatible (bandmat_data_offset +
+      sizeof (tarray tdouble (Z.of_nat m * Z.of_nat (S b)))) p) by entailer!.
+destruct H3 as [H3 COMPAT].
+simpl in COMPAT. rewrite Z.max_r in COMPAT by lia.
+red in COMPAT.
+forward_call (bandmat_data_offset + Z.of_nat m * Z.of_nat (S b) * sizeof(tdouble), p, gv).
+-
+revert Frame.
+instantiate (1:=nil). intro.
+subst Frame.
+rewrite if_false by (intro; subst; contradiction).
+simpl.
+rewrite Z.max_r by lia.
+rewrite (Z.mul_comm (Z.of_nat m * Z.of_nat (S b))).
+cancel.
+destruct p; try contradiction; clear H3.
+rewrite <- (Ptrofs.repr_unsigned i).
+unfold bandmat_data_offset in *.
+saturate_local.
+rewrite memory_block_split; try (simpl; rep_lia).
+apply sepcon_derives.
+change 8 with (4+4).
+rewrite memory_block_split; try (simpl; rep_lia).
+apply sepcon_derives;
+rewrite field_at_data_at; simpl;
+unfold field_address;
+rewrite if_true by auto with field_compatible; simpl.
+rewrite ptrofs_add_repr, Z.add_0_r.
+apply data_at_memory_block.
+rewrite ptrofs_add_repr.
+apply data_at_memory_block.
+simpl.
+rewrite ptrofs_add_repr.
+replace (8 * (m * Z.pos (PosDef.Pos.of_succ_nat b)))%Z
+  with (8 * (Z.max 0 (m * Z.pos (PosDef.Pos.of_succ_nat b))))%Z by rep_lia.
+apply data_at_memory_block.
+-
+entailer!.
+Qed.
 
 (** * [bandmatn_clear] verification *)
 Lemma body_bandmatn_clear: semax_body Vprog Gprog f_bandmatn_clear bandmatn_clear_spec.
-Proof. Admitted.
+Proof.
+start_function.
+unfold bandmatn.
+Intros.
+assert_PROP (field_compatible (tarray tdouble (m * S b)) [] p) as FC by entailer!.
+sep_apply data_at_memory_block.
+forward_call (p, (sizeof (tarray (ctype_of_type the_type) (m * S b)))%Z, sh).
+-
+entailer!.
+simpl.
+replace (Int64.repr (m * (b + 1) * 8))
+  with (Int64.repr (8 * Z.max 0 (m * Z.pos (PosDef.Pos.of_succ_nat b)))).
+  + reflexivity.
+  + f_equal. nia.
+-
+simpl.
+rep_lia.
+-
+unfold bandmatn.
+entailer!.
+  + split.
+    * apply trmx_const.
+    * intros i j Hij. unfold const_mx. rewrite mxE. reflexivity.
+  + sep_apply (mapsto_zero_data_at_zero (tarray tdouble (m * S b)) sh p).
+    * apply writable_readable_share; auto.
+    * rewrite zero_val_tarray.
+      unfold tdouble.
+      rewrite zero_val_Tfloat64.
+      change (ctype_of_type the_type) with tdouble.
+      change (reptype_ftype _ ?A) with A.
+      assert (HlenL: Zlength (map val_of_optfloat
+                (@banded_repr (option (ftype the_type)) _ m b
+                  (@const_mx (option (ftype the_type)) m m (Some (Zconst the_type 0)))))
+             = (m * S b)%Z).
+      { rewrite Zlength_map.
+        assert (H0nat: (b < m)%nat) by lia.
+        rewrite (Zlength_banded_repr (T := option (ftype the_type)) m b _ H0nat).
+        lia. }
+      rewrite <- HlenL.
+      apply data_at_tarray_zero_weaken.
+      apply banded_repr_const_zero_or_undef; auto.
+      assert (H0nat: (b < m)%nat) by lia.
+      apply H0nat.
+Qed.
 
 (** * [bandmat_clear] verification *)
 Lemma body_bandmat_clear: semax_body Vprog Gprog f_bandmat_clear bandmat_clear_spec.
