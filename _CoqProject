@@ -39,6 +39,7 @@ C/spec_densemat.v
 C/spec_bandmat.v
 C/densemat_lemmas.v
 C/bandmat_lemmas.v
+C/verif_bandmat.v
 C/verif_densemat.v
 C/verif_densemat_mult.v
 C/verif_densemat_cholesky.v

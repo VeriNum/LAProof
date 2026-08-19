@@ -340,7 +340,7 @@ Definition bandmatn_get_spec :=
        b:nat, p: val, sh: share, x: ftype the_type
   PRE [ tptr the_ctype, tint, tint, tint ] let '(existT _ m (M,(i,j))) := X in let 'd := j-i in
     PROP(readable_share sh; M i j = Some x; 0 <= d <= b)
-    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr i); Vint (Int.repr d))
+    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr j); Vint (Int.repr d))
     SEP (bandmatn sh b M p)
   POST [ the_ctype ] let '(existT _ m (M,(i,j))) := X in
     PROP () 
@@ -353,7 +353,7 @@ Definition bandmat_get_spec :=
        b:nat, p: val, sh: share, x: ftype the_type
   PRE [ tptr bandmat_t , tint, tint ] let '(existT _ m (M,(i,j))) := X in let 'd := j-i in
     PROP(readable_share sh; M i j = Some x; 0 <= d <= b)
-    PARAMS (p ; Vint (Int.repr i); Vint (Int.repr d))
+    PARAMS (p ; Vint (Int.repr j); Vint (Int.repr d))
     SEP(bandmat sh b M p)
   POST [ the_ctype ]  let '(existT _ m (M,(i,j))) := X in
     PROP () 
@@ -367,7 +367,7 @@ Definition bandmatn_set_spec :=
   PRE [ tptr the_ctype, tint, tint, tint, the_ctype ] 
     let '(existT _ m (M,(i,j))) := X in let 'd := j-i in
     PROP(writable_share sh; 0 <= d <= b) 
-    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr i); Vint (Int.repr d); val_of_float x)
+    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr j); Vint (Int.repr d); val_of_float x)
     SEP(bandmatn sh b M p)
   POST [ tvoid ] let '(existT _ m (M,(i,j))) := X in
     PROP () 
@@ -381,7 +381,7 @@ Definition bandmat_set_spec :=
   PRE [ tptr bandmat_t, tint, tint, the_ctype ] 
     let '(existT _ m (M,(i,j))) := X in let 'd := j-i in
     PROP(writable_share sh; 0 <= d <= b) 
-    PARAMS (p ; Vint (Int.repr i); Vint (Int.repr d); val_of_float x)
+    PARAMS (p ; Vint (Int.repr j); Vint (Int.repr d); val_of_float x)
     SEP(bandmat sh b M p)
   POST [ tvoid ] let '(existT _ m (M,(i,j))) := X in
     PROP () 
@@ -395,7 +395,7 @@ Definition bandmatn_addto_spec :=
   PRE [ tptr the_ctype, tint, tint, tint, the_ctype ] 
     let '(existT _ m (M,(i,j))) := X in let 'd := j-i in
     PROP(writable_share sh; M i j = Some y; 0 <= d <= b) 
-    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr i); Vint (Int.repr d); val_of_float x)
+    PARAMS (p ; Vint (Int.repr m); Vint (Int.repr j); Vint (Int.repr d); val_of_float x)
     SEP(bandmatn sh b M p)
   POST [ tvoid ] let '(existT _ m (M,(i,j))) := X in
     PROP () 
@@ -409,7 +409,7 @@ Definition bandmat_addto_spec :=
   PRE [ tptr bandmat_t, tint, tint, the_ctype ] 
     let '(existT _ m (M,(i,j))) := X in let 'd := j-i in
     PROP(writable_share sh; M i j = Some y; 0 <= d <= b) 
-    PARAMS (p ; Vint (Int.repr i); Vint (Int.repr d);
+    PARAMS (p ; Vint (Int.repr j); Vint (Int.repr d);
             val_of_float x)
     SEP(bandmat sh b M p)
   POST [ tvoid ] let '(existT _ m (M,(i,j))) := X in

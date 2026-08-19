@@ -253,15 +253,75 @@ Qed.
 
 (** * [bandmat_clear] verification *)
 Lemma body_bandmat_clear: semax_body Vprog Gprog f_bandmat_clear bandmat_clear_spec.
-Proof. Admitted.
+Proof.
+start_function.
+unfold bandmat.
+Intros.
+forward.
+forward.
+forward_call (existT (fun k => 'M[option (ftype the_type)]_(k,k)) m X, b, offset_val bandmat_data_offset p, sh).
+- unfold bandmat.
+  entailer!.
+Qed.
 
 (** * [bandmatn_get] verification *)
 Lemma body_bandmatn_get: semax_body Vprog Gprog f_bandmatn_get bandmatn_get_spec.
-Proof. Admitted.
+Proof.
+start_function.
+unfold bandmatn.
+Intros.
+assert_PROP (0 <= Z.of_nat j + (Z.of_nat j - Z.of_nat i) * Z.of_nat m
+             < Z.of_nat m * Z.of_nat (S b)).
+{ entailer!. pose proof (ltn_ord j). nia. }
+forward.
+-
+entailer!.
+change (reptype_ftype (m * Z.pos (PosDef.Pos.of_succ_nat b)) (map val_of_optfloat (banded_repr b M)))
+  with (map val_of_optfloat (banded_repr b M)).
+assert (Hbound2: 0 <= j + (j - i) * m < Zlength (banded_repr b M)).
+{ rewrite Zlength_banded_repr by lia. lia. }
+rewrite Znth_map by apply Hbound2.
+rewrite banded_repr_Znth by (auto; assert (H2nat: (b < m)%nat) by lia; apply H2nat).
+rewrite H.
+reflexivity.
+-
+entailer!.
+assert (Hj: 0 <= j < m) by (pose proof (ltn_ord j); lia).
+assert (Hi: 0 <= i < m) by (pose proof (ltn_ord i); lia).
+assert (Hjm: j <= m * S b) by nia.
+assert (Hprod: 0 <= (j - i) * m <= m * S b) by nia.
+rewrite (Int.signed_repr j) by rep_lia.
+rewrite (Int.signed_repr ((j - i) * m)) by rep_lia.
+rewrite (Int.signed_repr (j - i)) by rep_lia.
+rewrite (Int.signed_repr m) by rep_lia.
+split; rep_lia.
+-
+change (reptype_ftype (m * S b) (map val_of_optfloat (banded_repr b M)))
+  with (map val_of_optfloat (banded_repr b M)).
+assert (Hbound2: 0 <= j + (j - i) * m < Zlength (banded_repr b M)).
+{ rewrite Zlength_banded_repr by lia. lia. }
+rewrite Znth_map by apply Hbound2.
+rewrite banded_repr_Znth by (auto; assert (H2nat: (b < m)%nat) by lia; apply H2nat).
+rewrite H.
+forward.
+unfold bandmatn.
+change (reptype_ftype (m * S b) (map val_of_optfloat (banded_repr b M)))
+  with (map val_of_optfloat (banded_repr b M)).
+entailer!.
+Qed.
 
 (** * [bandmat_get] verification *)
 Lemma body_bandmat_get: semax_body Vprog Gprog f_bandmat_get bandmat_get_spec.
-Proof. Admitted.
+Proof.
+start_function.
+unfold bandmat.
+Intros.
+forward.
+forward_call (existT (fun m => ('M[option (ftype the_type)]_(m,m) * ('I_(m) * 'I_(m)))%type) m (M,(i,j)), b, offset_val bandmat_data_offset p, sh, x).
+forward.
+unfold bandmat.
+entailer!.
+Qed.
 
 (** * [bandmatn_set] verification *)
 Lemma body_bandmatn_set: semax_body Vprog Gprog f_bandmatn_set bandmatn_set_spec.
