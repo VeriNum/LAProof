@@ -523,7 +523,10 @@ Definition dense_to_band_spec :=
   PRE [ tptr densemat_t, tint ] let '(existT _ m M) := X in
     (* enforcing that M is banded with band width bw *)
     (PROP(readable_share sh ; 0 < m * S bw <= Int.max_signed ;
-          trmx M = M ; forall (i j : 'I_m), j>i+bw -> (option_rel feq) (M i j) (Some (Zconst the_type 0)) )
+          trmx M = M ; forall (i j : 'I_m), j>i+bw -> (option_rel feq) (M i j) (Some (Zconst the_type 0)) ;
+          (* M must be fully populated (a genuine dense matrix), so that every in-band
+             entry read by dense_to_band's loop is defined *)
+          forall (i j : 'I_m), isSome (M i j) )
     PARAMS (p ; Vint (Int.repr bw)) GLOBALS (gv)
     SEP(densemat sh M p; mem_mgr gv))
   POST [ tptr bandmat_t ] let '(existT _ m M) := X in

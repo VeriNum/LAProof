@@ -574,3 +574,269 @@ Proof.
     symmetry.
     apply (banded_repr_lower_update m b (update_mx M i j v) j i v Hij_lt).
 Qed.
+
+
+(** Reusable tactics for [bandmatn_get]/[bandmatn_set]/[bandmatn_addto]-style proofs.
+    All rely on [start_function] having bound the names [m, b, M, i, j] exactly as
+    our specs destructure them. *)
+
+Ltac bandmat_strip_reptype m b M :=
+  try change (reptype_ftype (m * S b) (map val_of_optfloat (banded_repr b M)))
+    with (map val_of_optfloat (banded_repr b M));
+  try change (reptype_ftype (m * Z.pos (PosDef.Pos.of_succ_nat b)) (map val_of_optfloat (banded_repr b M)))
+    with (map val_of_optfloat (banded_repr b M)).
+
+Ltac bandmat_index_range_tac m b i j :=
+  entailer!;
+  assert (Hj: 0 <= j < m) by (pose proof (ltn_ord j); lia);
+  assert (Hi: 0 <= i < m) by (pose proof (ltn_ord i); lia);
+  assert (Hjm: j <= m * S b) by nia;
+  assert (Hprod: 0 <= (j - i) * m <= m * S b) by nia;
+  rewrite (Int.signed_repr j) by rep_lia;
+  rewrite (Int.signed_repr ((j - i) * m)) by rep_lia;
+  rewrite (Int.signed_repr (j - i)) by rep_lia;
+  rewrite (Int.signed_repr m) by rep_lia;
+  split; rep_lia.
+
+Ltac bandmat_read_tac m b M i j Heq :=
+  bandmat_strip_reptype m b M;
+  assert (Hbound2: 0 <= j + (j - i) * m < Zlength (banded_repr b M))
+    by (rewrite Zlength_banded_repr by lia; lia);
+  rewrite Znth_map by apply Hbound2;
+  rewrite banded_repr_Znth by (auto; assert (H2nat: (b < m)%nat) by lia; apply H2nat);
+  rewrite Heq.
+
+Ltac bandmat_write_tac m b M i j v Htrmx Hoffband Hband :=
+  rewrite (upd_Znth_map val_of_optfloat (j + (j - i) * m) (banded_repr b M) v);
+  assert (H2nat: (b < m)%nat) by lia;
+  rewrite (banded_repr_double_upd_Znth m b M i j v Hband H2nat);
+  unfold bandmatn;
+  entailer!;
+  apply (bandmatn_invariant_update m b M i j v Htrmx Hoffband Hband).
+
+(** * Supporting infrastructure for [body_dense_to_band] *)
+
+(** [banded_repr] only ever reads [M] at in-band positions [i <= j], so two
+    matrices that agree there produce the same physical representation. *)
+Lemma banded_repr_ext {T} {InhT: Inhabitant T} (m b: nat) (P M: 'M[T]_(m,m)):
+  (forall (i j: 'I_m), 0 <= (Z.of_nat j - Z.of_nat i) <= Z.of_nat b -> P i j = M i j) ->
+  banded_repr b P = banded_repr b M.
+Proof.
+  intros Hext.
+  unfold banded_repr.
+  f_equal.
+  apply map_ext_in; intros j0 _.
+  f_equal.
+  apply map_ext_in; intros i0 _.
+  apply Hext.
+  unfold inord_inj, inord_add; simpl.
+  pose proof (ltn_ord j0) as Hj0.
+  lia.
+Qed.
+
+Lemma bandmatn_ext {t: type} (sh: share) (m b: nat) (P M: 'M[option (ftype t)]_(m,m)) (p: val):
+  trmx M = M ->
+  (forall i j : 'I_m, j > i + b -> M i j = Some (Zconst t 0)) ->
+  banded_repr b P = banded_repr b M ->
+  bandmatn sh b P p |-- bandmatn sh b M p.
+Proof.
+  intros Htrmx Hoffband Heq.
+  unfold bandmatn.
+  rewrite Heq.
+  apply andp_derives; [ | apply derives_refl].
+  apply prop_derives.
+  intros [Hb1 [Hb2 _]].
+  destruct Hb1 as [Hb1a Hb1b].
+  repeat split; auto.
+Qed.
+
+Lemma bandmat_ext (sh: share) (m b: nat) (P M: 'M[option (ftype the_type)]_(m,m)) (p: val):
+  trmx M = M ->
+  (forall i j : 'I_m, j > i + b -> M i j = Some (Zconst the_type 0)) ->
+  banded_repr b P = banded_repr b M ->
+  bandmat sh b P p |-- bandmat sh b M p.
+Proof.
+  intros Htrmx Hoffband Heq.
+  unfold bandmat.
+  apply sepcon_derives.
+  - apply sepcon_derives.
+    + apply derives_refl.
+    + apply bandmatn_ext; auto.
+  - apply derives_refl.
+Qed.
+
+(** Reading either of the two positions written by a symmetric double-update
+    gives back the written value. *)
+Lemma update_mx_sym_same {T} [m] (M: 'M[T]_(m,m)) (a b: 'I_m) (x: T):
+  update_mx (update_mx M a b x) b a x a b = x.
+Proof.
+  destruct (Nat.eq_dec a b) as [Hab|Hab].
+  - assert (Hab': a = b) by (apply ord_inj; auto). subst.
+    apply update_mx_same.
+  - rewrite update_mx_diff.
+    + apply update_mx_same.
+    + left. intro Hc. apply Hab. rewrite Hc. reflexivity.
+Qed.
+
+(** Reading any OTHER position is unaffected by a symmetric double-update. *)
+Lemma update_mx_sym_diff {T} [m] (M: 'M[T]_(m,m)) (a b: 'I_m) (x: T) (r c: 'I_m):
+  r <> a \/ c <> b ->
+  r <> b \/ c <> a ->
+  update_mx (update_mx M a b x) b a x r c = M r c.
+Proof.
+  intros H1 H2.
+  rewrite update_mx_diff by exact H2.
+  rewrite update_mx_diff by exact H1.
+  reflexivity.
+Qed.
+
+(** Convenience wrapper: derive an ordinal-level disjoint-pair fact from a
+    nat-level one (nat-level is what [lia] can actually discharge). *)
+Lemma ord_neq_pair {m} (r i c j: 'I_m):
+  (nat_of_ord r <> nat_of_ord i)%nat \/ (nat_of_ord c <> nat_of_ord j)%nat ->
+  r <> i \/ c <> j.
+Proof.
+  intros [H|H].
+  - left. intro He. apply H. rewrite He. reflexivity.
+  - right. intro He. apply H. rewrite He. reflexivity.
+Qed.
+
+(** [dtb_inv bw d j A P0 P]: loop invariant for [dense_to_band]'s double loop.
+    [P0] is the starting (all-[None]-in-band) matrix; [A] is the source dense
+    matrix being converted. After the outer loop has fully processed bands
+    [0..d-1] and the current band [d]'s columns [d..j-1], [P] agrees with [A]
+    on every in-band position already visited, and still agrees with [P0] on
+    every in-band position not yet visited. Only positions [(r,c)] with
+    [c >= r] (upper triangle) are tracked, since that's all [banded_repr]
+    (and hence [bandmatn]) ever reads. *)
+Definition dtb_inv {m: nat} (bw d j: nat) (A P0 P: 'M[option (ftype the_type)]_(m,m)) : Prop :=
+  (forall (r c : 'I_m),
+     (0 <= (Z.of_nat c - Z.of_nat r) <= Z.of_nat bw)%Z ->
+     ((Z.of_nat c - Z.of_nat r < Z.of_nat d)%Z \/
+      ((Z.of_nat c - Z.of_nat r = Z.of_nat d)%Z /\ (c < j)%nat)) ->
+     P r c = A r c)
+  /\
+  (forall (r c : 'I_m),
+     (0 <= (Z.of_nat c - Z.of_nat r) <= Z.of_nat bw)%Z ->
+     ((Z.of_nat c - Z.of_nat r > Z.of_nat d)%Z \/
+      ((Z.of_nat c - Z.of_nat r = Z.of_nat d)%Z /\ (c >= j)%nat)) ->
+     P r c = P0 r c).
+
+Lemma dtb_inv_base {m: nat} (bw: nat) (A P0: 'M[option (ftype the_type)]_(m,m)):
+  @dtb_inv m bw 0 0 A P0 P0.
+Proof.
+  split.
+  - intros r c Hrange [Hlt | [Heq Hlt]]; lia.
+  - intros r c Hrange Hcond. reflexivity.
+Qed.
+
+(** Advancing the inner loop by one: writing the single symmetric pair
+    [(i_ord,j_ord)] with [j_ord - i_ord = d] extends [dtb_inv] from column
+    [j] to column [S j] within the same band [d]. *)
+Lemma dtb_inv_step_j {m: nat} (bw d j: nat) (A P0 P: 'M[option (ftype the_type)]_(m,m))
+      (i_ord j_ord: 'I_m) (x: ftype the_type):
+  dtb_inv bw d j A P0 P ->
+  nat_of_ord i_ord = (j - d)%nat ->
+  nat_of_ord j_ord = j ->
+  (d <= j)%nat -> (j < m)%nat ->
+  A i_ord j_ord = Some x ->
+  dtb_inv bw d (S j) A P0 (update_mx (update_mx P i_ord j_ord (Some x)) j_ord i_ord (Some x)).
+Proof.
+  intros [Hdone Hpend] Hi Hj Hdj Hjm HAx.
+  split.
+  - intros r c Hrange [Hlt | [Heq Hlt]].
+    + assert (H1: r <> i_ord \/ c <> j_ord).
+      { apply ord_neq_pair.
+        destruct (Nat.eq_dec (nat_of_ord r) (nat_of_ord i_ord)) as [Hreq|Hrneq].
+        - right. intro Hceq.
+          rewrite Hi in Hreq. rewrite Hj in Hceq.
+          rewrite Hreq, Hceq in Hlt. lia.
+        - left. exact Hrneq. }
+      assert (H2: r <> j_ord \/ c <> i_ord).
+      { apply ord_neq_pair.
+        destruct (Nat.eq_dec (nat_of_ord r) (nat_of_ord j_ord)) as [Hreq|Hrneq].
+        - right. intro Hceq.
+          rewrite Hj in Hreq. rewrite Hi in Hceq.
+          rewrite Hreq, Hceq in Hlt. lia.
+        - left. exact Hrneq. }
+      rewrite (update_mx_sym_diff P i_ord j_ord (Some x) r c H1 H2).
+      apply Hdone; [exact Hrange | left; exact Hlt].
+    + destruct (Nat.eq_dec (nat_of_ord c) j) as [Hcj | Hcj].
+      * assert (Hreq: r = i_ord) by (apply ord_inj; rewrite Hi; lia).
+        assert (Hceq: c = j_ord) by (apply ord_inj; rewrite Hj; exact Hcj).
+        subst r c.
+        rewrite update_mx_sym_same.
+        symmetry. exact HAx.
+      * assert (Hclt: (nat_of_ord c < j)%nat) by lia.
+        assert (H1: r <> i_ord \/ c <> j_ord).
+        { apply ord_neq_pair. right. rewrite Hj. exact Hcj. }
+        assert (H2: r <> j_ord \/ c <> i_ord).
+        { apply ord_neq_pair.
+          destruct (Nat.eq_dec (nat_of_ord r) (nat_of_ord j_ord)) as [Hreq|Hrneq].
+          - right. intro Hceq0.
+            rewrite Hj in Hreq. rewrite Hi in Hceq0.
+            rewrite Hreq, Hceq0 in Heq. lia.
+          - left. exact Hrneq. }
+        rewrite (update_mx_sym_diff P i_ord j_ord (Some x) r c H1 H2).
+        apply Hdone; [exact Hrange | right; split; [exact Heq | exact Hclt] ].
+  - intros r c Hrange [Hgt | [Heq Hge]].
+    + assert (H1: r <> i_ord \/ c <> j_ord).
+      { apply ord_neq_pair.
+        destruct (Nat.eq_dec (nat_of_ord r) (nat_of_ord i_ord)) as [Hreq|Hrneq].
+        - right. rewrite Hj. rewrite Hi in Hreq. lia.
+        - left. exact Hrneq. }
+      assert (H2: r <> j_ord \/ c <> i_ord).
+      { apply ord_neq_pair.
+        destruct (Nat.eq_dec (nat_of_ord r) (nat_of_ord j_ord)) as [Hreq|Hrneq].
+        - right. rewrite Hi. rewrite Hj in Hreq. lia.
+        - left. exact Hrneq. }
+      rewrite (update_mx_sym_diff P i_ord j_ord (Some x) r c H1 H2).
+      apply Hpend; [exact Hrange | left; exact Hgt].
+    + assert (H1: r <> i_ord \/ c <> j_ord).
+      { apply ord_neq_pair. right. rewrite Hj. lia. }
+      assert (H2: r <> j_ord \/ c <> i_ord).
+      { apply ord_neq_pair.
+        destruct (Nat.eq_dec (nat_of_ord r) (nat_of_ord j_ord)) as [Hreq|Hrneq].
+        - right. rewrite Hi. rewrite Hj in Hreq. lia.
+        - left. exact Hrneq. }
+      rewrite (update_mx_sym_diff P i_ord j_ord (Some x) r c H1 H2).
+      apply Hpend; [exact Hrange | right; split; [exact Heq | lia] ].
+Qed.
+
+(** Advancing the outer loop by one: once the inner loop has fully finished
+    band [d] (reached column [m]), the very same [P] also satisfies the
+    invariant for band [S d] at its starting column [S d] (nothing has been
+    written yet in that band; every position in it is still [c < S d]-vacuous
+    on one side and [P0] on the other). No write happens here, just
+    reindexing, relying on [c < m] always holding for [c : 'I_m]. *)
+Lemma dtb_inv_step_d {m: nat} (bw d: nat) (A P0 P: 'M[option (ftype the_type)]_(m,m)):
+  dtb_inv bw d m A P0 P ->
+  dtb_inv bw (S d) (S d) A P0 P.
+Proof.
+  intros [Hdone Hpend].
+  split.
+  - intros r c Hrange Hcond.
+    apply Hdone; [exact Hrange | ].
+    pose proof (ltn_ord c) as Hcm.
+    destruct Hcond as [Hlt | [Heq Hlt]]; [ | exfalso; lia].
+    destruct (Z.eq_dec (Z.of_nat c - Z.of_nat r) (Z.of_nat d)) as [Heqd|Hneqd].
+    + right. split; [exact Heqd | lia].
+    + left. lia.
+  - intros r c Hrange Hcond.
+    apply Hpend; [exact Hrange | left].
+    destruct Hcond as [Hgt | [Heq Hge]]; lia.
+Qed.
+
+(** Closing lemma: once band [bw] (the last one) has been fully processed
+    (inner loop reached column [m]), every in-band position agrees with [A]. *)
+Lemma dtb_inv_final {m: nat} (bw: nat) (A P0 P: 'M[option (ftype the_type)]_(m,m)):
+  dtb_inv bw bw m A P0 P ->
+  forall (r c: 'I_m), 0 <= (Z.of_nat c - Z.of_nat r) <= Z.of_nat bw -> P r c = A r c.
+Proof.
+  intros [Hdone Hpend] r c Hrange.
+  apply Hdone; [exact Hrange | ].
+  pose proof (ltn_ord c) as Hcm.
+  destruct (Z.eq_dec (Z.of_nat c - Z.of_nat r) (Z.of_nat bw)) as [Heqd|Hneqd].
+  - right. split; [exact Heqd | lia].
+  - left. lia.
+Qed.

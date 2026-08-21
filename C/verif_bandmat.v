@@ -204,67 +204,6 @@ apply data_at_memory_block.
 entailer!.
 Qed.
 
-(** * [bandmatn_clear] verification *)
-Lemma body_bandmatn_clear: semax_body Vprog Gprog f_bandmatn_clear bandmatn_clear_spec.
-Proof.
-start_function.
-unfold bandmatn.
-Intros.
-assert_PROP (field_compatible (tarray tdouble (m * S b)) [] p) as FC by entailer!.
-sep_apply data_at_memory_block.
-forward_call (p, (sizeof (tarray (ctype_of_type the_type) (m * S b)))%Z, sh).
--
-entailer!.
-simpl.
-replace (Int64.repr (m * (b + 1) * 8))
-  with (Int64.repr (8 * Z.max 0 (m * Z.pos (PosDef.Pos.of_succ_nat b)))).
-  + reflexivity.
-  + f_equal. nia.
--
-simpl.
-rep_lia.
--
-unfold bandmatn.
-entailer!.
-  + split.
-    * apply trmx_const.
-    * intros i j Hij. unfold const_mx. rewrite mxE. reflexivity.
-  + sep_apply (mapsto_zero_data_at_zero (tarray tdouble (m * S b)) sh p).
-    * apply writable_readable_share; auto.
-    * rewrite zero_val_tarray.
-      unfold tdouble.
-      rewrite zero_val_Tfloat64.
-      change (ctype_of_type the_type) with tdouble.
-      change (reptype_ftype _ ?A) with A.
-      assert (HlenL: Zlength (map val_of_optfloat
-                (@banded_repr (option (ftype the_type)) _ m b
-                  (@const_mx (option (ftype the_type)) m m (Some (Zconst the_type 0)))))
-             = (m * S b)%Z).
-      { rewrite Zlength_map.
-        assert (H0nat: (b < m)%nat) by lia.
-        rewrite (Zlength_banded_repr (T := option (ftype the_type)) m b _ H0nat).
-        lia. }
-      rewrite <- HlenL.
-      apply data_at_tarray_zero_weaken.
-      apply banded_repr_const_zero_or_undef; auto.
-      assert (H0nat: (b < m)%nat) by lia.
-      apply H0nat.
-Qed.
-
-(** * [bandmat_clear] verification *)
-Lemma body_bandmat_clear: semax_body Vprog Gprog f_bandmat_clear bandmat_clear_spec.
-Proof.
-start_function.
-unfold bandmat.
-Intros.
-forward.
-forward.
-forward_call (existT (fun k => 'M[option (ftype the_type)]_(k,k)) 
-  m X, b, offset_val bandmat_data_offset p, sh).
-- unfold bandmat.
-  entailer!.
-Qed.
-
 (** * [bandmatn_get] verification *)
 Lemma body_bandmatn_get: semax_body Vprog Gprog f_bandmatn_get bandmatn_get_spec.
 Proof.
@@ -277,37 +216,15 @@ assert_PROP (0 <= Z.of_nat j + (Z.of_nat j - Z.of_nat i) * Z.of_nat m
 forward.
 -
 entailer!.
-change (reptype_ftype (m * Z.pos (PosDef.Pos.of_succ_nat b)) (map val_of_optfloat (banded_repr b M)))
-  with (map val_of_optfloat (banded_repr b M)).
-assert (Hbound2: 0 <= j + (j - i) * m < Zlength (banded_repr b M)).
-{ rewrite Zlength_banded_repr by lia. lia. }
-rewrite Znth_map by apply Hbound2.
-rewrite banded_repr_Znth by (auto; assert (H2nat: (b < m)%nat) by lia; apply H2nat).
-rewrite H.
+bandmat_read_tac m b M i j H.
 reflexivity.
 -
-entailer!.
-assert (Hj: 0 <= j < m) by (pose proof (ltn_ord j); lia).
-assert (Hi: 0 <= i < m) by (pose proof (ltn_ord i); lia).
-assert (Hjm: j <= m * S b) by nia.
-assert (Hprod: 0 <= (j - i) * m <= m * S b) by nia.
-rewrite (Int.signed_repr j) by rep_lia.
-rewrite (Int.signed_repr ((j - i) * m)) by rep_lia.
-rewrite (Int.signed_repr (j - i)) by rep_lia.
-rewrite (Int.signed_repr m) by rep_lia.
-split; rep_lia.
+bandmat_index_range_tac m b i j.
 -
-change (reptype_ftype (m * S b) (map val_of_optfloat (banded_repr b M)))
-  with (map val_of_optfloat (banded_repr b M)).
-assert (Hbound2: 0 <= j + (j - i) * m < Zlength (banded_repr b M)).
-{ rewrite Zlength_banded_repr by lia. lia. }
-rewrite Znth_map by apply Hbound2.
-rewrite banded_repr_Znth by (auto; assert (H2nat: (b < m)%nat) by lia; apply H2nat).
-rewrite H.
+bandmat_read_tac m b M i j H.
 forward.
 unfold bandmatn.
-change (reptype_ftype (m * S b) (map val_of_optfloat (banded_repr b M)))
-  with (map val_of_optfloat (banded_repr b M)).
+bandmat_strip_reptype m b M.
 entailer!.
 Qed.
 
@@ -336,27 +253,12 @@ assert_PROP (0 <= Z.of_nat j + (Z.of_nat j - Z.of_nat i) * Z.of_nat m
 { entailer!. pose proof (ltn_ord j). nia. }
 forward.
 -
-entailer!.
-assert (Hj: 0 <= j < m) by (pose proof (ltn_ord j); lia).
-assert (Hi: 0 <= i < m) by (pose proof (ltn_ord i); lia).
-assert (Hjm: j <= m * S b) by nia.
-assert (Hprod: 0 <= (j - i) * m <= m * S b) by nia.
-rewrite (Int.signed_repr j) by rep_lia.
-rewrite (Int.signed_repr ((j - i) * m)) by rep_lia.
-rewrite (Int.signed_repr (j - i)) by rep_lia.
-rewrite (Int.signed_repr m) by rep_lia.
-split; rep_lia.
+bandmat_index_range_tac m b i j.
 -
-change (reptype_ftype (m * S b) (map val_of_optfloat (banded_repr b M)))
-  with (map val_of_optfloat (banded_repr b M)).
+bandmat_strip_reptype m b M.
 assert (Hveq: Vfloat x = val_of_optfloat (Some x)) by reflexivity.
 rewrite Hveq.
-rewrite (upd_Znth_map val_of_optfloat (j + (j - i) * m) (banded_repr b M) (Some x)).
-assert (H1nat: (b < m)%nat) by lia.
-rewrite (banded_repr_double_upd_Znth m b M i j (Some x) H H1nat).
-unfold bandmatn.
-entailer!.
-apply (bandmatn_invariant_update m b M i j (Some x) H2 H3 H).
+bandmat_write_tac m b M i j (Some x) H2 H3 H.
 Qed.
 
 (** * [bandmat_set] verification *)
@@ -374,11 +276,42 @@ Qed.
 
 (** * [bandmatn_addto] verification *)
 Lemma body_bandmatn_addto: semax_body Vprog Gprog f_bandmatn_addto bandmatn_addto_spec.
-Proof. Admitted.
+Proof.
+start_function.
+unfold bandmatn.
+Intros.
+assert_PROP (0 <= Z.of_nat j + (Z.of_nat j - Z.of_nat i) * Z.of_nat m
+             < Z.of_nat m * Z.of_nat (S b)).
+{ entailer!. pose proof (ltn_ord j). nia. }
+forward.
+-
+entailer!.
+bandmat_read_tac m b M i j H.
+simpl. auto.
+-
+bandmat_index_range_tac m b i j.
+-
+bandmat_read_tac m b M i j H.
+forward.
++
+bandmat_index_range_tac m b i j.
++
+change (Vfloat (Float.add y x)) with (val_of_optfloat (Some (BPLUS y x))).
+bandmat_write_tac m b M i j (Some (BPLUS y x)) H3 H4 H0.
+Qed.
 
 (** * [bandmat_addto] verification *)
 Lemma body_bandmat_addto: semax_body Vprog Gprog f_bandmat_addto bandmat_addto_spec.
-Proof. Admitted.
+Proof.
+start_function.
+unfold bandmat.
+Intros.
+forward.
+forward_call (existT (fun m => ('M[option (ftype the_type)]_(m,m) * ('I_(m) * 'I_(m)))%type) 
+  m (M,(i,j)), b, offset_val bandmat_data_offset p, sh, y, x).
+unfold bandmat.
+entailer!.
+Qed.
 
 (** * [bandmat_norm2] verification *)
 Lemma body_bandmat_norm2: semax_body Vprog Gprog f_bandmat_norm2 bandmat_norm2_spec.
