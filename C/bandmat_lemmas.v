@@ -6,7 +6,12 @@ From LAProof.C Require Import densemat_lemmas.
 From LAProof.accuracy_proofs Require Import solve_model.
 From VSTlib Require Import spec_math spec_malloc.
 From Stdlib Require Import Classes.RelationClasses.
-From vcfloat Require Import FPStdLib.
+(* [FPStdCompCert] is needed for its [FPCore.Nans] instance: the band-solve
+   lemmas at the bottom of this file mention [BMINUS]/[BMULT]/[subtract_loop]
+   directly, and instances are not re-exported through [spec_bandmat] or
+   [densemat_lemmas] (both of which import it for themselves).  Same line as
+   spec_bandmat.v and densemat_lemmas.v use. *)
+From vcfloat Require Import FPStdCompCert FPStdLib.
 
 From mathcomp Require (*Import*) ssreflect ssrbool ssrfun eqtype ssrnat seq choice.
 From mathcomp Require (*Import*) fintype finfun bigop finset fingroup perm order.
@@ -839,4 +844,243 @@ Proof.
   destruct (Z.eq_dec (Z.of_nat c - Z.of_nat r) (Z.of_nat bw)) as [Heqd|Hneqd].
   - right. split; [exact Heqd | lia].
   - left. lia.
+Qed.
+(** * Supporting infrastructure for [body_bandmat_solve] *)
+
+(** [bandmat_solve] opens with two struct-field reads ([PR->m], [PR->b]) and
+    then calls [bandmat_get], whose funspec wants the folded [bandmat]
+    predicate back.  Unlike [dense_to_band]'s read of a [densemat_t] field,
+    these are bandmat's own fields, so no cross-compspecs bridging is needed --
+    just unfold, [forward] twice, and fold back up. *)
+Lemma bandmat_unfold: forall (sh: share) [m: nat] (b: nat)
+        (M: 'M[option (ftype the_type)]_(m,m)) (p: val),
+  bandmat sh b M p =
+     field_at sh (Tstruct _bandmat_t noattr) (DOT _m) (Vint (Int.repr m)) p
+   * field_at sh (Tstruct _bandmat_t noattr) (DOT _b) (Vint (Int.repr b)) p
+   * bandmatn sh b M (offset_val bandmat_data_offset p)
+   * malloc_token' sh (bandmat_data_offset
+        + sizeof (tarray the_ctype (Z.of_nat m * Z.of_nat (S b)))) p.
+Proof. reflexivity. Qed.
+
+(** Folding back up.  [rewrite <- bandmat_unfold] cannot do this job: after the
+    [Intros] that VST requires to flatten the [*] out of the SEP clause, the
+    four conjuncts are separate entries of the SEP *list*, and the [A * B * C * D]
+    term the rewrite is looking for is no longer a subterm of the goal.  An
+    entailment consumed by [sep_apply] matches the entries individually. *)
+Lemma bandmat_fold: forall (sh: share) [m: nat] (b: nat)
+        (M: 'M[option (ftype the_type)]_(m,m)) (p: val),
+     field_at sh (Tstruct _bandmat_t noattr) (DOT _m) (Vint (Int.repr m)) p
+   * field_at sh (Tstruct _bandmat_t noattr) (DOT _b) (Vint (Int.repr b)) p
+   * bandmatn sh b M (offset_val bandmat_data_offset p)
+   * malloc_token' sh (bandmat_data_offset
+        + sizeof (tarray the_ctype (Z.of_nat m * Z.of_nat (S b)))) p
+   |-- bandmat sh b M p.
+Proof. intros. apply derives_refl. Qed.
+
+(** ** Column vectors as flat arrays *)
+
+(** The [x] argument of [bandmat_solve] is a bare [double*] that the C code
+    subscripts directly ([x[i]], [x[i-dj]]) rather than through an accessor
+    function, and [densematn_get_spec]/[densematn_set_spec] are not in bandmat's
+    [Gprog], so [forward_densematn_get]/[forward_densematn_set] are unavailable
+    here.  Its representation is [densematn sh (map_mx Some x) xp] with
+    [x : 'cV_m], i.e. [column_major] of an [m]-by-1 matrix -- which is just the
+    flat list of entries, since [column_major] concatenates one column.
+
+    Rather than write [bandmat_read_tac]-style tactics against [column_major],
+    we convert the predicate once, at the top of the proof, into a plain
+    [data_at] over [tarray the_ctype m].  Then every [x[i]] is an ordinary VST
+    array access and the two lemmas below ([Znth_colvec_list_val],
+    [upd_Znth_colvec_list_val]) relate it back to the matrix. *)
+
+Definition colvec_list [m: nat] (v: 'cV[ftype the_type]_m) : list (ftype the_type) :=
+  map (fun i : 'I_m => v i ord0) (ord_enum m).
+
+Lemma Zlength_colvec_list: forall [m] (v: 'cV[ftype the_type]_m),
+  Zlength (colvec_list v) = Z.of_nat m.
+Proof.
+intros. unfold colvec_list. rewrite Zlength_map. apply Zlength_ord_enum.
+Qed.
+
+#[export] Hint Rewrite @Zlength_colvec_list : sublist.
+
+Lemma Znth_colvec_list_val: forall [m] (v: 'cV[ftype the_type]_m) (i: 'I_m),
+  Znth (Z.of_nat i) (map val_of_float (colvec_list v)) = val_of_float (v i ord0).
+Proof.
+intros m v i.
+assert (Hi := ltn_ord i).
+rewrite (@Znth_map (ftype the_type) _ val _ (Z.of_nat i) val_of_float (colvec_list v))
+  by (rewrite Zlength_colvec_list; lia).
+unfold colvec_list.
+rewrite (@Znth_map 'I_m i (ftype the_type) _ (Z.of_nat i)
+           (fun i0: 'I_m => v i0 ord0) (ord_enum m))
+  by (rewrite Zlength_ord_enum; lia).
+rewrite (@Znth_ord_enum m i i).
+reflexivity.
+Qed.
+
+Lemma upd_Znth_colvec_list_val:
+  forall [m] (v: 'cV[ftype the_type]_m) (i: 'I_m) (y: ftype the_type),
+  upd_Znth (Z.of_nat i) (map val_of_float (colvec_list v)) (val_of_float y)
+  = map val_of_float (colvec_list (update_mx v i ord0 y)).
+Proof.
+intros m v i y.
+rewrite (upd_Znth_map val_of_float (Z.of_nat i) (colvec_list v) y).
+f_equal.
+unfold colvec_list.
+apply (upd_Znth_map_ord_eq m (fun i0: 'I_m => v i0 ord0)
+         (fun i0: 'I_m => update_mx v i ord0 y i0 ord0) i y).
+- intros k Hk. rewrite update_mx_diff; [reflexivity | left; exact Hk].
+- apply update_mx_same.
+Qed.
+
+Lemma column_major_colvec: forall [m] (v: 'cV[ftype the_type]_m),
+  map (@val_of_optfloat the_type) (column_major (map_mx Some v))
+  = map val_of_float (colvec_list v).
+Proof.
+intros m v.
+apply Znth_list_eq.
+- rewrite !Zlength_map, Zlength_column_major, Zlength_colvec_list. lia.
+- intros k Hk.
+  rewrite Zlength_map, Zlength_column_major in Hk.
+  assert (Hlt: Datatypes.is_true (ssrnat.leq (S (Z.to_nat k)) m)) by lia.
+  pose (i := @Ordinal m (Z.to_nat k) Hlt).
+  assert (Hi: Z.of_nat (nat_of_ord i) = k) by (simpl; lia).
+  rewrite <- Hi.
+  rewrite Znth_colvec_list_val.
+  rewrite (@Znth_map (option (ftype the_type)) _ val _ (Z.of_nat (nat_of_ord i))
+             val_of_optfloat (column_major (map_mx Some v)))
+    by (rewrite Zlength_column_major; lia).
+  replace (Z.of_nat (nat_of_ord i))
+     with (Z.of_nat (nat_of_ord i + nat_of_ord (@ord0 O) * m)%nat) by (simpl; lia).
+  rewrite (@Znth_column_major (option (ftype the_type)) _ m 1 i (@ord0 O) (map_mx Some v)).
+  unfold map_mx. rewrite mxE. reflexivity.
+Qed.
+
+(** Note on [compspecs]: [densematn] is compiled in [spec_densemat.v], so the
+    [data_at] inside it carries [spec_densemat.CompSpecs], while the [data_at]
+    on the right (and everything [forward] produces inside a bandmat proof)
+    carries bandmat's own [CompSpecs].  Bridging them is exactly the operation
+    that defeated [body_dense_to_band] -- but only because there the type was a
+    [Tstruct], whose [align_compatible_rec] forces [coeq]'s composite table.
+    Here the type is [tarray the_ctype n], which mentions no struct, so
+    [cs_preserve_type] reduces to [true] on the [tdouble] leaf without ever
+    consulting [coeq], and [change_compspecs] goes through.
+
+    Also note the qualified names below: [ctype_of_type], [reptype_ftype],
+    [the_type] and [the_ctype] are each defined TWICE, once in [spec_densemat.v]
+    and once in [spec_bandmat.v].  The unqualified names here resolve to
+    spec_bandmat's, but the goal produced by [unfold densematn] is phrased in
+    spec_densemat's, so the [change]s must name [spec_densemat.]'s versions
+    explicitly or they silently match nothing -- which then makes the [replace]
+    below fail, because [reptype_ftype]'s type still mentions the old length. *)
+(** The conversion itself.  Used left-to-right at the start of
+    [body_bandmat_solve] and right-to-left when discharging its postcondition. *)
+Lemma densematn_colvec: forall (sh: share) [m: nat] (v: 'cV[ftype the_type]_m) (p: val),
+  0 < Z.of_nat m <= Int.max_signed ->
+  densematn sh (map_mx Some v) p
+  = data_at sh (tarray the_ctype (Z.of_nat m)) (map val_of_float (colvec_list v)) p.
+Proof.
+intros sh m v p Hm.
+unfold densematn.
+change (spec_densemat.reptype_ftype _ ?A) with A.
+change (spec_densemat.ctype_of_type the_type) with the_ctype.
+rewrite column_major_colvec.
+(* Collapse the [n = 1] dimension.  Deliberately by conversion rather than by
+   [lia]: the goal [Z.of_nat m = Z.of_nat m * Z.of_nat 1] is a product of two
+   terms, and if zify does not fold [Z.of_nat 1] into the literal [1] it is a
+   NONLINEAR goal, which is why plain [lia] answers "Cannot find witness". *)
+first
+  [ change (Z.of_nat 1) with 1%Z; rewrite Z.mul_1_r
+  | rewrite Nat.mul_1_r
+  | rewrite Nat2Z.inj_mul, Nat.mul_1_r ].
+apply pred_ext;
+ entailer!;
+ try solve [simpl; rep_lia];
+ try solve [change_compspecs CompSpecs; apply derives_refl];
+ try solve [change_compspecs spec_densemat.CompSpecs; apply derives_refl].
+Qed.
+
+(** ** Band index sequences *)
+
+(** One step of the forward inner loop: [dj -> dj+1] extends the visited
+    lower-band index list at its *end* (because the list is reversed), which is
+    exactly the shape [seq.foldl_cat] wants. *)
+(** [k'] is passed explicitly, rather than written [k+1] in the conclusion,
+    purely so that the rewrite lands syntactically on the call site's index
+    expressions: at the call site the two lists are indexed [i - dj] and
+    [i - (dj-1)], which are equal to [k] and [k+1] but not syntactically so. *)
+Lemma band_lower_step: forall (m: nat) {IHm: Inhabitant 'I_m} (i k k': Z),
+  0 <= k -> k < i -> i <= Z.of_nat m -> k' = k + 1 ->
+  rev (sublist k i (ord_enum m))
+  = rev (sublist k' i (ord_enum m)) ++ [Znth k (ord_enum m)].
+Proof.
+intros m IHm i k k' Hk Hki Him Hk'.
+assert (LEN := Zlength_ord_enum m).
+subst k'.
+rewrite (sublist_split k (k+1) i) by lia.
+rewrite (sublist_one k (k+1)) by lia.
+rewrite rev_app_distr.
+reflexivity.
+Qed.
+
+
+(** One step of the outer forward-substitution loop: folding over
+    [sublist 0 (i+1)] is folding over [sublist 0 i] and then applying the step
+    function at [i].  (Same shape as the [sublist_split]/[sublist_one]/
+    [foldl_cat] dance in [body_densematn_csolve], factored out so the VST proof
+    script stays readable.) *)
+Lemma fstep_step: forall [m] {IHm: Inhabitant 'I_m} (bw: nat)
+    (L: 'M[ftype the_type]_m) (x: 'cV[ftype the_type]_m) (i: 'I_m),
+  seq.foldl (forward_subst_band_step bw L) x (sublist 0 (Z.of_nat i + 1) (ord_enum m))
+  = forward_subst_band_step bw L
+      (seq.foldl (forward_subst_band_step bw L) x (sublist 0 (Z.of_nat i) (ord_enum m))) i.
+Proof.
+intros m IHm bw L x i.
+assert (Hi := ltn_ord i).
+assert (LEN := Zlength_ord_enum m).
+rewrite (sublist_split 0 (Z.of_nat i) (Z.of_nat i + 1)) by lia.
+rewrite seq.foldl_cat.
+rewrite (sublist_one (Z.of_nat i)) by lia.
+simpl.
+rewrite Znth_ord_enum.
+reflexivity.
+Qed.
+
+(** One step of the outer backward-substitution loop.  The fold list is
+    reversed, so extending it downwards at [i] appends [i] at the end. *)
+Lemma bstep_step: forall [m] {IHm: Inhabitant 'I_m} (bw: nat)
+    (U: 'M[ftype the_type]_m) (y: 'cV[ftype the_type]_m) (i: 'I_m),
+  seq.foldl (backward_subst_band_step bw U) y
+      (rev (sublist (Z.of_nat i) (Z.of_nat m) (ord_enum m)))
+  = backward_subst_band_step bw U
+      (seq.foldl (backward_subst_band_step bw U) y
+         (rev (sublist (Z.of_nat i + 1) (Z.of_nat m) (ord_enum m)))) i.
+Proof.
+intros m IHm bw U y i.
+assert (Hi := ltn_ord i).
+assert (LEN := Zlength_ord_enum m).
+rewrite (sublist_split (Z.of_nat i) (Z.of_nat i + 1) (Z.of_nat m)) by lia.
+rewrite (sublist_one (Z.of_nat i)) by lia.
+simpl rev.
+rewrite seq.foldl_cat.
+simpl.
+rewrite Znth_ord_enum.
+reflexivity.
+Qed.
+
+(** [subtract_loop] over a list of pairs built pointwise from two functions is
+    the same as folding [BMINUS] over the pointwise products.  The loop
+    invariants are stated in the latter (accumulator) form; the model is stated
+    in the former. *)
+Lemma subtract_loop_map: forall (c: ftype the_type) [n: nat]
+    (A B: 'I_n -> ftype the_type) (l: list 'I_n),
+  subtract_loop c (map (fun j => (A j, B j)) l)
+  = seq.foldl BMINUS c (map (fun j => BMULT (A j) (B j)) l).
+Proof.
+intros.
+unfold subtract_loop.
+change @seq.map with @map.
+rewrite map_map.
+reflexivity.
 Qed.

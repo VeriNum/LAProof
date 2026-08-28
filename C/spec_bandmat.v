@@ -522,8 +522,12 @@ Definition dense_to_band_spec :=
   WITH X: {m & 'M[option (ftype the_type)]_(m, m)}, p: val, sh: share, bw: nat, gv:globals
   PRE [ tptr densemat_t, tint ] let '(existT _ m M) := X in
     (* enforcing that M is banded with band width bw *)
-    (PROP(readable_share sh ; 0 < m * S bw <= Int.max_signed ;
-          trmx M = M ; forall (i j : 'I_m), j>i+bw -> (option_rel feq) (M i j) (Some (Zconst the_type 0)) ;
+    (PROP(readable_share sh ; 0 < m * S bw <= Int.max_signed ; bw < m ;
+          trmx M = M ;
+          (* exact equality, not just feq: this needs to match bandmatn's own
+             off-band invariant exactly, which is stated with propositional
+             equality, not float-equivalence *)
+          forall (i j : 'I_m), j>i+bw -> M i j = Some (Zconst the_type 0) ;
           (* M must be fully populated (a genuine dense matrix), so that every in-band
              entry read by dense_to_band's loop is defined *)
           forall (i j : 'I_m), isSome (M i j) )
@@ -549,6 +553,63 @@ Definition bandmat_factor_spec :=
     RETURN (Vint (Int.repr (Zcholesky_return (cholesky_return R))))
     SEP (bandmat sh b (joinLU M (map_mx Some R)) p).
 
+(** ** Functional models for the band triangular solves *)
+
+(** [bandmat_solve]'s substitution loops do NOT compute the dense models
+    [forward_subst]/[backward_subst] of [solve_model.v].  There are two
+    independent differences, both real in floating point:
+
+    - Forward substitution visits the in-band columns in *descending* order:
+      [for (dj = 1; dj <= bw && dj <= i; ++dj)] means [j = i-1, i-2, ...].
+      [forward_subst_step] folds over [take i (ord_enum n)], i.e. [j] ascending,
+      which is what [densematn_csolve]'s [for (j = 0; j < i; ++j)] does.
+      [foldl BMINUS] is not commutative in floating point, so these differ.
+
+    - Both loops skip the out-of-band entries instead of subtracting
+      [c - BMULT (Zconst t 0) (x j)].  That is not the identity either:
+      if [x j] is infinite or NaN the product is NaN, and if [c] is a negative
+      zero then [c - (-0) = +0 <> c].
+
+    So the band code gets its own models, folding over exactly the index
+    sequence the C loops visit, in exactly the order they visit it.  Relating
+    these to the dense models is a separate question -- true over the reals,
+    false over floats -- and is deliberately not asserted here. *)
+
+(** The lower-triangular in-band column indices for row [i], in the order that
+    [for (dj = 1; dj <= bw && dj <= i; ++dj)] visits them, namely
+    [i-1, i-2, ..., max(0, i-bw)]. *)
+Definition band_lower_seq [n: nat] (bw: nat) (i: 'I_n) : list 'I_n :=
+  rev (sublist (Z.max 0 (Z.of_nat i - Z.of_nat bw)) (Z.of_nat i) (ord_enum n)).
+
+(** The upper-triangular in-band column indices for row [i], in the order that
+    [for (j = i+1; j <= i+bw && j < n; ++j)] visits them, namely
+    [i+1, i+2, ..., min(i+bw, n-1)]. *)
+Definition band_upper_seq [n: nat] (bw: nat) (i: 'I_n) : list 'I_n :=
+  sublist (Z.of_nat i + 1) (Z.min (Z.of_nat i + 1 + Z.of_nat bw) (Z.of_nat n))
+          (ord_enum n).
+
+Definition forward_subst_band_step {t: type} [n: nat] (bw: nat)
+         (L: 'M[ftype t]_n) (x: 'cV[ftype t]_n) (i: 'I_n) : 'cV_n :=
+   update_mx x i ord0
+    (BDIV (subtract_loop (x i ord0)
+             (map (fun j => (L i j, x j ord0)) (band_lower_seq bw i)))
+          (L i i)).
+
+Definition forward_subst_band {t: type} [n: nat] (bw: nat)
+         (L: 'M[ftype t]_n) (x: 'cV[ftype t]_n) : 'cV_n :=
+  seq.foldl (forward_subst_band_step bw L) x (ord_enum n).
+
+Definition backward_subst_band_step {t: type} [n: nat] (bw: nat)
+         (U: 'M[ftype t]_n) (x: 'cV[ftype t]_n) (i: 'I_n) : 'cV_n :=
+    update_mx x i ord0
+      (BDIV (subtract_loop (x i ord0)
+               (map (fun j => (U i j, x j ord0)) (band_upper_seq bw i)))
+            (U i i)).
+
+Definition backward_subst_band {t: type} [n: nat] (bw: nat)
+         (U: 'M[ftype t]_n) (x: 'cV[ftype t]_n) : 'cV[ftype t]_n :=
+     seq.foldl (backward_subst_band_step bw U) x (rev (ord_enum n)).
+
 Definition bandmat_solve_spec :=
  DECLARE _bandmat_solve
  WITH rsh: share, sh: share, X: {m & 'M[option (ftype the_type)]_m * 'cV[ftype the_type]_m}%type,
@@ -562,9 +623,9 @@ Definition bandmat_solve_spec :=
     PROP ()
     RETURN ()
     SEP (bandmat rsh b M p;
-         densematn sh (map_mx Some 
-                      (backward_subst (map_mx optfloat_to_float M)
-                          (forward_subst (trmx (map_mx optfloat_to_float M)) x)))
+         densematn sh (map_mx Some
+                      (backward_subst_band b (map_mx optfloat_to_float M)
+                          (forward_subst_band b (trmx (map_mx optfloat_to_float M)) x)))
            xp).
 
 
