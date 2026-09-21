@@ -56,8 +56,8 @@ intros.
   set (H0 := ltnW _). clearbody H0.
   change (fun _ => _) with (@widen_ord k n H0).
   apply (@map_inj _ _ (@nat_of_ord n)). apply ord_inj.
-  rewrite map_take val_ord_enum take_iota /minn H /ord_enum -map_comp pmap_filter.
-  2: move => x; unfold insub; destruct idP; auto.
+  rewrite map_take val_ord_enum take_iota /minn H /ord_enum -map_comp pmap_filter;
+  try solve [move => x; unfold insub; destruct idP; auto].
   clear.
   destruct k; auto.
   set (n := S k) in *.
@@ -343,8 +343,7 @@ assert (Datatypes.is_true (leq (S (S (nat_of_ord k))) n)).
 assert (k1 = @Ordinal n (S k) H). apply ord_inj; auto.
 subst k1.
 unfold subtract_loop_jik at 1.
-rewrite (take_snoc i).
-  2: (rewrite  size_ord_enum; pose proof ltn_ord k;  lia).
+rewrite (take_snoc i); try solve [ rewrite  size_ord_enum; pose proof ltn_ord k;  lia].
 rewrite /subtract_loop !map_cat /= foldl_cat /= nth_ord_enum' //.
 Qed.
 
@@ -374,7 +373,7 @@ split; [ | split3]; intros; try split; hnf; intros; try lia.
    unfold update_mx at 1. rewrite mxE.
    destruct (Nat.eq_dec _ _); [lia  |]. simpl.
    destruct H2.
-   rewrite H1; [ |apply Hij]. f_equal.
+   rewrite H1; try solve [apply Hij]. f_equal.
    * unfold subtract_loop_jik. f_equal.
      apply eq_in_subrange.
      intros. unfold update_mx. rewrite !mxE.

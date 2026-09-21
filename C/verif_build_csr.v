@@ -61,6 +61,40 @@ replace (Zlength (coo_entries (add_to_coo coo i j x))) with (n+1)
 cancel.
 Qed.
 
+(* See:  https://github.com/PrincetonUniversity/VST/issues/869 *)
+
+Ltac freeze_tac_entail L name ::=
+  eapply (freeze_SEP''entail (map Z.to_nat L)); 
+   [solve_is_increasing
+   | match goal with |- _ = (my_freezelist_nth ?A _) => let j := eval compute in A in change A with j end;
+     cbv [my_freezelist_nth my_nth]; unfold map at 1;
+     match goal with |- _ = (_, my_delete_list ?A _) => let j := eval compute in A in change A with j end;
+     cbv [my_delete_list my_delete_nth];
+     reflexivity
+   | match goal with
+           | |- ENTAIL _, (PROPx _ (LOCALx _ (SEPx ((FRZL ?xs) :: my_delete_list ?A _)))) |-- _ =>
+           let D := fresh name in
+           set (D:=xs);
+           change xs with (@abbreviate (list mpred) xs) in D
+         end].
+
+
+Ltac freeze_tac L name ::=
+  eapply (freeze_SEP'' (map Z.to_nat L)); 
+   [solve_is_increasing
+   | match goal with |- _ = (my_freezelist_nth ?A _) => let j := eval compute in A in change A with j end;
+     cbv [my_freezelist_nth my_nth]; unfold map at 1;
+     match goal with |- _ = (_, my_delete_list ?A _) => let j := eval compute in A in change A with j end;
+     cbv [my_delete_list my_delete_nth];
+     reflexivity
+ | match goal with
+           | |- semax _ (PROPx _ (LOCALx _ (SEPx ((FRZL ?xs) ::  _)))) _ _ =>
+           let D := fresh name in
+           set (D:=xs);
+           change xs with (@abbreviate (list mpred) xs) in D
+    end
+].
+
 Lemma body_coo_count: semax_body Vprog Gprog f_coo_count coo_count_spec.
 Proof.
 start_function.
