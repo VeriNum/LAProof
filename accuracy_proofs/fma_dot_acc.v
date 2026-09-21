@@ -79,7 +79,7 @@ Proof.
   assert (Hlenr : size (rev v1) = size (rev v2)) by (rewrite !size_rev; auto).
   rewrite <- size_rev in Hlen.
   pose proof fma_dot_prod_rel_fold_right v1 v2 as Hrel.
-  rewrite rev_zip in Hrel. 2: revert Hlen; rewrite size_rev; auto.
+  rewrite rev_zip in Hrel; try solve [revert Hlen; rewrite size_rev; auto].
   revert Hlen; rewrite size_rev; intro Hlen.
   pose proof (fma_dotprod_mixed_error_rel
                 (rev v1) (rev v2) Hlenr
@@ -103,8 +103,8 @@ Proof.
     rewrite size_rev in Hsize.
     assert (Hlt : (size u - S n < size v2)%nat) by lia.
     specialize (Hbnd (size u - S n)%nat Hlt).
-    rewrite nth_rev in Hbnd. 2: rewrite Hlen //.
-    rewrite nth_rev.          2: rewrite Hsize Hlen //.
+    rewrite nth_rev in Hbnd; try solve [rewrite Hlen //].
+    rewrite nth_rev; try solve  [rewrite Hsize Hlen //].
     destruct Hbnd as (delta & Hnth & Hdelta).
     exists delta; split.
     + rewrite Hnth; repeat f_equal.

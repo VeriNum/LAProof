@@ -119,7 +119,7 @@ Proof.
     assert (Heq : dotprodR (rev u) (map FT2R v2) = FT2R (dotprodF v1 v2) - eta).
     { eapply R_dot_prod_rel_eq; eauto.
       rewrite -dotprodR_rev;
-        [ | rewrite size_map; rewrite size_rev in Hsize_u; auto].
+      try solve [rewrite size_map; rewrite size_rev in Hsize_u; auto].
       rewrite -map_rev; auto. }
     nra.
   - (* per-element bound *)
@@ -127,8 +127,8 @@ Proof.
     intros n Hn.
     assert (Hlt : (size u - S n < size v2)%nat) by lia.
     specialize (Helem_bound (size u - S n)%nat Hlt).
-    rewrite nth_rev in Helem_bound; [ | rewrite Hlen' //].
-    rewrite nth_rev; [ | lia].
+    rewrite nth_rev in Helem_bound; try solve [rewrite Hlen' //].
+    rewrite nth_rev; try lia.
     destruct Helem_bound as (delta & Hval & Hdelta).
     exists delta; split.
     + rewrite Hval; repeat f_equal.

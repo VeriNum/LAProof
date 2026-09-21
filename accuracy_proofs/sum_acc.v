@@ -111,14 +111,14 @@ induction (rev x) as [| a l] => Hfin; clear x.
       rewrite nth_cat.
       rewrite size_cat size_map in Hn |- *; simpl size in Hn.
       destruct (n < size l')%N eqn:Hn_lt.
-      -- rewrite (nth_map R0); [| lia].
+      -- rewrite (nth_map R0); try lia.
          specialize (Hdel n Hn_lt).
          destruct Hdel as (d & Hd1 & Hd2).
          exists ((1+d') * (1+d) - 1).
          rewrite {}Hd1; split.
          ++ fold (ftype t).
             rewrite rev_cons nth_rcons size_rev.
-            destruct (n < size l)%N eqn:Hn'; [| lia]; nra.
+            destruct (n < size l)%N eqn:Hn';  try lia; nra.
          ++ field_simplify_Rabs.
             eapply Rle_trans;
               [apply Rabs_triang |
@@ -138,7 +138,7 @@ induction (rev x) as [| a l] => Hfin; clear x.
             rewrite Rmult_1_r /=; f_equal; lia.
       -- fold (ftype t).
          assert (Hn_eq : n = size l') by lia; subst n.
-         rewrite nth_rev /=; [| lia].
+         rewrite nth_rev /=;  try lia.
          rewrite -Hlen'; do 2 replace (_ - _)%N with O by lia; simpl.
          exists d'; split; auto.
          eapply Rle_trans; [apply Hd' |].
@@ -181,8 +181,8 @@ exists (nth R0 x'); split.
   clear H3; f_equal; f_equal; clear.
   destruct (size x'); clear x'.
   { simpl; destruct i; lia. }
-  rewrite (nth_map (@ord0 n) common.neg_zero).
-  rewrite mv_mathcomp.nth_ord_enum' //.
+  rewrite (nth_map (@ord0 n) common.neg_zero);
+  try solve [rewrite mv_mathcomp.nth_ord_enum' //].
   rewrite mv_mathcomp.size_ord_enum.
   pose proof ltn_ord i; lia.
 Qed.
@@ -290,13 +290,13 @@ end.
 - apply eq_bigr => i _.
   destruct n; [destruct i; lia |].
   rewrite -map_comp.
-  rewrite (nth_map (@ord0 n) R0).
-  rewrite mv_mathcomp.nth_ord_enum' //.
+  rewrite (nth_map (@ord0 n) R0);
+   try solve [rewrite mv_mathcomp.nth_ord_enum' //].
   rewrite mv_mathcomp.size_ord_enum //.
 - apply eq_bigr => i _.
   destruct n; [destruct i; lia |].
-  rewrite (nth_map (@ord0 n) R0).
-  rewrite mv_mathcomp.nth_ord_enum' //.
+  rewrite (nth_map (@ord0 n) R0);
+   try solve [rewrite mv_mathcomp.nth_ord_enum' //].
   rewrite mv_mathcomp.size_ord_enum //.
 Qed.
 
@@ -339,7 +339,7 @@ Theorem sum_forward_error_permute :
 Proof.
 move=> x x0 Hfin Hfin0 Hper.
 rewrite (sumR_permute (map FT2R x) (map FT2R x0));
-  [| apply Permutation_map; auto].
+   try solve [apply Permutation_map; auto].
 eapply Rle_trans; [apply sum_forward_error_permute'; eauto |].
 apply Req_le; f_equal; symmetry.
 f_equal; apply Permutation_length; auto.

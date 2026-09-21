@@ -172,8 +172,7 @@ rewrite H.
 lia.
 rewrite -nth_List_nth.
 rewrite nth_take; auto.
-rewrite (nth_map i).
-rewrite nth_ord_enum' //.
+rewrite (nth_map i); try solve [rewrite nth_ord_enum' //].
 rewrite size_ord_enum.
 lia.
 Qed.
@@ -307,7 +306,7 @@ apply FunctionalExtensionality.functional_extensionality; intro i.
 unfold backward_subst_step.
 apply FunctionalExtensionality.functional_extensionality; intro z.
 f_equal.
-rewrite -Hij; [ | lia].
+rewrite -Hij; try lia.
 f_equal.
 f_equal.
 apply map_ext_in; intros.
@@ -324,7 +323,7 @@ assert (u < n \/ u >= n)%nat by lia.
 destruct H2.
 ordify n u.
 rewrite nth_ord_enum' in H0. subst. lia.
-rewrite nth_default in H0. subst; lia.
+rewrite nth_default in H0; try (subst; lia).
 rewrite size_ord_enum. lia.
 Qed.
 
@@ -339,7 +338,7 @@ apply FunctionalExtensionality.functional_extensionality; intro i.
 unfold forward_subst_step.
 apply FunctionalExtensionality.functional_extensionality; intro z.
 f_equal.
-rewrite -Hij; [ | lia].
+rewrite -Hij; try lia.
 f_equal.
 f_equal.
 apply map_ext_in; intros.
@@ -359,7 +358,7 @@ rewrite nth_take; auto.
 pose proof ltn_ord z.
 ordify n k.
 rewrite nth_ord_enum'. lia.
-rewrite nth_default. lia.
+rewrite nth_default; try lia.
 rewrite size_take. rewrite size_ord_enum.
 rewrite ltn_ord. subst. lia.
 Qed.

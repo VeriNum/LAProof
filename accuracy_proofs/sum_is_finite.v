@@ -295,7 +295,7 @@ Proof.
     apply Rlt_le_trans with (bpow Zaux.radix2 (femax t) / y * y).
     { apply Rmult_lt_compat_l; [| exact Hineq].
       unfold Rdiv; apply Rmult_lt_0_compat; [apply bpow_gt_0 | apply Rinv_pos; exact Hy]. }
-    unfold Rdiv; rewrite Rmult_assoc; rewrite Rinv_l; [lra | exact Hy'].
+    unfold Rdiv; rewrite Rmult_assoc; rewrite Rinv_l; try lra; exact Hy'.
 Qed.
 
 End NAN.

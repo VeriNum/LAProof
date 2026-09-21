@@ -220,7 +220,7 @@ destruct Hl.
     rewrite <- !Rplus_assoc.
     replace (D * g1 n (n - 1) + g1 n (n - 1))
       with (g1 n (n - 1) * (1 + D)) by nra.
-    rewrite one_plus_d_mul_g1; [| lia].
+    rewrite one_plus_d_mul_g1; try lia.
     rewrite Rplus_assoc.
     replace (E + D * E) with ((1 + D) * E) by nra.
     eapply Rle_trans; [apply plus_d_e_g1_le; lia |].
@@ -288,7 +288,7 @@ assert (Hl : l = [] \/ l <> []).
 destruct Hl.
 - (* case: singleton list *)
   subst; simpl.
-  rewrite (R_dot_prod_rel_single rp (FR2 a)); [| auto].
+  rewrite (R_dot_prod_rel_single rp (FR2 a)); auto.
   inversion Hfp. inversion H2; subst.
   pose proof fma_accurate' (fst a) (snd a) (Zconst t 0) Hfin as Hacc.
   destruct Hacc as (e & d & Hz & He & Hd & A).
@@ -353,7 +353,8 @@ destruct Hl.
     with (D * F + ((1 + D) * g n * s1 + D * s1) +
           g1 n (n - 1) * (1 + D) + E)
     by nra.
-  rewrite one_plus_d_mul_g one_plus_d_mul_g1.
+  rewrite one_plus_d_mul_g one_plus_d_mul_g1;
+  try solve [unfold n; destruct l; try congruence; simpl; lia].
   rewrite Rplus_assoc.
   apply Rplus_le_compat; [apply Rplus_le_compat |].
   + rewrite <- Rabs_mult; fold F.
@@ -365,7 +366,6 @@ destruct Hl.
     apply Req_le; f_equal; auto; lia.
   + replace (n.+1 - 1)%nat with n by lia.
     apply plus_e_g1_le.
-  + unfold n; destruct l; try congruence; simpl; lia.
 Qed.
 
 End ForwardErrorRel2.
@@ -516,7 +516,7 @@ subst; clear Hlen1.
     destruct Hun as (delta & Hun & Hdelta).
     simpl.
     replace 0 with (Rmult (1 + d') 0) by nra.
-    rewrite (nth_map R0); [| lia].
+    rewrite (nth_map R0); try lia.
     rewrite Hun.
     exists ((1 + d') * (1 + delta) - 1).
     split; [nra |].
@@ -681,7 +681,7 @@ subst; clear Hlen1.
     specialize (B n H1).
     destruct B as (delta & B & HB); simpl.
     replace 0 with (Rmult (1 + d) 0) by nra.
-    rewrite (nth_map R0); [| lia].
+    rewrite (nth_map R0); try lia.
     rewrite B.
     exists ((1 + d) * (1 + delta) - 1).
     split; [nra |].
@@ -710,8 +710,8 @@ subst; clear Hlen1.
         rewrite Rabs_R1.
         eapply Rle_trans; [apply Rplus_le_compat_l; apply Hd |].
         apply Rle_refl. }
-    rewrite one_plus_d_mul_g1.
-    2: { destruct l; [contradiction | simpl; lia]. }
+    rewrite one_plus_d_mul_g1;
+      try solve [destruct l; [contradiction | simpl; lia]].
     unfold g1; field_simplify.
     rewrite Rplus_assoc.
     apply Rplus_le_compat.

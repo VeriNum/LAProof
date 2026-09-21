@@ -402,12 +402,10 @@ Lemma sumR_le_sumRabs :
 Proof.
   induction x; simpl; [nra |].
   rewrite sumRabs_Rabs in IHx.
+  eapply Rle_trans; [ apply Rabs_triang | ].
   eapply Rle_trans.
-  2: rewrite Rabs_pos_eq.
-  - apply Rabs_triang.
-  - apply Rplus_le_compat_l; auto.
-  - apply Rplus_le_le_0_compat;
-      [apply Rabs_pos | apply sumRabs_pos].
+  apply Rplus_le_compat_l; try eassumption.
+  apply Rle_abs.
 Qed.
 
 (** Inserting an element at an arbitrary position in a split list preserves
