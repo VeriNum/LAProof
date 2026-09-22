@@ -24,10 +24,9 @@ depends: [
   "coq-flocq"
   "coq-interval"
   "coq-vcfloat" {>= "2.4.1~"}
-  "coq-mathcomp-ssreflect" {>= "2.4.0~"}
-  "coq-mathcomp-algebra"
-  "coq-mathcomp-analysis"
-  "coq-mathcomp-algebra-tactics"
+  "coq-mathcomp-ssreflect" {>= "2.6.0~"}
+  "rocq-mathcomp-algebra"
+  "rocq-mathcomp-analysis"
   "coq-mathcomp-reals-stdlib"
   "coq-mathcomp-finmap"
   "coq-vst" {>= "2.16~"}
