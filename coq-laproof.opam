@@ -32,7 +32,6 @@ depends: [
   "coq-mathcomp-finmap"
   "coq-vst" {>= "2.16~"}
   "coq-vst-lib" {>= "2.15.1~"}
-  "coq-libvalidsdp" {>= "1.1.1"}
 ]
 tags: [
   "date:2025-05-08"
