@@ -139,11 +139,10 @@ lia.
   rewrite ptrofs_add_repr.
   rewrite Ptrofs.unsigned_repr by rep_lia.
   unfold natural_alignment in H2.
-  repeat apply Z.divide_add_r.
-  destruct H2 as [x ?]. rewrite H2. 
-  exists (2*x)%Z. lia.
-  exists 2; lia.
-  apply Z.divide_mul_l. exists 2; lia.
+  unfold Archi.align_float64.
+  repeat apply Z.divide_add_r; auto.
+  apply Z.divide_refl.
+  apply Z.divide_factor_l.
 - split; simpl; auto. lia.
 Qed.
 

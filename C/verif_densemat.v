@@ -118,10 +118,10 @@ destruct H4.
 rewrite H4.
 repeat apply Z.divide_add_r.
 apply Z.divide_mul_r.
-exists 2; auto.
-exists 2; auto.
+apply Z.divide_refl.
+apply Z.divide_refl.
 apply Z.divide_mul_l.
-exists 2; auto.
+apply Z.divide_refl.
 -
 sep_apply data_at__data_at.
 apply derives_refl'.
