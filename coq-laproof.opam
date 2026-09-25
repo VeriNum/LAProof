@@ -20,7 +20,7 @@ install: [
   [ make "-j%{jobs}%" "install" ]
 ]
 depends: [
-  "coq-core" {>= "9.2~"}
+  "coq-core" {>= "9.1~"}
   "rocq-stdlib"
   "coq-flocq"
   "coq-interval"
@@ -31,10 +31,10 @@ depends: [
   "rocq-mathcomp-reals-stdlib"
   "rocq-mathcomp-zify"
   "coq-mathcomp-finmap"
-  "coq-vst" {= "2.17"}
+  "coq-vst" {>= "2.17"}
   "coq-vst-lib" {>= "2.15.1~"}
 ]
 tags: [
-  "date:2026-09-24"
+  "date:2026-09-25"
   "logpath:LAProof"
 ]
