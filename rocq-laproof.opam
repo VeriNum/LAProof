@@ -27,10 +27,10 @@ depends: [
   "coq-vcfloat" {>= "2.4.2~"}
   "rocq-mathcomp-ssreflect" {>= "2.6.0~"}
   "rocq-mathcomp-algebra"
-  "rocq-mathcomp-analysis"
   "rocq-mathcomp-reals-stdlib"
   "rocq-mathcomp-zify"
   "coq-mathcomp-finmap"
+  "coq-libvalidsdp"
   "coq-vst" {>= "2.17"}
   "coq-vst-lib" {>= "2.15.1~"}
 ]
