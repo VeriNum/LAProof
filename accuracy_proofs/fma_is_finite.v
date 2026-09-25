@@ -309,8 +309,8 @@ Proof.
         } 
         apply He.
     (* Final algebraic inequality using fun_bnd structure *)
-    rewrite sqrt_def.
-    { unfold fun_bnd.
+    rewrite sqrt_def; try solve [apply fun_bound_pos; auto].
+      unfold fun_bnd.
       replace (length (a :: l)) with (S n) by (simpl; lia).
       set (x := (@g t (S n - 1) + 1)).
       set (y := (1 + INR (S n) * x)).
@@ -375,7 +375,6 @@ Proof.
               | apply le_INR; lia
               | replace (S n - 1)%nat with n%nat by lia; nra ].
           + unfold n; apply lt_INR; lia. } }
-    apply fun_bound_pos; auto. }
 Qed.
 
 End NAN.

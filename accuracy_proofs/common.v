@@ -217,10 +217,10 @@ Definition default_abs : R :=
 
 Lemma default_rel_sep_0 : default_rel <> R0.
 Proof.
-  apply Rabs_lt_pos.
+  apply Rabs_lt_pos. unfold default_rel; simpl.
   rewrite Rabs_pos_eq;
-    [ apply Rmult_lt_0_compat; try Lra.nra
-    | apply Rmult_le_pos; try Lra.nra ];
+    first [apply Rmult_lt_0_compat | apply Rmult_le_pos]; (* Do it this way for backward compatibility *)
+    try Lra.nra;
     auto with commonDB.
 Qed.
 Hint Resolve default_rel_sep_0 : commonDB.
@@ -390,15 +390,17 @@ Proof.
   rewrite <- !Rmult_assoc.
   replace (bpow Zaux.radix2 1 * / 2) with 1 by (simpl; nra).
   rewrite !bpow_opp.
-  rewrite !Rcomplements.Rle_div_r.
-  - field_simplify; try nra.
-    replace 1 with (bpow Zaux.radix2 0) by (simpl; auto).
-    apply bpow_le.
-    pose proof fprec_gt_one t; lia.
-  - apply Rlt_gt.
+  rewrite !Rcomplements.Rle_div_r;
+  first [  (* do it this way for backward compatibility *)
+   apply Rlt_gt;
     replace (/ bpow Zaux.radix2 (fprec t))
-      with (1 / bpow Zaux.radix2 (fprec t)) by nra.
-    apply Rdiv_lt_0_compat; try nra.
+      with (1 / bpow Zaux.radix2 (fprec t)) by nra;
+    apply Rdiv_lt_0_compat; nra
+  | field_simplify; try nra;
+    replace 1 with (bpow Zaux.radix2 0) by (simpl; auto);
+    apply bpow_le;
+    pose proof fprec_gt_one t; lia
+ ].
 Qed.
 
 End WithType.

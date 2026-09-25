@@ -20,21 +20,21 @@ install: [
   [ make "-j%{jobs}%" "install" ]
 ]
 depends: [
-  "coq" {>= "9.0"}
+  "coq-core" {>= "9.1~"}
+  "rocq-stdlib"
   "coq-flocq"
   "coq-interval"
-  "coq-vcfloat" {>= "2.4.1~"}
-  "coq-mathcomp-ssreflect" {>= "2.4.0~"}
-  "coq-mathcomp-algebra"
-  "coq-mathcomp-analysis"
-  "coq-mathcomp-algebra-tactics"
-  "coq-mathcomp-reals-stdlib"
+  "coq-vcfloat" {>= "2.4.2~"}
+  "rocq-mathcomp-ssreflect" {>= "2.6.0~"}
+  "rocq-mathcomp-algebra"
+  "rocq-mathcomp-reals-stdlib"
+  "rocq-mathcomp-zify"
   "coq-mathcomp-finmap"
-  "coq-vst" {>= "2.16~"}
+  "coq-libvalidsdp"
+  "coq-vst" {>= "2.17"}
   "coq-vst-lib" {>= "2.15.1~"}
-  "coq-libvalidsdp" {>= "1.1.1"}
 ]
 tags: [
-  "date:2025-05-08"
+  "date:2026-09-25"
   "logpath:LAProof"
 ]

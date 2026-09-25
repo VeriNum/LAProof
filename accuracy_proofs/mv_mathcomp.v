@@ -40,7 +40,7 @@
 From LAProof.accuracy_proofs Require Import preamble common
     dotprod_model sum_model dot_acc float_acc_lems.
 
-From mathcomp.algebra_tactics Require Import ring.
+(* From mathcomp.algebra_tactics Require Import ring. *)
 
 Open Scope ring_scope.
 Open Scope order_scope.
@@ -391,7 +391,8 @@ Proof.
     change (0 <= 0 * xx)%Re.
     rewrite Rmult_0_l; reflexivity.
   - remember (normv u) as umax.
-    rewrite /normr /normM /normv /sum_abs /= big_max_mul.
+    rewrite /normr /normM /normv /sum_abs /= big_max_mul;
+  try solve [rewrite Hequmax;   apply normv_pos].
     apply: le_bigmax2 => i0 _.
     rewrite mxE => /=.
     eapply le_trans; [apply Rabs_sum |].
@@ -405,8 +406,6 @@ Proof.
       1, 2: apply /RleP; apply Rabs_pos.
       rewrite Hequmax /normv.
       by apply /le_bigmax.
-    + rewrite Hequmax.
-      apply normv_pos.
 Qed.
 
 (** Triangle inequality for [normv]: [‖u + v‖_∞ ≤ ‖u‖_∞ + ‖v‖_∞]. *)
@@ -495,8 +494,8 @@ Proof.
     transitivity (map (fun y => subn n (S y)) (map (@nat_of_ord n) (ord_enum n))).
     2: { rewrite -map_comp /comp //. }
     unfold ord_enum.
-    rewrite pmap_filter.
-    2: { intro; simpl; unfold insub; destruct idP; simpl in *; auto. }
+    rewrite pmap_filter;
+      try solve [intro; simpl; unfold insub; destruct idP; simpl in *; auto].
     transitivity (map (fun y => subn n (S y)) (iota 0 n)).
     2: {
       set u := O.
@@ -522,12 +521,11 @@ Proof.
     - rewrite size_rev size_map //.
     - intros i Hi.
       rewrite size_rev size_iota in Hi.
-      rewrite -!nth_List_nth nth_rev.
-      2: rewrite size_iota; lia.
-      rewrite size_iota nth_iota.
-      2: lia.
-      rewrite (nth_map O).
-      2: rewrite size_iota; lia.
+      rewrite -!nth_List_nth nth_rev;
+      try solve [ rewrite size_iota; lia].
+      rewrite size_iota nth_iota; try lia.
+      rewrite (nth_map O);
+      try solve [rewrite size_iota; lia].
       rewrite nth_iota; try lia.
   }
   set a := rev (ord_enum n) in Hnat |-*; clearbody a.
@@ -814,7 +812,7 @@ Proof.
     f_equal; f_equal.
     apply FunctionalExtensionality.functional_extensionality; intro j.
     rewrite map_comp /comp val_ord_enum.
-    rewrite map_nth_iota; [| lia].
+    rewrite map_nth_iota; try lia.
     rewrite drop0.
     replace (take rows mval) with mval.
     2: rewrite Hrows take_size //.
@@ -844,10 +842,8 @@ Proof.
   intros.
   apply matrixP => i j.
   rewrite /mx_of_listlist mxE /listlist_of_mx.
-  rewrite (nth_map i).
-  2: rewrite size_ord_enum; apply ltn_ord.
-  rewrite (nth_map j).
-  2: rewrite size_ord_enum; apply ltn_ord.
+  rewrite (nth_map i); try solve [rewrite size_ord_enum; apply ltn_ord].
+  rewrite (nth_map j); try solve [rewrite size_ord_enum; apply ltn_ord].
   rewrite !nth_ord_enum'; auto.
 Qed.
 
@@ -870,7 +866,7 @@ Proof.
     rewrite (nth_ord_enum_lemma d vval) -Hsize.
     f_equal; f_equal.
     rewrite map_comp /comp val_ord_enum.
-    rewrite map_nth_iota; [| lia].
+    rewrite map_nth_iota; try lia.
     rewrite drop0 take_size.
     apply FunctionalExtensionality.functional_extensionality; intro j.
     rewrite mxE //.
@@ -885,8 +881,7 @@ Proof.
   intros.
   apply matrixP => i j.
   rewrite /mx_of_listlist mxE /listlist_of_mx.
-  rewrite (nth_map i).
-  2: rewrite size_ord_enum; apply ltn_ord.
+  rewrite (nth_map i); try solve [rewrite size_ord_enum; apply ltn_ord].
   rewrite !ord1.
   f_equal.
   apply nth_ord_enum'.
@@ -985,15 +980,13 @@ Proof.
       destruct (i < n1)%N eqn:Hlt.
       * unfold split; simpl.
         destruct (ltnP i n1); try lia.
-        rewrite (nth_map (Ordinal i0)).
-        2: rewrite size_ord_enum //.
+        rewrite (nth_map (Ordinal i0)); try solve [rewrite size_ord_enum //].
         change i with (nat_of_ord (Ordinal i0)).
         rewrite nth_ord_enum' //.
       * unfold split; simpl.
         destruct (ltnP i n1); try lia.
         assert (Hlt2 : is_true (i - n1 < n2)%N) by lia.
-        rewrite (nth_map (Ordinal Hlt2)).
-        2: rewrite size_ord_enum //.
+        rewrite (nth_map (Ordinal Hlt2)); try solve [rewrite size_ord_enum //].
         change (i - n1)%nat with (nat_of_ord (Ordinal Hlt2)).
         rewrite nth_ord_enum' //.
         f_equal; apply ord_inj; simpl; auto.
@@ -1062,8 +1055,7 @@ Proof.
           rewrite -nth_List_nth in HB; auto.
       }
       rewrite size_map size_ord_enum => j Hj.
-      rewrite (nth_map (Ordinal Hj)).
-      2: rewrite size_ord_enum //.
+      rewrite (nth_map (Ordinal Hj)); try solve [ rewrite size_ord_enum //].
       change j with (nat_of_ord (Ordinal Hj)).
       rewrite nth_ord_enum'.
       assert (Hnth : nth (Ordinal Hi) (ord_enum (n1 + n2)) i = Ordinal Hi).
@@ -1073,23 +1065,19 @@ Proof.
       destruct (i < n1)%N eqn:Hlt.
       * unfold split; simpl.
         destruct (ltnP i n1); try lia.
-        rewrite (nth_map (Ordinal i0)).
-        2: rewrite size_ord_enum //.
+        rewrite (nth_map (Ordinal i0)); try solve [rewrite size_ord_enum //].
         change i with (nat_of_ord (Ordinal i0)).
         rewrite nth_ord_enum' //.
-        rewrite (nth_map (Ordinal Hj)).
-        2: rewrite size_ord_enum //.
+        rewrite (nth_map (Ordinal Hj)); try solve [rewrite size_ord_enum //].
         change j with (nat_of_ord (Ordinal Hj)).
         rewrite nth_ord_enum' //.
       * unfold split; simpl.
         destruct (ltnP i n1); try lia.
         assert (Hlt2 : is_true (i - n1 < n2)%N) by lia.
-        rewrite (nth_map (Ordinal Hlt2)).
-        2: rewrite size_ord_enum //.
+        rewrite (nth_map (Ordinal Hlt2)); try solve [rewrite size_ord_enum //].
         change (i - n1)%nat with (nat_of_ord (Ordinal Hlt2)).
         rewrite nth_ord_enum' //.
-        rewrite (nth_map (Ordinal Hj)).
-        2: rewrite size_ord_enum //.
+        rewrite (nth_map (Ordinal Hj)); try solve [rewrite size_ord_enum //].
         f_equal; apply ord_inj; simpl; auto.
         change j with (nat_of_ord (Ordinal Hj)).
         rewrite nth_ord_enum' //.
@@ -1115,8 +1103,8 @@ Proof.
     rewrite /listlist_of_mx in Hnth.
     pose proof (ltn_ord i) as Hi.
     pose proof (ltn_ord j) as Hj.
-    rewrite !(nth_map i) in Hnth. 2, 3: rewrite size_ord_enum; auto.
-    rewrite !(nth_map j) in Hnth. 2, 3: rewrite size_ord_enum; auto.
+    rewrite !(nth_map i) in Hnth; try solve [rewrite size_ord_enum; auto].
+    rewrite !(nth_map j) in Hnth; try solve [rewrite size_ord_enum; auto].
     rewrite !nth_ord_enum' in Hnth.
     auto.
 Qed.
@@ -1211,9 +1199,9 @@ Proof.
         rewrite nth_seq_of_rV !mxE //.
     + change (S (size l)) with (addn 1 (size l)).
       apply listlist_of_mx_inj.
-      rewrite listlist_of_mx_of_listlist.
-      2: simpl; change @length with @size; lia.
-      2: constructor; auto.
+      rewrite listlist_of_mx_of_listlist;
+       try (simpl; change @length with @size; lia);
+      try solve [constructor; auto].
       rewrite listlist_of_mx_col_mx.
       rewrite !listlist_of_mx_of_listlist; auto.
       constructor; auto.

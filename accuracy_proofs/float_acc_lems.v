@@ -308,9 +308,10 @@ Proof.
                 BinarySingleNaN.mode_NE
                 x y z Hfinx Hfiny Hfinz) as H.
   cbv zeta in H.
-  rewrite Rlt_bool_true in H.
-  - destruct H as [_ [HFIN _]]; exact HFIN.
-  - move: Hov; by rewrite /fma_no_overflow /rounded.
+  rewrite Rlt_bool_true in H;
+  first [ (* do it this way for backward compatibility *)
+    destruct H as [_ [HFIN _]]; exact HFIN
+  |  move: Hov; by rewrite /fma_no_overflow /rounded].
 Qed.
 
 

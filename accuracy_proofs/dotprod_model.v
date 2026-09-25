@@ -357,11 +357,10 @@ Proof. reflexivity. Qed.
     
 Lemma sum_rev l : sum_fold l = sum_fold (rev l).
 Proof.
-  rewrite /sum_fold -foldl_rev foldl_foldr.
+  rewrite /sum_fold -foldl_rev foldl_foldr;
+  try solve [hnf; intros; lra].
   f_equal;
     do 2 (apply FunctionalExtensionality.functional_extensionality; intro); lra.
-  hnf; intros; lra.
-  hnf; intros; lra.
 Qed.
 
 (** [R_dot_prod_rel] characterizes [dotprodR]: for any v1 and v2,
@@ -379,9 +378,8 @@ Proof.
   apply R_dot_prod_rel_cons; apply IHl.
   subst z.
   clear.
-  rewrite !foldl_foldr; [ | compute; intros; lra..].
-  destruct a as [x y]; simpl.
-  rewrite Rplus_comm //.
+  rewrite !foldl_foldr;  try solve [compute; intros; lra].
+  destruct a;  rewrite Rplus_comm //.
 Qed.
 
 (** The value of the real dot product relation is injective in s. *)
@@ -448,8 +446,8 @@ Proof.
   move :(dotprodR_rel (rev (map FT2R v1)) (rev (map FT2R v2))).
   rewrite dotprodR_rev ?size_rev ?size_map // revK
           /sum_fold /dotprodR /dotprod
-          foldl_foldr //.
-  2,3: compute; intros; lra.
+          foldl_foldr //;
+  try solve [compute; intros; lra];
   rewrite -rev_zip ?size_map ?flip_Rplus //.
 Qed.
 
@@ -489,8 +487,8 @@ Proof.
                       (rev (map Rabs (map FT2R v2)))).
   rewrite dotprodR_rev ?size_rev ?size_map // revK
           /sum_fold /dotprodR /dotprod
-          foldl_foldr //.
-  2,3: compute; intros; lra.
+          foldl_foldr //;
+  try solve [compute; intros; lra].
   rewrite -rev_zip ?size_map ?flip_Rplus //.
 Qed.
 
@@ -603,8 +601,7 @@ Proof.
   replace (Rmult a (dotprodR u v)) with (dotprodR (map (Rmult a) u) v); auto.
   clear - H.
   unfold dotprodR, dotprod.
-  rewrite !foldl_foldr.
-  2,3,4,5: compute; intros; lra.
+  rewrite !foldl_foldr; try solve [compute; intros; lra].
   revert v H; induction u; destruct v; intros; inversion H; clear H; subst;
     simpl.
   compute; lra.
@@ -822,7 +819,7 @@ Proof.
     move :H => /eqP H.
     simpl in Hlen.
     rewrite -H Rmult_0_l.
-    rewrite (IHl _ _ H0 H3). lra. lia.
+    rewrite (IHl _ _ H0 H3); try lia; lra.
 Qed.
 
 (** Absolute-value dot product analogue of [R_dot_prod_rel_nnzR]:
@@ -845,8 +842,7 @@ Proof.
     move :H => /= /andP [H H0].
     move :H => /eqP H.
     simpl in Hlen.
-    rewrite -H Rabs_R0 Rmult_0_l (IHl _ _ H0 H3).
-    lra. lia.
+    rewrite -H Rabs_R0 Rmult_0_l (IHl _ _ H0 H3); try lia; lra.
 Qed.
 
 End NonZeroDP.

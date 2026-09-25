@@ -44,7 +44,7 @@ From LAProof.accuracy_proofs Require Import preamble common
                                              dotprod_model sum_model
                                              dot_acc float_acc_lems mv_mathcomp.
 
-From mathcomp.algebra_tactics Require Import ring.
+From mathcomp.algebra Require Import ring_tactic.
 
 Section WithNAN.
 
@@ -89,8 +89,7 @@ Proof.
     rewrite (unlock (bigop_unlock)).
     unfold reducebig, comp, applybig.
     unfold dotprodR, dotprod.
-    rewrite foldl_foldr.
-    2, 3: compute; intros; lra.
+    rewrite foldl_foldr; try solve [ compute; intros; lra].
     unfold seq_of_rV.
     rewrite -!map_comp.
     rewrite /seq_of_rV size_map size_ord_enum in Hu.
@@ -112,8 +111,7 @@ Proof.
     rewrite {}Hval.
     unfold seq_of_rV in Hbd |- *.
     rewrite size_map size_ord_enum in Hbd.
-    rewrite (nth_map j).
-    2: { rewrite size_ord_enum; pose proof (ltn_ord j); lia. }
+    rewrite (nth_map j); try solve [rewrite size_ord_enum; pose proof (ltn_ord j); lia].
     rewrite nth_ord_enum'.
     change (A 0 j)%Ri with (A ord0 j).
     set Aj := FT2R (A ord0 j).
@@ -220,7 +218,8 @@ Proof.
   set Ar := map_mx FT2R A.
   set Br := map_mx FT2R B.
   have H0 : (Ar *m Br + E *m Br + eta - Ar *m Br = E *m Br + eta)%Ri.
-  { rewrite -!addrA addrC addrA -addrA addNr addr0 //. }
+  rewrite -addrA (addrC eta) addrA; f_equal.
+  rewrite -!addrA addrC -addrA addNr addr0 //.
   rewrite {}H0.
   eapply (le_trans (normv_triang _ _ _)).
   apply lerD.
@@ -228,15 +227,17 @@ Proof.
   apply ler_pM => //.
   apply normM_pos.
   apply normv_pos.
-  rewrite /normM mulrC big_max_mul.
+  rewrite /normM mulrC big_max_mul; try solve [apply /RleP; auto with commonDB].
   apply: le_bigmax2 => i0 _.
   rewrite /sum_abs.
-  rewrite big_mul => [ | i b | ]; [ | ring | ].
-  - apply ler_sum => i _.
+   rewrite big_mul.
+   move => i b ; ring.
+   apply /RleP; auto with commonDB.  
+  apply ler_sum => i _.
     rewrite mulrC -/Ar //.
-  - apply /RleP; auto with commonDB.
-  - apply /RleP; auto with commonDB.
+   apply /RleP; auto with commonDB.
   - rewrite /normv.
+  apply /RleP.
      apply @bigmax_le => [ | i _].
     apply /RleP; auto with commonDB.
     auto.
