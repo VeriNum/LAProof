@@ -63,6 +63,42 @@ void csr_matrix_vector_multiply_byrows (struct csr_matrix *m, double *v, double 
     p[i]=csr_row_vector_multiply(m,v,i);
 }
 
+/**
+ * csr_find(m,i,j)
+ *     returns the index k in val/col_ind of entry (i,j),
+ *     or row_ptr[i+1] if (i,j) is not in the sparsity pattern.
+ *     Within a row, the column indices are strictly increasing,
+ *     so we use binary search.
+ */
+unsigned csr_find(struct csr_matrix *m, unsigned i, unsigned j) {
+  unsigned *col_ind = m->col_ind;
+  unsigned *row_ptr = m->row_ptr;
+  unsigned lo=row_ptr[i], end=row_ptr[i+1], hi=end;
+  while (lo<hi) {  /* if (i,j) is in row i, it is in [lo,hi) */
+    unsigned mid = lo+(hi-lo)/2;
+    unsigned c = col_ind[mid];
+    if (c==j)
+      return mid;
+    else if (c<j)
+      lo=mid+1;
+    else
+      hi=mid;
+  }
+  return end;
+}
+
+/**
+ * add_to_csr_matrix(m,i,j,x)
+ *     adds x to entry (i,j) of the CSR matrix m.
+ *     Precondition: (i,j) is in the sparsity pattern;
+ *     if it is not, m is unchanged.
+ */
+void add_to_csr_matrix(struct csr_matrix *m, unsigned i, unsigned j, double x) {
+  unsigned k = csr_find(m,i,j);
+  if (k!=m->row_ptr[i+1])
+    m->val[k] += x;
+}
+
 void exit(int code);
 
 struct coo_matrix *create_coo_matrix (unsigned maxn, unsigned rows, unsigned cols) {

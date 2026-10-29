@@ -39,6 +39,15 @@ double csr_row_vector_multiply(struct csr_matrix *m, double *v, unsigned i);
 void csr_matrix_vector_multiply_byrows (struct csr_matrix *m, double *v, double *p);
 
 /**
+ * `csr_find(m,i,j)` returns the index of entry (i,j) in the `val` and
+ * `col_ind` arrays, or `row_ptr[i+1]` if (i,j) is not in the sparsity pattern.
+ * `add_to_csr_matrix(m,i,j,x)` adds x to entry (i,j), which must already be
+ * in the sparsity pattern (if it is not, the matrix is unchanged).
+ */
+unsigned csr_find(struct csr_matrix *m, unsigned i, unsigned j);
+void add_to_csr_matrix(struct csr_matrix *m, unsigned i, unsigned j, double x);
+
+/**
  * The following test scaffolding is not proved correct.
  */
 
