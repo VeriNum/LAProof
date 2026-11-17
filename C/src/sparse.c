@@ -91,7 +91,7 @@ unsigned csr_find(struct csr_matrix *m, unsigned i, unsigned j) {
  * add_to_csr_matrix(m,i,j,x)
  *     adds x to entry (i,j) of the CSR matrix m.
  *     Precondition: (i,j) is in the sparsity pattern;
- *     if it is not, m is unchanged.
+ *     if it is not, m is unchanged. (silent failure)
  */
 void add_to_csr_matrix(struct csr_matrix *m, unsigned i, unsigned j, double x) {
   unsigned k = csr_find(m,i,j);

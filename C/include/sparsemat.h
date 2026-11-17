@@ -37,7 +37,7 @@ void sparsemat_free(sparsemat_t sm);
 void sparsemat_clear(sparsemat_t sm);
 
 // Fix the graph (no-op if already fixed)
-void sparsemat_fix_graph(sparsemat_t sm);
+// void sparsemat_fix_graph(sparsemat_t sm);
 
 // Get entry (i,j), fixing the graph first; 0 if (i,j) is not in the graph
 double sparsemat_get(sparsemat_t sm, int i, int j);
