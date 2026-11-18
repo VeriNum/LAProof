@@ -4,6 +4,7 @@ C/bandmat.v
 C/build_csr.v
 C/cholesky.v
 C/densemat.v
+C/sparsemat.v
 C/cblas/ddot.v
 C/cblas/dasum.v
 C/cblas/dscal.v

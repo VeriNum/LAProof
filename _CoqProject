@@ -46,6 +46,8 @@ C/build_csr.v
 C/verif_build_csr.v
 C/distinct.v
 C/partial_csr.v
+C/sparsemat.v
+C/spec_sparsemat.v
 
 C/cblas/ddot.v
 C/cblas/ddot_model.v
